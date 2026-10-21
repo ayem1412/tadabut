@@ -73,6 +73,21 @@ Other scripts:
 | `pnpm lint`      | Check formatting and lint rules |
 | `pnpm format`    | Fix formatting and sort imports |
 
+### Branches and releases
+
+Tadabut uses [GitHub Flow](https://docs.github.com/en/get-started/using-github/github-flow):
+
+- `master` always works. Nothing is pushed to it directly.
+- Each change gets its own short branch: `feat/…`, `fix/…`, `docs/…` or `chore/…`.
+- Each branch is merged through a pull request, once CI passes.
+- Releases are tags on `master` (`v0.1.0`, `v0.2.0`, …), following [semver](https://semver.org).
+
+To release, on a `chore/release-x.y.z` branch:
+
+1. Bump `version` in `package.json` (before 1.0: `0.0.x` for fixes, `0.x.0` for features or breaking changes).
+2. Update this README (roadmap, framework status, usage).
+3. Merge to `master`, then tag the merge commit and push the tag.
+
 ## Not affiliated with DataTables
 
 Tadabut is an independent project. It is not made by or affiliated with SpryMedia or the DataTables project. It does not use or include code from DataTables Editor.
