@@ -1,0 +1,68 @@
+{
+  "name": "tadabut",
+  "version": "0.0.0",
+  "description": "Typed wrapper for DataTables with row editing, rich inputs and chained selects.",
+  "keywords": [
+    "datatables",
+    "datatables.net",
+    "table",
+    "datagrid",
+    "editable",
+    "inline-editing",
+    "row-editing",
+    "chained-select",
+    "dependent-select",
+    "typescript",
+    "react"
+  ],
+  "author": "Anas Youssef ELMAHDAD <elmahdad.anasyoussef00@proton.me> (https://github.com/ayem1412)",
+  "license": "MIT",
+  "type": "module",
+  "files": [
+    "dist"
+  ],
+  "sideEffects": false,
+  "scripts": {
+    "dev": "vite",
+    "build": "tsdown",
+    "test": "vitest",
+    "typecheck": "tsc",
+    "lint": "biome check .",
+    "format": "biome check --write .",
+    "check": "biome ci . && tsc && vitest run && tsdown"
+  },
+  "peerDependencies": {
+    "datatables.net": "^3.0.0",
+    "react": "^19.0.0"
+  },
+  "peerDependenciesMeta": {
+    "react": {
+      "optional": true
+    }
+  },
+  "devDependencies": {
+    "@arethetypeswrong/core": "^0.18.5",
+    "@biomejs/biome": "2.5.15",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "@vitejs/plugin-react": "^6.1.2",
+    "datatables.net": "^3.1.4",
+    "datatables.net-dt": "^3.1.4",
+    "happy-dom": "^21.0.3",
+    "publint": "^0.3.25",
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1",
+    "tsdown": "^0.23.1",
+    "typescript": "^7.0.2",
+    "vite": "^8.3.4",
+    "vitest": "^5.0.5"
+  },
+  "packageManager": "pnpm@12.14.0",
+  "devEngines": {
+    "packageManager": {
+      "name": "pnpm",
+      "version": "12.14.0",
+      "onFail": "download"
+    }
+  }
+}
