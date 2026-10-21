@@ -55,8 +55,8 @@ type Employee = {
   age: number;
   hiredAt: string; // 'YYYY-MM-DD'
   active: boolean;
-  country: string;
-  city: string;
+  countryId: number;
+  cityId: number;
 };
 
 const columns: Column<Employee>[] = [
@@ -88,26 +88,28 @@ const columns: Column<Employee>[] = [
   { prop: "hiredAt", title: "Hired", editor: { type: "date" } },
   { prop: "active", title: "Active", editor: { type: "checkbox" } },
   {
-    prop: "country",
+    prop: "countryId",
     title: "Country",
     editor: {
       type: "select",
       options: [
-        { value: "MA", label: "Morocco" },
-        { value: "FR", label: "France" },
+        { value: 1, label: "Morocco" },
+        { value: 2, label: "France" },
       ],
     },
   },
 ];
 ```
 
-| Type       | Value type | Extra options                       |
-| ---------- | ---------- | ----------------------------------- |
-| `text`     | `string`   | `minLength`, `maxLength`, `pattern` |
-| `number`   | `number`   | `min`, `max`, `step`                |
-| `date`     | `string`   | `min`, `max` (both `'YYYY-MM-DD'`)  |
-| `checkbox` | `boolean`  | —                                   |
-| `select`   | `string`   | `options`, `dependsOn`              |
+A select's values have the same type as the column. `countryId` is a `number`, so `{ value: '1', … }` is a type error.
+
+| Type       | Value type        | Extra options                       |
+| ---------- | ----------------- | ----------------------------------- |
+| `text`     | `string`          | `minLength`, `maxLength`, `pattern` |
+| `number`   | `number`          | `min`, `max`, `step`                |
+| `date`     | `string`          | `min`, `max` (both `'YYYY-MM-DD'`)  |
+| `checkbox` | `boolean`         | —                                   |
+| `select`   | the column's type | `options`, `dependsOn`              |
 
 ### Validation
 
@@ -135,13 +137,13 @@ A select can depend on another field. Its `options` is then a function that rece
 
 ```ts
 {
-  prop: 'city',
+  prop: 'cityId',
   title: 'City',
   editor: {
     type: 'select',
-    dependsOn: 'country',
+    dependsOn: 'countryId',
     options: async (row, { signal }) => {
-      const res = await fetch(`/api/cities?country=${row.country}`, { signal });
+      const res = await fetch(`/api/cities?country=${row.countryId}`, { signal });
       return res.json(); // [{ value, label }, …]
     },
   },
@@ -173,20 +175,41 @@ const table = new Tadabut<Employee>(container, {
 - **Success:** the row shows the new values. If you return a row, it is used instead (useful for fields the server sets, like `updatedAt`).
 - **Failure:** throw. The row goes back to its old values and the error message is shown on the row.
 
-### Starting an edit
+### Editing options
 
-By default, each row gets an edit button. You can also control editing from code:
+When at least one column has an `editor`, each row gets an edit button. The `editing` option changes how editing works:
+
+```ts
+const table = new Tadabut<Employee>(container, {
+  data: employees,
+  rowId: "id",
+  columns,
+  onSave: saveEmployee,
+  editing: {
+    mode: "multiple", // default: 'single'
+    button: false, // default: true — hide the edit button
+  },
+});
+```
+
+- **`mode: 'single'`** — one row at a time. Starting a new edit is blocked while another row is open.
+- **`mode: 'multiple'`** — several rows can be open at once. Each row saves on its own, and `onSave` is called once per row.
+- **`button: false`** — no edit button. Start edits from your own code instead.
+
+### Controlling it from code
 
 ```ts
 table.edit(5); // start editing the row with id 5
-table.save(); // save the row being edited
-table.cancel(); // cancel and restore the old values
+table.save(5); // save it
+table.cancel(5); // cancel and restore its old values
 
 table.setData(newEmployees); // replace all rows, keeps sorting and search
 table.destroy(); // remove everything Tadabut created
 ```
 
-Keyboard: <kbd>Enter</kbd> saves, <kbd>Escape</kbd> cancels.
+In `single` mode the id can be left out: `save()` and `cancel()` act on the open row.
+
+Keyboard: <kbd>Enter</kbd> saves the row you're in, <kbd>Escape</kbd> cancels it.
 
 ### React
 
