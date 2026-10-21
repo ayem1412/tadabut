@@ -4,14 +4,14 @@ import 'datatables.net-dt/css';
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 
-import { TadabutTable } from '../src/react/index';
+import { Tadabut } from '../src/react/index';
 import { columns, rows } from './data';
 
 function App() {
   return (
     <>
       <h1>Tadabut · React</h1>
-      <TadabutTable data={rows} columns={columns} />
+      <Tadabut data={rows} columns={columns} />
     </>
   );
 }
