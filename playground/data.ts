@@ -1,0 +1,28 @@
+type Row = {
+  id: number;
+  name: string;
+  city: string;
+  age: number;
+};
+
+export const rows: Row[] = [
+  { id: 1, name: 'Amina Benali', city: 'Rabat', age: 29 },
+  { id: 2, name: 'Youness Idrissi', city: 'Casablanca', age: 34 },
+  { id: 3, name: 'Salma Ait Ouahmane', city: 'Agadir', age: 25 },
+  { id: 4, name: 'Karim El Fassi', city: 'Fès', age: 41 },
+  { id: 5, name: 'Nadia Amrani', city: 'Tanger', age: 37 },
+  { id: 6, name: 'Hamza Ouchen', city: 'Marrakech', age: 22 },
+  { id: 7, name: 'Leila Berrada', city: 'Meknès', age: 31 },
+  { id: 8, name: 'Omar Tazi', city: 'Oujda', age: 45 },
+  { id: 9, name: 'Ilham Zerouali', city: 'Tétouan', age: 28 },
+  { id: 10, name: 'Mehdi Alaoui', city: 'Kénitra', age: 33 },
+  { id: 11, name: 'Sara Lahlou', city: 'Rabat', age: 26 },
+  { id: 12, name: 'Anass Bennani', city: 'Casablanca', age: 39 },
+];
+
+export const columns: { title: string; prop: string }[] = [
+  { title: 'ID', prop: 'id' },
+  { title: 'Name', prop: 'name' },
+  { title: 'City', prop: 'city' },
+  { title: 'Age', prop: 'age' },
+];
