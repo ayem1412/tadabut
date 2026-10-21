@@ -1,13 +1,13 @@
 import { type ReactElement, useEffect, useRef } from 'react';
 
-import { Tadabut } from '../index';
+import { Tadabut as Core } from '../index';
 
-export type TadabutTableProps = {
+export type TadabutProps = {
   data: Record<string, unknown>[];
   columns: { title: string; prop: string }[];
 };
 
-export function TadabutTable({ data, columns }: TadabutTableProps): ReactElement {
+export function Tadabut({ data, columns }: TadabutProps): ReactElement {
   const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -17,7 +17,7 @@ export function TadabutTable({ data, columns }: TadabutTableProps): ReactElement
       return;
     }
 
-    const table = new Tadabut(container, data, columns);
+    const table = new Core(container, data, columns);
 
     return () => {
       table.destroy();
