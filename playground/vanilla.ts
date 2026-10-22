@@ -2,7 +2,7 @@ import 'datatables.net-dt';
 import 'datatables.net-dt/css';
 
 import { Tadabut } from '../src/index';
-import { columns, rows } from './data';
+import { columns, type Row, rows } from './data';
 
 const container = document.querySelector<HTMLElement>('#container');
 const createBtn = document.querySelector<HTMLButtonElement>('#create');
@@ -13,7 +13,7 @@ if (!container || !createBtn || !destroyBtn || !status) {
   throw new Error('Playground: missing elements in vanilla.html');
 }
 
-let table: Tadabut | null = null;
+let table: Tadabut<Row> | null = null;
 
 const updateStatus = (): void => {
   createBtn.disabled = table !== null;

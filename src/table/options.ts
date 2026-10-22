@@ -2,10 +2,17 @@ import type { Column } from '../columns/column';
 
 /**
  * Options for creating a Tadabut table.
+ *
+ * @typeParam Row - The shape of one row. Usually worked out from `data`.
  */
-export type TadabutOptions = {
+export type TadabutOptions<Row extends object> = {
   /** The rows to show. One object per row. */
-  readonly data: readonly Record<string, unknown>[];
+  readonly data: readonly Row[];
   /** The columns to show, in order. */
-  readonly columns: readonly Column[];
+  readonly columns: readonly Column<Row>[];
+  /**
+   * Name of the row property that identifies each row, like `'id'`.
+   * Not needed to show a table. Editing will use it to find rows.
+   */
+  readonly rowId?: keyof Row & string;
 };
