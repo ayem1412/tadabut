@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it } from 'vitest';
 
-import { Tadabut } from '../src/index';
+import { Tadabut } from '../../src/index';
 
 const rows = [
   { id: 1, name: 'Amina', city: 'Rabat' },
@@ -27,7 +27,7 @@ describe('Tadabut', () => {
 
   it('shows one row per item', () => {
     const container = createContainer();
-    const table = new Tadabut(container, rows, columns);
+    const table = new Tadabut(container, { data: rows, columns });
 
     expect(container.querySelectorAll('tbody tr')).toHaveLength(3);
 
@@ -36,7 +36,7 @@ describe('Tadabut', () => {
 
   it('reads each cell from the column prop', () => {
     const container = createContainer();
-    const table = new Tadabut(container, rows, columns);
+    const table = new Tadabut(container, { data: rows, columns });
 
     const firstRow = container.querySelector('tbody tr');
     const cells = [...(firstRow?.querySelectorAll('td') ?? [])].map((td) => td.textContent);
@@ -48,7 +48,7 @@ describe('Tadabut', () => {
 
   it('uses the column titles as headers', () => {
     const container = createContainer();
-    const table = new Tadabut(container, rows, columns);
+    const table = new Tadabut(container, { data: rows, columns });
 
     const headers = [...container.querySelectorAll('thead th')].map((th) => th.textContent);
 
@@ -59,7 +59,7 @@ describe('Tadabut', () => {
 
   it('leaves the container empty after destroy', () => {
     const container = createContainer();
-    const table = new Tadabut(container, rows, columns);
+    const table = new Tadabut(container, { data: rows, columns });
 
     table.destroy();
 

@@ -1,3 +1,5 @@
+import type { Column } from '../src/index';
+
 type Row = {
   id: number;
   name: string;
@@ -20,7 +22,7 @@ export const rows: Row[] = [
   { id: 12, name: 'Anass Bennani', city: 'Casablanca', age: 39 },
 ];
 
-export const columns: { title: string; prop: string }[] = [
+export const columns: Column[] = [
   { title: 'ID', prop: 'id' },
   { title: 'Name', prop: 'name' },
   { title: 'City', prop: 'city' },
