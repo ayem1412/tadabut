@@ -251,7 +251,7 @@ export function Employees({ employees }: { employees: Employee[] }) {
 ## Roadmap
 
 - [x] Project setup
-- [ ] Thin wrapper: typed columns, data loading, cleanup
+- [x] Thin wrapper: typed columns, data loading, cleanup
 - [ ] React adapter
 - [ ] Inputs: text, number, date, checkbox, select
 - [ ] Row editing: save, cancel, validation, rollback
