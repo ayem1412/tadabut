@@ -22,7 +22,7 @@ const updateStatus = (): void => {
 };
 
 createBtn.addEventListener('click', () => {
-  table = new Tadabut(container, rows, columns);
+  table = new Tadabut(container, { data: rows, columns });
   updateStatus();
 });
 
@@ -32,5 +32,5 @@ destroyBtn.addEventListener('click', () => {
   updateStatus();
 });
 
-table = new Tadabut(container, rows, columns);
+table = new Tadabut(container, { data: rows, columns });
 updateStatus();
