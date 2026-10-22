@@ -20,7 +20,7 @@ import type { TadabutOptions } from './options';
  * });
  */
 export class Tadabut<Row extends object> {
-  private readonly dataTable: Api;
+  private readonly dataTable: Api<Row>;
   private readonly tableEl: HTMLTableElement;
 
   /**
@@ -39,6 +39,21 @@ export class Tadabut<Row extends object> {
       data: [...options.data],
       columns: toDataTables(options.columns),
     });
+  }
+
+  /**
+   * Replaces all rows without rebuilding the table.
+   *
+   * Sorting, search and the current page are kept. If the current page no
+   * longer exists (fewer rows than before), DataTables shows the last one.
+   *
+   * @param rows The new rows. The array is copied, never changed.
+   */
+  public setData(rows: readonly Row[]): void {
+    this.dataTable
+      .clear()
+      .rows.add([...rows])
+      .draw(false);
   }
 
   /**
