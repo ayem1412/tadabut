@@ -1,6 +1,6 @@
 import type { Column } from '../src/index';
 
-type Row = {
+export type Row = {
   id: number;
   name: string;
   city: string;
@@ -22,7 +22,7 @@ export const rows: Row[] = [
   { id: 12, name: 'Anass Bennani', city: 'Casablanca', age: 39 },
 ];
 
-export const columns: Column[] = [
+export const columns: Column<Row>[] = [
   { title: 'ID', prop: 'id' },
   { title: 'Name', prop: 'name' },
   { title: 'City', prop: 'city' },

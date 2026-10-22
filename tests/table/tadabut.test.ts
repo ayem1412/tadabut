@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it } from 'vitest';
 
-import { Tadabut } from '../../src/index';
+import { type Column, Tadabut } from '../../src/index';
 
 const rows = [
   { id: 1, name: 'Amina', city: 'Rabat' },
@@ -8,7 +8,9 @@ const rows = [
   { id: 3, name: 'Salma', city: 'Agadir' },
 ];
 
-const columns = [
+type Row = (typeof rows)[number];
+
+const columns: Column<Row>[] = [
   { title: 'ID', prop: 'id' },
   { title: 'Name', prop: 'name' },
   { title: 'City', prop: 'city' },

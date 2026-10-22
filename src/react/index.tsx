@@ -2,9 +2,9 @@ import { type ReactElement, useEffect, useRef } from 'react';
 
 import { Tadabut as Core, type TadabutOptions } from '../index';
 
-export type TadabutProps = TadabutOptions;
+export type TadabutProps<Row extends object> = TadabutOptions<Row>;
 
-export function Tadabut({ data, columns }: TadabutProps): ReactElement {
+export function Tadabut<Row extends object>({ data, columns }: TadabutProps<Row>): ReactElement {
   const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {

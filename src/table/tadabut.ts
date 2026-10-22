@@ -6,16 +6,20 @@ import type { TadabutOptions } from './options';
 /**
  * A DataTables table, created and owned by Tadabut.
  *
+ * @typeParam Row - The shape of one row. Usually worked out from `data`,
+ *   so there is no need to write it.
+ *
  * @example
  * const table = new Tadabut(container, {
  *   data: [{ id: 1, name: 'Amina' }],
+ *   rowId: 'id',
  *   columns: [
  *     { title: 'ID', prop: 'id' },
  *     { title: 'Name', prop: 'name' },
  *   ],
  * });
  */
-export class Tadabut {
+export class Tadabut<Row extends object> {
   private readonly dataTable: Api;
   private readonly tableEl: HTMLTableElement;
 
@@ -26,7 +30,7 @@ export class Tadabut {
    *   `destroy()` leaves it empty again.
    * @param options The data and columns to show.
    */
-  public constructor(container: HTMLElement, options: TadabutOptions) {
+  public constructor(container: HTMLElement, options: TadabutOptions<Row>) {
     this.tableEl = document.createElement('table');
     container.appendChild(this.tableEl);
 
