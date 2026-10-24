@@ -1,4 +1,6 @@
 import type { BaseEditor } from './base';
+import { addClasses } from './classes';
+import type { EditorContext, EditorInstance } from './instance';
 
 /**
  * A one-line text input, for `string` columns.
@@ -21,3 +23,46 @@ export type TextEditor = BaseEditor & {
    */
   readonly pattern?: string;
 };
+
+/**
+ * Creates a live text editor.
+ *
+ * Internal: Tadabut calls it when a row starts being edited.
+ *
+ * @param config The editor config from the column.
+ * @param context The starting value and the change callback.
+ */
+export function createTextEditor(
+  config: TextEditor,
+  context: EditorContext<string>,
+): EditorInstance<string> {
+  const input = document.createElement('input');
+  input.type = 'text';
+  addClasses(input, ['tdb-input', 'tdb-input-text'], config.className);
+
+  if (config.minLength !== undefined) {
+    input.minLength = config.minLength;
+  }
+
+  if (config.maxLength !== undefined) {
+    input.maxLength = config.maxLength;
+  }
+
+  if (config.pattern !== undefined) {
+    input.pattern = config.pattern;
+  }
+
+  input.value = context.value ?? '';
+
+  input.addEventListener('input', () => context.onChange(input.value));
+
+  return {
+    element: input,
+    getValue: () => input.value,
+    setValue: (value) => {
+      input.value = value ?? '';
+    },
+    focus: () => input.focus(),
+    destroy: () => input.remove(),
+  };
+}
