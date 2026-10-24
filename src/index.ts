@@ -11,5 +11,11 @@
  */
 
 export type { Column } from './columns/column';
+export type { CheckboxEditor } from './editors/checkbox';
+export type { DateEditor } from './editors/date';
+export type { EditorFor } from './editors/editor';
+export type { NumberEditor } from './editors/number';
+export type { SelectEditor, SelectOption } from './editors/select';
+export type { TextEditor } from './editors/text';
 export type { TadabutOptions } from './table/options';
 export { Tadabut } from './table/tadabut';
