@@ -1,5 +1,9 @@
+import { createCheckboxEditor } from './checkbox';
+import { createDateEditor } from './date';
 import type { AnyEditor } from './editor';
 import type { EditorContext, EditorInstance } from './instance';
+import { createNumberEditor } from './number';
+import { createSelectEditor } from './select';
 import { createTextEditor } from './text';
 
 /**
@@ -24,10 +28,16 @@ export function createEditor(
       return loosen(createTextEditor(config, tighten(context)));
 
     case 'number':
+      return loosen(createNumberEditor(config, tighten(context)));
+
     case 'date':
+      return loosen(createDateEditor(config, tighten(context)));
+
     case 'checkbox':
+      return loosen(createCheckboxEditor(config, tighten(context)));
+
     case 'select':
-      throw new Error(`The '${config.type}' editor is not implemented yet`);
+      return createSelectEditor(config, context);
 
     default: {
       // Fails to compile if an editor type above has no `case`.
