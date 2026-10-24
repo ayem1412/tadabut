@@ -1,5 +1,6 @@
 import type { AnyEditor } from './editor';
 import type { EditorContext, EditorInstance } from './instance';
+import { createNumberEditor } from './number';
 import { createTextEditor } from './text';
 
 /**
@@ -24,6 +25,8 @@ export function createEditor(
       return loosen(createTextEditor(config, tighten(context)));
 
     case 'number':
+      return loosen(createNumberEditor(config, tighten(context)));
+
     case 'date':
     case 'checkbox':
     case 'select':

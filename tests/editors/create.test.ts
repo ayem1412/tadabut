@@ -11,8 +11,8 @@ describe('createEditor', () => {
   });
 
   it('throws for editors that are not implemented yet', () => {
-    expect(() => createEditor({ type: 'number' }, { value: 1, onChange: vi.fn() })).toThrow(
-      "'number'",
+    expect(() => createEditor({ type: 'date' }, { value: null, onChange: vi.fn() })).toThrow(
+      "'date'",
     );
   });
 });
