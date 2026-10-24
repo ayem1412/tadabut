@@ -52,16 +52,18 @@ export function createTextEditor(
     input.pattern = config.pattern;
   }
 
-  input.value = context.value ?? '';
+  const setValue = (value: string | null): void => {
+    input.value = value ?? '';
+  };
+
+  setValue(context.value ?? null);
 
   input.addEventListener('input', () => context.onChange(input.value));
 
   return {
     element: input,
     getValue: () => input.value,
-    setValue: (value) => {
-      input.value = value ?? '';
-    },
+    setValue,
     focus: () => input.focus(),
     destroy: () => input.remove(),
   };

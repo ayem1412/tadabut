@@ -56,7 +56,7 @@ export function createDateEditor(
 
   setValue(context.value ?? null);
 
-  input.addEventListener('input', () => context.onChange(getValue()));
+  input.addEventListener('change', () => context.onChange(getValue()));
 
   return {
     element: input,
