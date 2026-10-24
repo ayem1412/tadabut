@@ -103,13 +103,19 @@ const columns: Column<Employee>[] = [
 
 A select's values have the same type as the column. `countryId` is a `number`, so `{ value: '1', … }` is a type error.
 
-| Type       | Value type        | Extra options                       |
-| ---------- | ----------------- | ----------------------------------- |
-| `text`     | `string`          | `minLength`, `maxLength`, `pattern` |
-| `number`   | `number`          | `min`, `max`, `step`                |
-| `date`     | `string`          | `min`, `max` (both `'YYYY-MM-DD'`)  |
-| `checkbox` | `boolean`         | —                                   |
-| `select`   | the column's type | `options`, `dependsOn`              |
+| Type       | Value type        | When empty  | Extra options                       |
+| ---------- | ----------------- | ----------- | ----------------------------------- |
+| `text`     | `string`          | `''`        | `minLength`, `maxLength`, `pattern` |
+| `number`   | `number`          | `null`      | `min`, `max`, `step`                |
+| `date`     | `string`          | `null`      | `min`, `max` (both `'YYYY-MM-DD'`)  |
+| `checkbox` | `boolean`         | never empty | —                                   |
+| `select`   | the column's type | `null`      | `options`, `dependsOn`              |
+
+Every editor also accepts `className`, for extra CSS classes on the input.
+
+- **Empty values.** An empty number or date input gives `null`, never `0` or `NaN`. A select with nothing picked gives `null`, and so does a select whose value matches no option. A checkbox is always `true` or `false`, and a `null` value shows as unchecked.
+- **Nullable columns.** A `string | null` column gets the same editors as a `string` column. `null` shows as an empty input.
+- **Dates.** A date column must hold exactly `'YYYY-MM-DD'`. Any other format, like `'2024-01-05T00:00:00'`, shows as an empty input, and saving turns it into `null`. Convert dates before giving them to the table.
 
 ### Validation
 
@@ -252,7 +258,7 @@ export function Employees({ employees }: { employees: Employee[] }) {
 
 - [x] Project setup
 - [x] Thin wrapper: typed columns, data loading, cleanup
-- [ ] React adapter
+- [x] React adapter
 - [ ] Inputs: text, number, date, checkbox, select
 - [ ] Row editing: save, cancel, validation, rollback
 - [ ] Chained selects
