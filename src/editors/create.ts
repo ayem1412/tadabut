@@ -1,3 +1,4 @@
+import { createDateEditor } from './date';
 import type { AnyEditor } from './editor';
 import type { EditorContext, EditorInstance } from './instance';
 import { createNumberEditor } from './number';
@@ -28,6 +29,8 @@ export function createEditor(
       return loosen(createNumberEditor(config, tighten(context)));
 
     case 'date':
+      return loosen(createDateEditor(config, tighten(context)));
+
     case 'checkbox':
     case 'select':
       throw new Error(`The '${config.type}' editor is not implemented yet`);

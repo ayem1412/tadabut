@@ -11,8 +11,8 @@ describe('createEditor', () => {
   });
 
   it('throws for editors that are not implemented yet', () => {
-    expect(() => createEditor({ type: 'date' }, { value: null, onChange: vi.fn() })).toThrow(
-      "'date'",
+    expect(() => createEditor({ type: 'checkbox' }, { value: true, onChange: vi.fn() })).toThrow(
+      "'checkbox'",
     );
   });
 });
