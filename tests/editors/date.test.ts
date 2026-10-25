@@ -3,8 +3,9 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { createDateEditor, type DateEditor } from '../../src/editors/date';
 
 function setup(config: Omit<DateEditor, 'type'> = {}, value: string | null = '2024-01-05') {
+  const { className, ...options } = config;
   const onChange = vi.fn();
-  const editor = createDateEditor({ type: 'date', ...config }, { value, onChange });
+  const editor = createDateEditor({ type: 'date', ...options }, { value, onChange, className });
   const input = editor.element as HTMLInputElement;
   document.body.appendChild(input);
 

@@ -3,8 +3,9 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { createNumberEditor, type NumberEditor } from '../../src/editors/number';
 
 function setup(config: Omit<NumberEditor, 'type'> = {}, value: number | null = 42) {
+  const { className, ...options } = config;
   const onChange = vi.fn();
-  const editor = createNumberEditor({ type: 'number', ...config }, { value, onChange });
+  const editor = createNumberEditor({ type: 'number', ...options }, { value, onChange, className });
   const input = editor.element as HTMLInputElement;
   document.body.appendChild(input);
 

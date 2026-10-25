@@ -50,14 +50,14 @@ export type SelectEditor<Value> = BaseEditor & {
  * `'1'`).
  *
  * @param config The editor config from the column.
- * @param context The starting value and the change callback.
+ * @param context The starting value, the classes and the change callback.
  */
 export function createSelectEditor<Value>(
   config: SelectEditor<Value>,
   context: EditorContext<Value | null>,
 ): EditorInstance<Value | null> {
   const select = document.createElement('select');
-  addClasses(select, ['tdb-input', 'tdb-input-select'], config.className);
+  addClasses(select, ['tdb-input', 'tdb-input-select'], context.className);
 
   for (const option of config.options) {
     const element = document.createElement('option');

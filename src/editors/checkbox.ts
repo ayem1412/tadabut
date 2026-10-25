@@ -20,16 +20,18 @@ export type CheckboxEditor = BaseEditor & {
  *
  * Internal: Tadabut calls it when a row starts being edited.
  *
- * @param config The editor config from the column.
- * @param context The starting value and the change callback.
+ * @param _config The editor config from the column. A checkbox has no
+ *   options of its own yet; the parameter keeps the same shape as the other
+ *   editors.
+ * @param context The starting value, the classes and the change callback.
  */
 export function createCheckboxEditor(
-  config: CheckboxEditor,
+  _config: CheckboxEditor,
   context: EditorContext<boolean | null>,
 ): EditorInstance<boolean> {
   const input = document.createElement('input');
   input.type = 'checkbox';
-  addClasses(input, ['tdb-input', 'tdb-input-checkbox'], config.className);
+  addClasses(input, ['tdb-input', 'tdb-input-checkbox'], context.className);
 
   const setValue = (value: boolean | null): void => {
     input.checked = value === true;

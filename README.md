@@ -117,6 +117,96 @@ Every editor also accepts `className`, for extra CSS classes on the input.
 - **Nullable columns.** A `string | null` column gets the same editors as a `string` column. `null` shows as an empty input.
 - **Dates.** A date column must hold exactly `'YYYY-MM-DD'`. Any other format, like `'2024-01-05T00:00:00'`, shows as an empty input, and saving turns it into `null`. Convert dates before giving them to the table.
 
+### Styling
+
+Tadabut adds no styles of its own. Every input it creates gets stable class names, so you can style them with any CSS:
+
+| Class                | On            |
+| -------------------- | ------------- |
+| `tdb-input`          | every input   |
+| `tdb-input-text`     | text inputs   |
+| `tdb-input-number`   | number inputs |
+| `tdb-input-date`     | date inputs   |
+| `tdb-input-checkbox` | checkboxes    |
+| `tdb-input-select`   | selects       |
+
+To use your own framework's classes, add `className` to any editor. It is added next to the `tdb-…` classes.
+
+```ts
+// Bootstrap
+{ prop: 'name', title: 'Name', editor: { type: 'text', className: 'form-control' } }
+
+// Tailwind
+{ prop: 'name', title: 'Name', editor: { type: 'text', className: 'w-full rounded border px-2 py-1' } }
+```
+
+Tailwind only keeps classes it finds in your source files. Classes written in your column config are found, so they work.
+
+The table itself is styled by the DataTables package you pick: `datatables.net-dt` for the default look, `datatables.net-bs5` for Bootstrap 5, and so on.
+
+### Custom editors
+
+When the built-in inputs aren't enough, build your own: a Select2 dropdown, a date picker library, or an input for a column that holds an object. A custom editor works on any column.
+
+`create` is called each time a row starts being edited. It receives the starting value, the `className`, and an `onChange` to call when the user changes the value. It returns the live editor.
+
+```ts
+import $ from "jquery";
+import "select2";
+
+const countryColumn: Column<Employee> = {
+  prop: "countryCode", // string | null
+  title: "Country",
+  editor: {
+    type: "custom",
+    create: (context) => {
+      // Select2 adds its own elements next to the <select>,
+      // so wrap it: the wrapper is what goes in the cell.
+      const wrapper = document.createElement("div");
+      const select = document.createElement("select");
+      wrapper.appendChild(select);
+
+      const $select = $(select).select2({
+        width: "100%",
+        data: [
+          { id: "MA", text: "Morocco" },
+          { id: "FR", text: "France" },
+        ],
+      });
+
+      // Nothing picked gives null, not the text 'null'.
+      const read = () => ($select.val() as string | null) ?? null;
+
+      $select.val(context.value).trigger("change.select2");
+
+      // The user picked something: tell Tadabut.
+      $select.on("select2:select", () => context.onChange(read()));
+
+      return {
+        element: wrapper,
+        getValue: read,
+        // Update Select2's display only. This does not call onChange.
+        setValue: (value) => $select.val(value).trigger("change.select2"),
+        focus: () => $select.select2("open"),
+        destroy: () => {
+          $select.select2("destroy");
+          wrapper.remove();
+        },
+      };
+    },
+  },
+};
+```
+
+What matters in any custom editor:
+
+- Call `context.onChange` when **the user** changes the value, and only then.
+- `setValue` shows a new value **without** calling `onChange`.
+- `destroy` cleans up everything, including the widget's own cleanup (`select2('destroy')` here), before removing the element.
+- On a nullable column, `context.value` can be `null`.
+
+Select2 needs jQuery. Tadabut doesn't, so you install jQuery along with Select2.
+
 ### Validation
 
 Common rules go directly on the editor. For anything else, `validate` returns an error message, or nothing when the value is fine.
@@ -260,6 +350,7 @@ export function Employees({ employees }: { employees: Employee[] }) {
 - [x] Thin wrapper: typed columns, data loading, cleanup
 - [x] React adapter
 - [ ] Inputs: text, number, date, checkbox, select
+- [ ] Custom editors (Select2, date pickers, …)
 - [ ] Row editing: save, cancel, validation, rollback
 - [ ] Chained selects
 - [ ] Keyboard support, translations, theming
@@ -268,6 +359,8 @@ export function Employees({ employees }: { employees: Employee[] }) {
 Later: adding and deleting rows, popup editing, bulk editing, server-side mode, Vue and jQuery adapters.
 
 ## Development
+
+Want to help? Read [CONTRIBUTING.md](./CONTRIBUTING.md) first.
 
 Requires Node 22.18+ and pnpm.
 

@@ -29,8 +29,8 @@ export type TextEditor = BaseEditor & {
  *
  * Internal: Tadabut calls it when a row starts being edited.
  *
- * @param config The editor config from the column.
- * @param context The starting value and the change callback.
+ * @param options The editor config from the column.
+ * @param context The starting value, the classes and the change callback.
  */
 export function createTextEditor(
   config: TextEditor,
@@ -38,7 +38,7 @@ export function createTextEditor(
 ): EditorInstance<string> {
   const input = document.createElement('input');
   input.type = 'text';
-  addClasses(input, ['tdb-input', 'tdb-input-text'], config.className);
+  addClasses(input, ['tdb-input', 'tdb-input-text'], context.className);
 
   if (config.minLength !== undefined) {
     input.minLength = config.minLength;
@@ -52,18 +52,17 @@ export function createTextEditor(
     input.pattern = config.pattern;
   }
 
-  const setValue = (value: string | null): void => {
-    input.value = value ?? '';
-  };
-
-  setValue(context.value ?? null);
+  // A nullable column can hold null: show it as an empty input.
+  input.value = context.value ?? '';
 
   input.addEventListener('input', () => context.onChange(input.value));
 
   return {
     element: input,
     getValue: () => input.value,
-    setValue,
+    setValue: (value) => {
+      input.value = value ?? '';
+    },
     focus: () => input.focus(),
     destroy: () => input.remove(),
   };

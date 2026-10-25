@@ -33,7 +33,7 @@ export type NumberEditor = BaseEditor & {
  * Internal: Tadabut calls it when a row starts being edited.
  *
  * @param config The editor config from the column.
- * @param context The starting value and the change callback.
+ * @param context The starting value, the classes and the change callback.
  */
 export function createNumberEditor(
   config: NumberEditor,
@@ -41,7 +41,7 @@ export function createNumberEditor(
 ): EditorInstance<number | null> {
   const input = document.createElement('input');
   input.type = 'number';
-  addClasses(input, ['tdb-input', 'tdb-input-number'], config.className);
+  addClasses(input, ['tdb-input', 'tdb-input-number'], context.className);
 
   if (config.min !== undefined) {
     input.min = String(config.min);

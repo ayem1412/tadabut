@@ -12,6 +12,7 @@
 
 export type { Column } from './columns/column';
 export type { CheckboxEditor } from './editors/checkbox';
+export type { CustomEditor } from './editors/custom';
 export type { DateEditor } from './editors/date';
 export type { EditorFor } from './editors/editor';
 export type { EditorContext, EditorInstance } from './editors/instance';

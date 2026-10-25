@@ -1,4 +1,5 @@
 import type { CheckboxEditor } from './checkbox';
+import type { CustomEditor } from './custom';
 import type { DateEditor } from './date';
 import type { NumberEditor } from './number';
 import type { SelectEditor } from './select';
@@ -7,19 +8,21 @@ import type { TextEditor } from './text';
 /**
  * The editors that fit a column, based on the type of value it holds.
  *
- * | Column value | Allowed editors          |
- * | ------------ | ------------------------ |
- * | `string`     | text, date, select       |
- * | `number`     | number, select           |
- * | `boolean`    | checkbox, select         |
- * | anything else| none: the column can't be edited |
+ * | Column value  | Built-in editors   | Custom editor |
+ * | ------------- | ------------------ | ------------- |
+ * | `string`      | text, date, select | yes           |
+ * | `number`      | number, select     | yes           |
+ * | `boolean`     | checkbox, select   | yes           |
+ * | anything else | none               | yes           |
  *
- * `null` and `undefined` are ignored, so a `string | null` column gets the
- * same editors as a `string` column.
+ * For built-in editors, `null` and `undefined` are ignored, so a
+ * `string | null` column gets the same editors as a `string` column.
+ * A custom editor keeps the full type, `null` included, because it receives
+ * the row's value as it is.
  *
  * @typeParam Value - The column's value type.
  */
-export type EditorFor<Value> = EditorForValue<NonNullable<Value>>;
+export type EditorFor<Value> = EditorForValue<NonNullable<Value>> | CustomEditor<Value>;
 
 // The `[…]` around both sides stops TypeScript from checking each member of
 // a union on its own. `'a' | 'b'` is checked as one string type.
@@ -42,4 +45,5 @@ export type AnyEditor =
   | NumberEditor
   | DateEditor
   | CheckboxEditor
-  | SelectEditor<unknown>;
+  | SelectEditor<unknown>
+  | CustomEditor<unknown>;

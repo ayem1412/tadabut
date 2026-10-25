@@ -14,7 +14,7 @@ function setup(
   className?: string,
 ) {
   const onChange = vi.fn();
-  const editor = createSelectEditor({ type: 'select', options, className }, { value, onChange });
+  const editor = createSelectEditor({ type: 'select', options }, { value, onChange, className });
   const select = editor.element as HTMLSelectElement;
   document.body.appendChild(select);
 
