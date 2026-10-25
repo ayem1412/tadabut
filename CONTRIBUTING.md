@@ -37,14 +37,15 @@ Formatting is done by [Biome](https://biomejs.dev). Set your editor to use it. P
 src/
   index.ts      everything public is exported here
   table/        the Tadabut class and its options
-  columns/      the Column type
-  editors/      one file per editor
+  columns/      the Column type, and how columns are passed to DataTables
+  editors/      one file per editor, the editor contract, and createEditor
+  validation/   validation rules and the code that checks them
   react/        the React adapter
 tests/          same folders as src/
 playground/     pages to try things by hand
 ```
 
-Code is grouped by feature. A new feature gets its own folder.
+Code is grouped by feature. A new feature gets its own folder. If you add one, add it to this list too.
 
 ## Rules
 
