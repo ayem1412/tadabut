@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import type { Column, TadabutOptions } from '../../src/index';
+import type { Column, EditorInstance, TadabutOptions } from '../../src/index';
 
 type Row = {
   id: number;
@@ -10,7 +10,12 @@ type Row = {
   active: boolean;
   status: 'draft' | 'published';
   managerId: number | null;
+  location: { lat: number; lng: number };
 };
+
+declare const locationEditor: EditorInstance<{ lat: number; lng: number }>;
+declare const managerEditor: EditorInstance<number | null>;
+declare const textEditor: EditorInstance<string>;
 
 describe('column types', () => {
   it('rejects a prop that is not a row key', () => {
@@ -117,5 +122,129 @@ describe('column types', () => {
     ];
 
     expect(columns).toHaveLength(2);
+  });
+
+  it('accepts a custom editor on any column, even an object column', () => {
+    const columns: Column<Row>[] = [
+      {
+        title: 'Location',
+        prop: 'location',
+        editor: { type: 'custom', create: () => locationEditor },
+      },
+      {
+        title: 'Manager',
+        prop: 'managerId',
+        editor: { type: 'custom', create: () => managerEditor },
+      },
+    ];
+
+    expect(columns).toHaveLength(2);
+  });
+
+  it('still rejects built-in editors on an object column', () => {
+    const columns: Column<Row>[] = [
+      // @ts-expect-error no built-in editor fits an object
+      { title: 'Location', prop: 'location', editor: { type: 'text' } },
+    ];
+
+    expect(columns).toHaveLength(1);
+  });
+
+  it('rejects a custom editor that returns the wrong value type', () => {
+    const columns: Column<Row>[] = [
+      // @ts-expect-error a string editor on a number column
+      {
+        title: 'ID',
+        prop: 'id',
+        editor: { type: 'custom', create: () => textEditor },
+      },
+    ];
+
+    expect(columns).toHaveLength(1);
+  });
+
+  it('gives a custom editor the full column type, null included', () => {
+    const column: Column<Row> = {
+      title: 'Manager',
+      prop: 'managerId',
+      editor: {
+        type: 'custom',
+        create: (context) => {
+          const value: number | null = context.value;
+          // @ts-expect-error the value can be null
+          const notNull: number = context.value;
+          expect([value, notNull]).toBeDefined();
+          return managerEditor;
+        },
+      },
+    };
+
+    expect(column.prop).toBe('managerId');
+  });
+
+  it('accepts required and validate on every editor', () => {
+    const columns: Column<Row>[] = [
+      { title: 'Name', prop: 'name', editor: { type: 'text', required: true } },
+      { title: 'ID', prop: 'id', editor: { type: 'number', required: true } },
+      { title: 'Hired', prop: 'hiredAt', editor: { type: 'date', required: true } },
+      {
+        title: 'Active',
+        prop: 'active',
+        editor: { type: 'checkbox', validate: () => undefined },
+      },
+      {
+        title: 'Status',
+        prop: 'status',
+        editor: { type: 'select', options: [], required: true },
+      },
+      {
+        title: 'Manager',
+        prop: 'managerId',
+        editor: {
+          type: 'custom',
+          create: () => managerEditor,
+          required: true,
+          validate: (value) => (value === null ? 'Pick one' : undefined),
+        },
+      },
+    ];
+
+    expect(columns).toHaveLength(6);
+  });
+
+  it('types the value and the row inside validate', () => {
+    const column: Column<Row> = {
+      title: 'ID',
+      prop: 'id',
+      editor: {
+        type: 'number',
+        validate: (value, row) => {
+          const id: number | null = value;
+          const active: boolean = row.active;
+          // @ts-expect-error the value can be null
+          const notNull: number = value;
+          // @ts-expect-error Row has no field 'nope'
+          const missing = row.nope;
+          expect([id, active, notNull, missing]).toBeDefined();
+          return undefined;
+        },
+      },
+    };
+
+    expect(column.prop).toBe('id');
+  });
+
+  it('rejects a validate that does not return a message', () => {
+    const column: Column<Row> = {
+      title: 'ID',
+      prop: 'id',
+      editor: {
+        type: 'number',
+        // @ts-expect-error validate must return a string or undefined
+        validate: () => 5,
+      },
+    };
+
+    expect(column.prop).toBe('id');
   });
 });

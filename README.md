@@ -223,7 +223,7 @@ Select2 needs jQuery. Tadabut doesn't, so install jQuery yourself if you use Sel
 
 ### Validation
 
-Simple rules go on the editor. For anything else, `validate` returns an error message, or nothing if the value is fine.
+`required` works on every editor. For anything the built-in rules don't cover, `validate` returns an error message, or `undefined` if the value is fine. It also gets the whole row.
 
 ```ts
 {
@@ -234,12 +234,33 @@ Simple rules go on the editor. For anything else, `validate` returns an error me
     required: true,
     min: 18,
     validate: (value, row) =>
-      row.active && value > 65 ? 'Active employees must be 65 or younger' : undefined,
+      row.active && value !== null && value > 65
+        ? 'Active employees must be 65 or younger'
+        : undefined,
   },
 }
 ```
 
-Errors show under the input. The row can't be saved until every field is valid.
+Built-in rules:
+
+| Editor   | Rules                               |
+| -------- | ----------------------------------- |
+| text     | `minLength`, `maxLength`, `pattern` |
+| number   | `min`, `max`                        |
+| date     | `min`, `max`                        |
+| checkbox | none                                |
+| select   | none                                |
+| custom   | none                                |
+
+The checks run in this order, and the first error wins:
+
+1. Empty (`null`, `undefined` or `''`): an error if `required`. If not, nothing else is checked, so an empty optional field never fails `min` or your `validate`.
+2. The built-in rules.
+3. Your `validate`. It only runs if the built-in rules passed.
+
+`pattern` has to match the whole value, like the HTML attribute. A checkbox is never empty, so `required` does nothing on it.
+
+Messages are in English for now. You'll be able to change them when translations are added. Errors will show under the input once row editing is done, and a row can't be saved until every field is valid.
 
 ### Chained selects
 
