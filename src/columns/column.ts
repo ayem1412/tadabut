@@ -1,4 +1,5 @@
 import type { EditorFor } from '../editors/editor';
+import type { ValidationOptions } from '../validation/rules';
 
 /**
  * One column of a Tadabut table.
@@ -12,7 +13,11 @@ import type { EditorFor } from '../editors/editor';
  * @example
  * const columns: Column<Employee>[] = [
  *   { title: 'ID', prop: 'id' },
- *   { title: 'Age', prop: 'age', editor: { type: 'number', min: 18 } },
+ *   {
+ *     title: 'Age',
+ *     prop: 'age',
+ *     editor: { type: 'number', required: true, min: 18 },
+ *   },
  * ];
  */
 export type Column<Row extends object> = {
@@ -25,6 +30,9 @@ type ColumnFor<Row extends object, Key extends keyof Row & string> = {
   readonly title: string;
   /** Name of the row property shown in this column. */
   readonly prop: Key;
-  /** How the value is edited. Leave it out for a read-only column. */
-  readonly editor?: EditorFor<Row[Key]>;
+  /**
+   * How the value is edited, and its validation rules. Leave it out for a
+   * read-only column.
+   */
+  readonly editor?: EditorFor<Row[Key]> & ValidationOptions<Row, Row[Key]>;
 };

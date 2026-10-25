@@ -21,3 +21,4 @@ export type { SelectEditor, SelectOption } from './editors/select';
 export type { TextEditor } from './editors/text';
 export type { TadabutOptions } from './table/options';
 export { Tadabut } from './table/tadabut';
+export type { ValidationOptions } from './validation/rules';
