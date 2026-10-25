@@ -1,22 +1,30 @@
 # Tadabut · ⵜⴰⴷⴰⴱⵓⵜ
 
-A typed wrapper for [DataTables](https://datatables.net) that adds row editing, rich inputs and chained selects, with a modern, promise-based API.
+[![CI](https://github.com/ayem1412/tadabut/actions/workflows/ci.yml/badge.svg)](https://github.com/ayem1412/tadabut/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](./LICENSE)
+[![TypeScript](https://img.shields.io/badge/TypeScript-strict-3178c6?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
+[![DataTables 3](https://img.shields.io/badge/DataTables-3.x-0d6efd)](https://datatables.net)
+[![Status](https://img.shields.io/badge/status-early%20development-orange)](#roadmap)
+[![PRs welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](./CONTRIBUTING.md)
 
-> **Status: early development.** Nothing is published yet and the API will change. Not ready for production use.
+Tadabut wraps [DataTables](https://datatables.net) and adds what it doesn't give you for free: editing rows, real inputs in the cells, and selects that depend on each other.
+
+> [!WARNING]
+> Tadabut is in early development. It is not on npm yet, and the API will change. Don't use it in production.
 
 ## Why
 
-DataTables is a great table library, but editing data inside the table needs extra work. Tadabut adds that layer on top of DataTables 3:
+DataTables is great for showing data. Editing that data inside the table is a different story: you either buy the Editor extension or write a lot of code yourself. Tadabut is that code, written once.
 
-- **Row editing** — turn a row into inputs, then save or cancel. Saving is async, and failed saves roll back.
-- **Rich inputs** — text, number, date, checkbox and select, with validation.
-- **Chained selects** — a select whose options depend on another field (country → city), with out-of-date requests cancelled automatically.
-- **Fully typed** — the table knows the shape of your rows, so column names and field options are checked by TypeScript.
-- **No jQuery** — built on DataTables 3, which no longer needs it.
+- Edit a row in place, then save or cancel. Saving is async. If it fails, the row goes back to its old values.
+- Text, number, date, checkbox and select inputs, with validation.
+- Selects that depend on another field, like country and city. Old requests get cancelled when the user changes their mind.
+- Fully typed. The table knows what your rows look like, so a typo in a column name is a type error.
+- No jQuery. It's built on DataTables 3, which doesn't need it anymore.
 
 ## Framework support
 
-Tadabut has a framework-free core and thin adapters on top.
+The core has no framework in it. Each framework gets a small adapter on top.
 
 | Target     | Status      |
 | ---------- | ----------- |
@@ -28,21 +36,22 @@ Tadabut has a framework-free core and thin adapters on top.
 
 ## Requirements
 
-- DataTables 3 (`datatables.net` or one of its styling packages, like `datatables.net-dt`)
+- DataTables 3: `datatables.net`, or one of its styling packages like `datatables.net-dt`
 - React 19, only if you use the React adapter
 - A modern browser
 
 ## Installation
 
-Not published yet.
+Not on npm yet.
 
 ## Usage
 
-> **Planned API.** This section describes where Tadabut is going, not what works today. It will change as it gets built.
+> [!NOTE]
+> This is the planned API. Parts of it don't work yet, and it may change while it gets built.
 
 ### Create a table
 
-Tell Tadabut what a row looks like. Every column `prop` is then checked against it, so a typo like `prop: 'nmae'` is a type error.
+Give Tadabut the type of your rows. Every column's `prop` is checked against it.
 
 ```ts
 import { Tadabut, type Column } from "tadabut";
@@ -72,13 +81,13 @@ const table = new Tadabut<Employee>(document.querySelector("#employees")!, {
 });
 ```
 
-- The first argument is an empty container. Tadabut creates the table inside it.
-- `rowId` names the property that identifies each row. Methods like `edit(id)` use it.
-- Columns without an `editor` are read-only.
+- The first argument is an empty element. Tadabut builds the table inside it.
+- `rowId` is the property that identifies a row. Methods like `edit(id)` use it.
+- A column without an `editor` can't be edited.
 
 ### Editable columns
 
-Add an `editor` to a column to make it editable. The `type` decides which input is shown and which options are allowed.
+Add an `editor` to a column to make it editable. Its `type` picks the input, and the options you can use with it.
 
 ```ts
 const columns: Column<Employee>[] = [
@@ -101,27 +110,30 @@ const columns: Column<Employee>[] = [
 ];
 ```
 
-A select's values have the same type as the column. `countryId` is a `number`, so `{ value: '1', … }` is a type error.
+A select's values must have the same type as the column. `countryId` is a number, so `value: '1'` is a type error.
 
-| Type       | Value type        | When empty  | Extra options                       |
-| ---------- | ----------------- | ----------- | ----------------------------------- |
-| `text`     | `string`          | `''`        | `minLength`, `maxLength`, `pattern` |
-| `number`   | `number`          | `null`      | `min`, `max`, `step`                |
-| `date`     | `string`          | `null`      | `min`, `max` (both `'YYYY-MM-DD'`)  |
-| `checkbox` | `boolean`         | never empty | —                                   |
-| `select`   | the column's type | `null`      | `options`, `dependsOn`              |
+| Type       | Value              | When empty  | Options                             |
+| ---------- | ------------------ | ----------- | ----------------------------------- |
+| `text`     | `string`           | `''`        | `minLength`, `maxLength`, `pattern` |
+| `number`   | `number`           | `null`      | `min`, `max`, `step`                |
+| `date`     | `string`           | `null`      | `min`, `max`                        |
+| `checkbox` | `boolean`          | never empty | none                                |
+| `select`   | same as the column | `null`      | `options`, `dependsOn`              |
 
-Every editor also accepts `className`, for extra CSS classes on the input.
+Every editor also takes `className`, for your own CSS classes.
 
-- **Empty values.** An empty number or date input gives `null`, never `0` or `NaN`. A select with nothing picked gives `null`, and so does a select whose value matches no option. A checkbox is always `true` or `false`, and a `null` value shows as unchecked.
-- **Nullable columns.** A `string | null` column gets the same editors as a `string` column. `null` shows as an empty input.
-- **Dates.** A date column must hold exactly `'YYYY-MM-DD'`. Any other format, like `'2024-01-05T00:00:00'`, shows as an empty input, and saving turns it into `null`. Convert dates before giving them to the table.
+A few things to know:
+
+- An empty number or date gives `null`, not `0` or `NaN`. A select with nothing picked gives `null` too.
+- A checkbox is always `true` or `false`. A `null` value shows as unchecked.
+- A `string | null` column gets the same editors as a `string` column. `null` shows as an empty input.
+- Date columns must hold `'YYYY-MM-DD'`. Something like `'2024-01-05T00:00:00'` shows as empty, and saving turns it into `null`. Convert your dates first.
 
 ### Styling
 
-Tadabut adds no styles of its own. Every input it creates gets stable class names, so you can style them with any CSS:
+Tadabut doesn't ship any CSS. The inputs it creates get these classes, so you can style them however you want:
 
-| Class                | On            |
+| Class                | Used on       |
 | -------------------- | ------------- |
 | `tdb-input`          | every input   |
 | `tdb-input-text`     | text inputs   |
@@ -130,7 +142,7 @@ Tadabut adds no styles of its own. Every input it creates gets stable class name
 | `tdb-input-checkbox` | checkboxes    |
 | `tdb-input-select`   | selects       |
 
-To use your own framework's classes, add `className` to any editor. It is added next to the `tdb-…` classes.
+To use Bootstrap, Tailwind or anything else, put your classes in `className`. They get added next to the `tdb-` ones.
 
 ```ts
 // Bootstrap
@@ -140,15 +152,17 @@ To use your own framework's classes, add `className` to any editor. It is added 
 { prop: 'name', title: 'Name', editor: { type: 'text', className: 'w-full rounded border px-2 py-1' } }
 ```
 
-Tailwind only keeps classes it finds in your source files. Classes written in your column config are found, so they work.
+If you use Tailwind: it only keeps classes it finds in your own files. Classes in your column config count, so they work.
 
-The table itself is styled by the DataTables package you pick: `datatables.net-dt` for the default look, `datatables.net-bs5` for Bootstrap 5, and so on.
+The table itself is styled by the DataTables package you install: `datatables.net-dt` for the default look, `datatables.net-bs5` for Bootstrap 5, and so on.
 
 ### Custom editors
 
-When the built-in inputs aren't enough, build your own: a Select2 dropdown, a date picker library, or an input for a column that holds an object. A custom editor works on any column.
+If the built-in inputs aren't enough, write your own. Select2, a date picker library, an input for a column that holds an object: anything works, on any column.
 
-`create` is called each time a row starts being edited. It receives the starting value, the `className`, and an `onChange` to call when the user changes the value. It returns the live editor.
+`create` runs every time a row starts being edited. It gets the starting value, the `className`, and an `onChange` function. It returns the editor.
+
+Here is Select2:
 
 ```ts
 import $ from "jquery";
@@ -198,18 +212,18 @@ const countryColumn: Column<Employee> = {
 };
 ```
 
-What matters in any custom editor:
+Rules for any custom editor:
 
-- Call `context.onChange` when **the user** changes the value, and only then.
-- `setValue` shows a new value **without** calling `onChange`.
-- `destroy` cleans up everything, including the widget's own cleanup (`select2('destroy')` here), before removing the element.
+- Call `context.onChange` when the user changes the value. Only then.
+- `setValue` changes what's shown, without calling `onChange`.
+- `destroy` cleans up everything, including the widget's own cleanup, then removes the element.
 - On a nullable column, `context.value` can be `null`.
 
-Select2 needs jQuery. Tadabut doesn't, so you install jQuery along with Select2.
+Select2 needs jQuery. Tadabut doesn't, so install jQuery yourself if you use Select2.
 
 ### Validation
 
-Common rules go directly on the editor. For anything else, `validate` returns an error message, or nothing when the value is fine.
+Simple rules go on the editor. For anything else, `validate` returns an error message, or nothing if the value is fine.
 
 ```ts
 {
@@ -225,11 +239,11 @@ Common rules go directly on the editor. For anything else, `validate` returns an
 }
 ```
 
-Errors are shown under the input. Saving is blocked until every field is valid.
+Errors show under the input. The row can't be saved until every field is valid.
 
 ### Chained selects
 
-A select can depend on another field. Its `options` is then a function that receives the current row. When the parent value changes, the child is cleared and its options are loaded again.
+A select can depend on another field. Its `options` becomes a function that gets the current row. When the other field changes, the select is cleared and its options load again.
 
 ```ts
 {
@@ -246,11 +260,11 @@ A select can depend on another field. Its `options` is then a function that rece
 }
 ```
 
-If the user changes the country again before the cities arrive, the old request is cancelled through `signal`. Pass it to `fetch` so old answers never show up.
+If the user changes the country again before the cities come back, the old request is cancelled through `signal`. Pass it to `fetch` so a late answer never shows up.
 
 ### Saving
 
-`onSave` receives the edited row and the row as it was before. Return a promise.
+`onSave` gets the edited row and the row as it was before. It returns a promise.
 
 ```ts
 const table = new Tadabut<Employee>(container, {
@@ -268,12 +282,12 @@ const table = new Tadabut<Employee>(container, {
 });
 ```
 
-- **Success:** the row shows the new values. If you return a row, it is used instead (useful for fields the server sets, like `updatedAt`).
-- **Failure:** throw. The row goes back to its old values and the error message is shown on the row.
+- If it works, the row shows the new values. If you return a row, that one is used instead. That's handy for fields the server fills in, like `updatedAt`.
+- If it fails, throw. The row goes back to its old values and shows your error message.
 
 ### Editing options
 
-When at least one column has an `editor`, each row gets an edit button. The `editing` option changes how editing works:
+When at least one column has an `editor`, every row gets an edit button. `editing` changes how that works:
 
 ```ts
 const table = new Tadabut<Employee>(container, {
@@ -283,14 +297,14 @@ const table = new Tadabut<Employee>(container, {
   onSave: saveEmployee,
   editing: {
     mode: "multiple", // default: 'single'
-    button: false, // default: true — hide the edit button
+    button: false, // default: true. false hides the edit button
   },
 });
 ```
 
-- **`mode: 'single'`** — one row at a time. Starting a new edit is blocked while another row is open.
-- **`mode: 'multiple'`** — several rows can be open at once. Each row saves on its own, and `onSave` is called once per row.
-- **`button: false`** — no edit button. Start edits from your own code instead.
+- `'single'` mode: one row at a time. You can't start a new edit while another row is open.
+- `'multiple'` mode: several rows can be open. Each one saves on its own, so `onSave` runs once per row.
+- `button: false`: no edit button. Start edits from your own code.
 
 ### Controlling it from code
 
@@ -303,13 +317,13 @@ table.setData(newEmployees); // replace all rows, keeps sorting and search
 table.destroy(); // remove everything Tadabut created
 ```
 
-In `single` mode the id can be left out: `save()` and `cancel()` act on the open row.
+In `'single'` mode you can leave out the id: `save()` and `cancel()` use the open row.
 
-Keyboard: <kbd>Enter</kbd> saves the row you're in, <kbd>Escape</kbd> cancels it.
+<kbd>Enter</kbd> saves the row you're in. <kbd>Escape</kbd> cancels it.
 
 ### React
 
-Same options, as props. Define `columns` outside the component (or with `useMemo`) so they don't change on every render.
+Same options, as props. Keep `columns` outside your component, or in a `useMemo`, so it doesn't change on every render.
 
 ```tsx
 import { useRef } from "react";
@@ -341,8 +355,8 @@ export function Employees({ employees }: { employees: Employee[] }) {
 }
 ```
 
-- When `employees` changes, the table updates in place. It is not rebuilt.
-- The ref gives you the same methods as the core: `edit`, `save`, `cancel`, `setData`.
+- When `employees` changes, the table updates in place. It doesn't get rebuilt.
+- The ref has the same methods as the core: `edit`, `save`, `cancel`, `setData`.
 
 ## Roadmap
 
@@ -356,48 +370,15 @@ export function Employees({ employees }: { employees: Employee[] }) {
 - [ ] Keyboard support, translations, theming
 - [ ] First release (0.1.0)
 
-Later: adding and deleting rows, popup editing, bulk editing, server-side mode, Vue and jQuery adapters.
+Later: adding and deleting rows, popup editing, editing many rows at once, server-side mode, Vue and jQuery adapters.
 
-## Development
+## Contributing
 
-Want to help? Read [CONTRIBUTING.md](./CONTRIBUTING.md) first.
-
-Requires Node 22.18+ and pnpm.
-
-```sh
-pnpm install
-pnpm dev        # open the playground
-pnpm test       # run tests in watch mode
-pnpm check      # lint, typecheck, test and build — run before pushing
-```
-
-Other scripts:
-
-| Script           | What it does                    |
-| ---------------- | ------------------------------- |
-| `pnpm build`     | Build the library into `dist/`  |
-| `pnpm typecheck` | Check types only                |
-| `pnpm lint`      | Check formatting and lint rules |
-| `pnpm format`    | Fix formatting and sort imports |
-
-### Branches and releases
-
-Tadabut uses [GitHub Flow](https://docs.github.com/en/get-started/using-github/github-flow):
-
-- `master` always works. Nothing is pushed to it directly.
-- Each change gets its own short branch: `feat/…`, `fix/…`, `docs/…` or `chore/…`.
-- Each branch is merged through a pull request, once CI passes.
-- Releases are tags on `master` (`v0.1.0`, `v0.2.0`, …), following [semver](https://semver.org).
-
-To release, on a `chore/release-x.y.z` branch:
-
-1. Bump `version` in `package.json` (before 1.0: `0.0.x` for fixes, `0.x.0` for features or breaking changes).
-2. Update this README (roadmap, framework status, usage).
-3. Merge to `master`, then tag the merge commit and push the tag.
+Help is welcome. Read [CONTRIBUTING.md](./CONTRIBUTING.md) to get set up, and please follow the [code of conduct](./CODE_OF_CONDUCT.md).
 
 ## Not affiliated with DataTables
 
-Tadabut is an independent project. It is not made by or affiliated with SpryMedia or the DataTables project. It does not use or include code from DataTables Editor.
+Tadabut is an independent project. It isn't made by SpryMedia or the DataTables team, and it doesn't contain any code from DataTables Editor.
 
 ## License
 
