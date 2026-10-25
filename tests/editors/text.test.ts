@@ -4,10 +4,11 @@ import type { TextEditor } from '../../src/editors/text';
 import { createTextEditor } from '../../src/editors/text';
 
 function setup(config: Omit<TextEditor, 'type'> = {}, value: string | null = 'Amina') {
+  const { className, ...options } = config;
   const onChange = vi.fn();
   const editor = createTextEditor(
-    { type: 'text', ...config },
-    { value: value as string, onChange },
+    { type: 'text', ...options },
+    { value: value as string, onChange, className },
   );
   const input = editor.element as HTMLInputElement;
   document.body.appendChild(input);

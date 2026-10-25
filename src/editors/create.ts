@@ -23,21 +23,26 @@ export function createEditor(
   config: AnyEditor,
   context: EditorContext<unknown>,
 ): EditorInstance<unknown> {
+  const ctx = { ...context, className: config.className };
+
   switch (config.type) {
     case 'text':
-      return loosen(createTextEditor(config, tighten(context)));
+      return loosen(createTextEditor(config, tighten(ctx)));
 
     case 'number':
-      return loosen(createNumberEditor(config, tighten(context)));
+      return loosen(createNumberEditor(config, tighten(ctx)));
 
     case 'date':
-      return loosen(createDateEditor(config, tighten(context)));
+      return loosen(createDateEditor(config, tighten(ctx)));
 
     case 'checkbox':
-      return loosen(createCheckboxEditor(config, tighten(context)));
+      return loosen(createCheckboxEditor(config, tighten(ctx)));
 
     case 'select':
-      return createSelectEditor(config, context);
+      return createSelectEditor(config, ctx);
+
+    case 'custom':
+      return config.create(ctx);
 
     default: {
       // Fails to compile if an editor type above has no `case`.

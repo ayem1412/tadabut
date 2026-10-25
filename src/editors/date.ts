@@ -30,7 +30,7 @@ export type DateEditor = BaseEditor & {
  * Internal: Tadabut calls it when a row starts being edited.
  *
  * @param config The editor config from the column.
- * @param context The starting value and the change callback.
+ * @param context The starting value, the classes and the change callback.
  */
 export function createDateEditor(
   config: DateEditor,
@@ -38,7 +38,7 @@ export function createDateEditor(
 ): EditorInstance<string | null> {
   const input = document.createElement('input');
   input.type = 'date';
-  addClasses(input, ['tdb-input', 'tdb-input-date'], config.className);
+  addClasses(input, ['tdb-input', 'tdb-input-date'], context.className);
 
   if (config.min !== undefined) {
     input.min = config.min;

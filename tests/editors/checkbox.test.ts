@@ -3,8 +3,12 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { type CheckboxEditor, createCheckboxEditor } from '../../src/editors/checkbox';
 
 function setup(config: Omit<CheckboxEditor, 'type'> = {}, value: boolean | null = true) {
+  const { className, ...options } = config;
   const onChange = vi.fn();
-  const editor = createCheckboxEditor({ type: 'checkbox', ...config }, { value, onChange });
+  const editor = createCheckboxEditor(
+    { type: 'checkbox', ...options },
+    { value, onChange, className },
+  );
   const input = editor.element as HTMLInputElement;
   document.body.appendChild(input);
 
