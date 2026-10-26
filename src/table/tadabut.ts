@@ -26,11 +26,17 @@ export class Tadabut<Row extends object> {
   /**
    * Creates a table inside `container`.
    *
-   * @param container An empty element. Tadabut adds the table to it, and
-   *   `destroy()` leaves it empty again.
+   * @param container An empty element. Tadabut adds the table to it, and `destroy()` leaves it empty again.
    * @param options The data and columns to show.
+   *
+   * @throws If a column has an `editor` but `rowId` is missing. Editing needs `rowId` to find rows.
    */
   public constructor(container: HTMLElement, options: TadabutOptions<Row>) {
+    const hasEditor = options.columns.some((column) => column.editor !== undefined);
+    if (hasEditor && options.rowId === undefined) {
+      throw new Error('Tadabut: rowId is required when a column has an editor.');
+    }
+
     this.tableEl = document.createElement('table');
     container.appendChild(this.tableEl);
 
