@@ -12,7 +12,9 @@ export type TadabutOptions<Row extends object> = {
   readonly columns: readonly Column<Row>[];
   /**
    * Name of the row property that identifies each row, like `'id'`.
-   * Not needed to show a table. Editing will use it to find rows.
+   * Its values must be unique strings or numbers.
+   *
+   * Required when a column has an `editor`: editing uses it to find rows.
    */
   readonly rowId?: keyof Row & string;
 };
