@@ -131,16 +131,19 @@ A few things to know:
 
 ### Styling
 
-Tadabut doesn't ship any CSS. The inputs it creates get these classes, so you can style them however you want:
+Tadabut doesn't ship any CSS. Everything it creates gets these classes, so you can style it however you want:
 
-| Class                | Used on       |
-| -------------------- | ------------- |
-| `tdb-input`          | every input   |
-| `tdb-input-text`     | text inputs   |
-| `tdb-input-number`   | number inputs |
-| `tdb-input-date`     | date inputs   |
-| `tdb-input-checkbox` | checkboxes    |
-| `tdb-input-select`   | selects       |
+| Class                | Used on                                   |
+| -------------------- | ----------------------------------------- |
+| `tdb-input`          | every input                               |
+| `tdb-input-text`     | text inputs                               |
+| `tdb-input-number`   | number inputs                             |
+| `tdb-input-date`     | date inputs                               |
+| `tdb-input-checkbox` | checkboxes                                |
+| `tdb-input-select`   | selects                                   |
+| `tdb-error`          | a field's error message, under its input  |
+| `tdb-save-error`     | the error under a row that failed to save |
+| `tdb-row-saving`     | a row while it's being saved              |
 
 To use Bootstrap, Tailwind or anything else, put your classes in `className`. They get added next to the `tdb-` ones.
 
@@ -285,7 +288,7 @@ If the user changes the country again before the cities come back, the old reque
 
 ### Saving
 
-`onSave` gets the edited row and the row as it was before. It returns a promise.
+`onSave` gets the edited row and the row as it was before editing. It can be async.
 
 ```ts
 const table = new Tadabut<Employee>(container, {
@@ -303,8 +306,16 @@ const table = new Tadabut<Employee>(container, {
 });
 ```
 
-- If it works, the row shows the new values. If you return a row, that one is used instead. That's handy for fields the server fills in, like `updatedAt`.
-- If it fails, throw. The row goes back to its old values and shows your error message.
+What happens when you save:
+
+1. Every field is validated. If one fails, its error shows under its input, the cursor goes to the first wrong field, and `onSave` isn't called.
+2. The row is locked while `onSave` runs. Clicking or typing in it does nothing, and it gets the `tdb-row-saving` class.
+3. If `onSave` works, the row closes and shows the new values. If you return a row, that one is used instead. That's handy for fields the server fills in, like `updatedAt`.
+4. If `onSave` throws, the row stays open with everything the user typed, and your error message shows under the row. They can fix it and save again, or cancel.
+
+The table's data only changes when saving works, so there's nothing to undo when it fails.
+
+`onSave` is optional. Without it, saving just updates the table.
 
 ### Editing options
 
@@ -331,7 +342,7 @@ const table = new Tadabut<Employee>(container, {
 
 ```ts
 table.edit(5); // start editing the row with id 5
-table.save(5); // save it
+await table.save(5); // validate and save it
 table.cancel(5); // cancel and restore its old values
 table.isEditing(5); // true while row 5 is open
 
@@ -341,7 +352,9 @@ table.destroy(); // remove everything Tadabut created
 
 `edit` returns `true` if editing started. It returns `false` when the row doesn't exist, another row is already open, or the row is on a page that hasn't been shown yet. DataTables only builds a row's cells once it's shown, so go to that page first.
 
-`cancel` does nothing if the row isn't being edited.
+`save` returns a promise of `true` if the row was saved and closed, `false` if it wasn't: a field is invalid, `onSave` failed, the row isn't being edited, or it's already saving.
+
+`cancel` does nothing if the row isn't being edited, or while it's saving.
 
 `setData` and `destroy` cancel any row being edited first. Unsaved changes are lost.
 
