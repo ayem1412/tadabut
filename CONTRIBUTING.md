@@ -40,6 +40,7 @@ src/
   columns/      the Column type, and how columns are passed to DataTables
   editors/      one file per editor, the editor contract, and createEditor
   validation/   validation rules and the code that checks them
+  editing/      editing a row: turning cells into editors and back
   react/        the React adapter
 tests/          same folders as src/
 playground/     pages to try things by hand

@@ -4,5 +4,7 @@ export default defineConfig({
   test: {
     environment: 'jsdom',
     include: ['tests/**/*.test.{ts,tsx}'],
+    isolate: false,
+    maxWorkers: 2,
   },
 });

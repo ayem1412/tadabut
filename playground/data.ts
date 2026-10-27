@@ -22,9 +22,29 @@ export const rows: Row[] = [
   { id: 12, name: 'Anass Bennani', city: 'Casablanca', age: 39 },
 ];
 
+const cities = [
+  'Agadir',
+  'Casablanca',
+  'Fès',
+  'Kénitra',
+  'Marrakech',
+  'Meknès',
+  'Oujda',
+  'Rabat',
+  'Tanger',
+  'Tétouan',
+];
+
 export const columns: Column<Row>[] = [
   { title: 'ID', prop: 'id' },
-  { title: 'Name', prop: 'name' },
-  { title: 'City', prop: 'city' },
-  { title: 'Age', prop: 'age' },
+  { title: 'Name', prop: 'name', editor: { type: 'text', maxLength: 50 } },
+  {
+    title: 'City',
+    prop: 'city',
+    editor: {
+      type: 'select',
+      options: cities.map((city) => ({ value: city, label: city })),
+    },
+  },
+  { title: 'Age', prop: 'age', editor: { type: 'number', min: 18, max: 99 } },
 ];

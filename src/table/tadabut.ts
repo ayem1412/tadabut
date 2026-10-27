@@ -1,4 +1,4 @@
-import DataTable, { type Api } from 'datatables.net';
+import DataTable, { type Api, type ApiRowMethods } from 'datatables.net';
 import type { Column } from '../columns/column';
 import { toDataTables } from '../columns/to-datatables';
 import { type EditableCell, EditSession } from '../editing/session';
@@ -63,9 +63,13 @@ export class Tadabut<Row extends object> {
    * Sorting, search and the current page are kept. If the current page no
    * longer exists (fewer rows than before), DataTables shows the last one.
    *
+   * Any row being edited is cancelled first. Unsaved changes are lost.
+   *
    * @param rows The new rows. The array is copied, never changed.
    */
   public setData(rows: readonly Row[]): void {
+    this.destroySessions();
+
     this.dataTable
       .clear()
       .rows.add([...rows])
@@ -84,15 +88,13 @@ export class Tadabut<Row extends object> {
    *   the row is on a page that hasn't been shown yet.
    */
   public edit(id: string | number): boolean {
-    const rowId = this.rowId;
-
-    if (rowId === undefined || this.sessions.size > 0) {
+    if (this.sessions.size > 0) {
       return false;
     }
 
-    const row = this.dataTable.row((_index, data) => data[rowId] === id);
+    const row = this.findRow(id);
 
-    if (!row.any()) {
+    if (row === undefined) {
       return false;
     }
 
@@ -117,10 +119,70 @@ export class Tadabut<Row extends object> {
   }
 
   /**
+   * Stops editing a row and puts its original values back. Unsaved changes
+   * are lost. Does nothing if the row isn't being edited.
+   *
+   * @param id The row's id: the value of its `rowId` field.
+   */
+  public cancel(id: string | number): void {
+    const session = this.sessions.get(id);
+
+    if (session === undefined) {
+      return;
+    }
+
+    session.destroy();
+    this.sessions.delete(id);
+
+    // 'data': the row's data is right, rebuild its cells from it. Without
+    // it, DataTables could read the now empty cells back into the data.
+    this.findRow(id)?.invalidate('data').draw(false);
+  }
+
+  /**
+   * Tells whether a row is being edited.
+   *
+   * @param id The row's id: the value of its `rowId` field.
+   */
+  public isEditing(id: string | number): boolean {
+    return this.sessions.has(id);
+  }
+
+  /**
    * Removes the table and everything Tadabut added to the container.
+   * Any row being edited is cancelled first.
    */
   public destroy(): void {
+    this.destroySessions();
     this.dataTable.destroy();
     this.tableEl.remove();
+  }
+
+  /**
+   * Finds a row by its id. `undefined` if there is no `rowId` option, or no
+   * row with that id.
+   */
+  private findRow(id: string | number): ApiRowMethods<Row> | undefined {
+    const rowId = this.rowId;
+
+    if (rowId === undefined) {
+      return undefined;
+    }
+
+    const row = this.dataTable.row((_index, data) => data[rowId] === id);
+
+    return row.any() ? row : undefined;
+  }
+
+  /**
+   * Destroys every open editor, without putting the cells' content back.
+   * Used right before the rows or the whole table go away.
+   */
+  private destroySessions(): void {
+    for (const session of this.sessions.values()) {
+      session.destroy();
+    }
+
+    this.sessions.clear();
   }
 }

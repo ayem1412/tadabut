@@ -333,10 +333,17 @@ const table = new Tadabut<Employee>(container, {
 table.edit(5); // start editing the row with id 5
 table.save(5); // save it
 table.cancel(5); // cancel and restore its old values
+table.isEditing(5); // true while row 5 is open
 
 table.setData(newEmployees); // replace all rows, keeps sorting and search
 table.destroy(); // remove everything Tadabut created
 ```
+
+`edit` returns `true` if editing started. It returns `false` when the row doesn't exist, another row is already open, or the row is on a page that hasn't been shown yet. DataTables only builds a row's cells once it's shown, so go to that page first.
+
+`cancel` does nothing if the row isn't being edited.
+
+`setData` and `destroy` cancel any row being edited first. Unsaved changes are lost.
 
 In `'single'` mode you can leave out the id: `save()` and `cancel()` use the open row.
 
