@@ -37,7 +37,11 @@ const cities = [
 
 export const columns: Column<Row>[] = [
   { title: 'ID', prop: 'id' },
-  { title: 'Name', prop: 'name', editor: { type: 'text', maxLength: 50 } },
+  {
+    title: 'Name',
+    prop: 'name',
+    editor: { type: 'text', required: true, maxLength: 50 },
+  },
   {
     title: 'City',
     prop: 'city',

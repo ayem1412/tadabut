@@ -164,6 +164,16 @@ export class EditSession<Row extends object> {
   }
 
   /**
+   * Puts the cursor in a field's editor. Does nothing if the field isn't
+   * being edited.
+   *
+   * @param prop The row property of the field.
+   */
+  public focus(prop: keyof Row & string): void {
+    this.fields.get(prop)?.editor.focus();
+  }
+
+  /**
    * Destroys every editor and error message. Safe to call more than once.
    *
    * The editable cells are left empty: the caller must put their content

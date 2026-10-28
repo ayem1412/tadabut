@@ -25,6 +25,7 @@ export class Tadabut<Row extends object> {
   private readonly tableEl: HTMLTableElement;
   private readonly rowId: (keyof Row & string) | undefined;
   private readonly columns: readonly Column<Row>[];
+  private readonly onSave: TadabutOptions<Row>['onSave'];
   /** The rows being edited, by row id. */
   private readonly sessions: Map<string | number, EditSession<Row>> = new Map();
 
@@ -46,6 +47,7 @@ export class Tadabut<Row extends object> {
 
     this.rowId = options.rowId;
     this.columns = options.columns;
+    this.onSave = options.onSave;
 
     this.tableEl = document.createElement('table');
     container.appendChild(this.tableEl);
@@ -131,8 +133,14 @@ export class Tadabut<Row extends object> {
       return;
     }
 
+    if (session.saving) {
+      return;
+    }
+
     session.destroy();
     this.sessions.delete(id);
+
+    this.clearSaveError(id);
 
     // 'data': the row's data is right, rebuild its cells from it. Without
     // it, DataTables could read the now empty cells back into the data.
@@ -146,6 +154,87 @@ export class Tadabut<Row extends object> {
    */
   public isEditing(id: string | number): boolean {
     return this.sessions.has(id);
+  }
+
+  /**
+   * Validates and saves the row being edited.
+   *
+   * 1. Every field is validated. If one fails, its error shows under its
+   *    input, the cursor goes to the first wrong field, and `onSave` isn't
+   *    called.
+   * 2. The row is locked while `onSave` runs.
+   * 3. If `onSave` works, the row closes and shows the new values: the row
+   *    `onSave` returned, or else the edited row.
+   * 4. If `onSave` throws, the row stays open with what the user typed, and
+   *    the error's message shows under the row.
+   *
+   * The table's data only changes when saving works.
+   *
+   * @param id The row's id: the value of its `rowId` field.
+   * @returns `true` if the row was saved and closed. `false` if a field is
+   *   invalid, `onSave` failed, the row isn't being edited, it's already
+   *   saving, or editing was stopped (by `setData` or `destroy`) while
+   *   `onSave` was running.
+   */
+  public async save(id: string | number): Promise<boolean> {
+    const session = this.sessions.get(id);
+
+    if (session === undefined || session.saving) {
+      return false;
+    }
+
+    session.clearErrors();
+    this.clearSaveError(id);
+
+    const errors = session.validate();
+    const [firstInvalid] = errors.keys();
+
+    if (firstInvalid !== undefined) {
+      session.showErrors(errors);
+      session.focus(firstInvalid);
+      return false;
+    }
+
+    const row = session.getRow();
+    this.setSaving(id, true);
+
+    let saved = row;
+
+    try {
+      const result = await this.onSave?.(row, {
+        previous: session.originalData,
+      });
+
+      if (result !== undefined) {
+        saved = result;
+      }
+    } catch (error) {
+      if (this.sessions.get(id) !== session) {
+        return false;
+      }
+
+      this.setSaving(id, false);
+      this.showSaveError(id, error instanceof Error ? error.message : 'Could not save.');
+      return false;
+    }
+
+    // While onSave ran, setData or destroy may have closed this session.
+    // Then the row may be gone, or belong to a new session: leave it alone.
+    if (this.sessions.get(id) !== session) {
+      return false;
+    }
+
+    session.destroy();
+    this.sessions.delete(id);
+
+    // Copy, so DataTables never holds the user's own object. Setting the
+    // data also rebuilds the row's cells.
+    this.findRow(id)
+      ?.data({ ...saved })
+      .draw(false);
+    this.setSaving(id, false);
+
+    return true;
   }
 
   /**
@@ -184,5 +273,46 @@ export class Tadabut<Row extends object> {
     }
 
     this.sessions.clear();
+  }
+
+  /**
+   * Locks or unlocks a row while it's being saved: sets the session's
+   * `saving` flag, and `inert` and the `tdb-row-saving` class on the row.
+   *
+   * Works even when the session is already gone, so a row can always be
+   * unlocked after saving.
+   */
+  private setSaving(id: string | number, saving: boolean): void {
+    const session = this.sessions.get(id);
+
+    if (session !== undefined) {
+      session.saving = saving;
+    }
+
+    const tr = this.findRow(id)?.node();
+
+    if (tr) {
+      tr.inert = saving;
+      tr.classList.toggle('tdb-row-saving', saving);
+    }
+  }
+
+  /**
+   * Shows a save error on its own line under the row, with the
+   * `tdb-save-error` class.
+   *
+   * The message is set as text, never as HTML: it often comes from a server,
+   * and HTML in it could run code in the page.
+   */
+  private showSaveError(id: string | number, message: string): void {
+    const error = document.createElement('div');
+    error.textContent = message;
+
+    this.findRow(id)?.child(error, 'tdb-save-error').show();
+  }
+
+  /** Removes the save error under a row, if there is one. */
+  private clearSaveError(id: string | number): void {
+    this.findRow(id)?.child.remove();
   }
 }
