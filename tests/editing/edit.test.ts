@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { type Column, type EditorInstance, Tadabut } from '../../src/index';
+import { type Column, type EditingOptions, type EditorInstance, Tadabut } from '../../src/index';
 
 type Row = { id: number; name: string; age: number; city: string };
 
@@ -18,13 +18,14 @@ const columns: Column<Row>[] = [
   { title: 'City', prop: 'city' },
 ];
 
-function setup(tableColumns: Column<Row>[] = columns) {
+function setup(tableColumns: Column<Row>[] = columns, editing?: EditingOptions) {
   const container = document.createElement('div');
   document.body.appendChild(container);
   const table = new Tadabut(container, {
     data: rows,
     rowId: 'id',
     columns: tableColumns,
+    editing,
   });
 
   return { container, table };
@@ -107,6 +108,7 @@ describe('editing a row', () => {
       'Name 1',
       '20',
       'Rabat',
+      'Edit',
     ]);
     expect(table.isEditing(1)).toBe(false);
   });
@@ -222,5 +224,69 @@ describe('editing a row', () => {
 
     expect(table.edit(1)).toBe(false);
     table.destroy();
+  });
+});
+
+describe("editing in 'multiple' mode", () => {
+  afterEach(() => {
+    document.body.innerHTML = '';
+  });
+
+  it('opens several rows at once', () => {
+    const { container, table } = setup(columns, { mode: 'multiple' });
+
+    expect(table.edit(1)).toBe(true);
+    expect(table.edit(2)).toBe(true);
+
+    expect(table.isEditing(1)).toBe(true);
+    expect(table.isEditing(2)).toBe(true);
+    expect(inputsIn(container)).toHaveLength(4);
+  });
+
+  it('does not open the same row twice', () => {
+    const { container, table } = setup(columns, { mode: 'multiple' });
+    table.edit(1);
+
+    expect(table.edit(1)).toBe(false);
+    expect(inputsIn(container)).toHaveLength(2);
+  });
+
+  it('cancels one row without touching the other', () => {
+    const { container, table } = setup(columns, { mode: 'multiple' });
+    table.edit(1);
+    table.edit(2);
+
+    table.cancel(1);
+
+    expect(table.isEditing(1)).toBe(false);
+    expect(table.isEditing(2)).toBe(true);
+    expect(rowCells(container, 1)[1]?.textContent).toBe('Name 1');
+    expect(rowCells(container, 2)[1]?.querySelector('input')?.value).toBe('Name 2');
+  });
+
+  it('saves each row on its own', async () => {
+    const { container, table } = setup(columns, { mode: 'multiple' });
+    table.edit(1);
+    table.edit(2);
+    const input = rowCells(container, 2)[1]?.querySelector('input') as HTMLInputElement;
+    input.value = 'Nadia';
+
+    expect(await table.save(2)).toBe(true);
+
+    expect(rowCells(container, 2)[1]?.textContent).toBe('Nadia');
+    expect(table.isEditing(1)).toBe(true);
+    expect(rowCells(container, 1)[1]?.querySelector('input')?.value).toBe('Name 1');
+  });
+
+  it('destroys every open row on setData', () => {
+    const { container, table } = setup(columns, { mode: 'multiple' });
+    table.edit(1);
+    table.edit(2);
+
+    table.setData(rows);
+
+    expect(table.isEditing(1)).toBe(false);
+    expect(table.isEditing(2)).toBe(false);
+    expect(inputsIn(container)).toHaveLength(0);
   });
 });

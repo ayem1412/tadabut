@@ -39,6 +39,23 @@ describe('column types', () => {
     expect(options.rowId).toBe('idd');
   });
 
+  it('accepts the editing modes, and nothing else', () => {
+    const options: TadabutOptions<Row> = {
+      data: [],
+      columns: [],
+      editing: { mode: 'multiple', button: false },
+    };
+    const wrong: TadabutOptions<Row> = {
+      data: [],
+      columns: [],
+      // @ts-expect-error 'many' is not an editing mode
+      editing: { mode: 'many' },
+    };
+
+    expect(options.editing?.mode).toBe('multiple');
+    expect(wrong.editing?.mode).toBe('many');
+  });
+
   it('accepts columns without an editor', () => {
     const column: Column<Row> = { title: 'ID', prop: 'id' };
 
@@ -180,5 +197,71 @@ describe('column types', () => {
     };
 
     expect(column.prop).toBe('managerId');
+  });
+
+  it('accepts required and validate on every editor', () => {
+    const columns: Column<Row>[] = [
+      { title: 'Name', prop: 'name', editor: { type: 'text', required: true } },
+      { title: 'ID', prop: 'id', editor: { type: 'number', required: true } },
+      { title: 'Hired', prop: 'hiredAt', editor: { type: 'date', required: true } },
+      {
+        title: 'Active',
+        prop: 'active',
+        editor: { type: 'checkbox', validate: () => undefined },
+      },
+      {
+        title: 'Status',
+        prop: 'status',
+        editor: { type: 'select', options: [], required: true },
+      },
+      {
+        title: 'Manager',
+        prop: 'managerId',
+        editor: {
+          type: 'custom',
+          create: () => managerEditor,
+          required: true,
+          validate: (value) => (value === null ? 'Pick one' : undefined),
+        },
+      },
+    ];
+
+    expect(columns).toHaveLength(6);
+  });
+
+  it('types the value and the row inside validate', () => {
+    const column: Column<Row> = {
+      title: 'ID',
+      prop: 'id',
+      editor: {
+        type: 'number',
+        validate: (value, row) => {
+          const id: number | null = value;
+          const active: boolean = row.active;
+          // @ts-expect-error the value can be null
+          const notNull: number = value;
+          // @ts-expect-error Row has no field 'nope'
+          const missing = row.nope;
+          expect([id, active, notNull, missing]).toBeDefined();
+          return undefined;
+        },
+      },
+    };
+
+    expect(column.prop).toBe('id');
+  });
+
+  it('rejects a validate that does not return a message', () => {
+    const column: Column<Row> = {
+      title: 'ID',
+      prop: 'id',
+      editor: {
+        type: 'number',
+        // @ts-expect-error validate must return a string or undefined
+        validate: () => 5,
+      },
+    };
+
+    expect(column.prop).toBe('id');
   });
 });

@@ -11,6 +11,27 @@ export type SaveContext<Row extends object> = {
 };
 
 /**
+ * How rows are edited.
+ */
+export type EditingOptions = {
+  /**
+   * How many rows can be edited at once.
+   *
+   * - `'single'` (default): one row. `edit` returns `false` while another
+   *   row is open.
+   * - `'multiple'`: any number of rows. Each one is saved or cancelled on
+   *   its own.
+   */
+  readonly mode?: 'single' | 'multiple';
+  /**
+   * Adds a column at the end with Edit, Save and Cancel buttons.
+   * Default `true`. Turn it off to start editing from your own code with
+   * `edit`, `save` and `cancel`.
+   */
+  readonly button?: boolean;
+};
+
+/**
  * Options for creating a Tadabut table.
  *
  * @typeParam Row - The shape of one row. Usually worked out from `data`.
@@ -27,6 +48,8 @@ export type TadabutOptions<Row extends object> = {
    * Required when a column has an `editor`: editing uses it to find rows.
    */
   readonly rowId?: keyof Row & string;
+  /** How rows are edited. Only used when a column has an `editor`. */
+  readonly editing?: EditingOptions;
   /**
    * Called when a row is saved, after every field passed validation.
    * It can be async.

@@ -2,7 +2,7 @@ import DataTable, { type Api, type ApiRowMethods } from 'datatables.net';
 import type { Column } from '../columns/column';
 import { toDataTables } from '../columns/to-datatables';
 import { type EditableCell, EditSession } from '../editing/session';
-import type { TadabutOptions } from './options';
+import type { EditingOptions, TadabutOptions } from './options';
 
 /**
  * A DataTables table, created and owned by Tadabut.
@@ -25,6 +25,8 @@ export class Tadabut<Row extends object> {
   private readonly tableEl: HTMLTableElement;
   private readonly rowId: (keyof Row & string) | undefined;
   private readonly columns: readonly Column<Row>[];
+  /** The `editing` option, with its defaults filled in. */
+  private readonly editing: Required<EditingOptions>;
   private readonly onSave: TadabutOptions<Row>['onSave'];
   /** The rows being edited, by row id. */
   private readonly sessions: Map<string | number, EditSession<Row>> = new Map();
@@ -47,6 +49,10 @@ export class Tadabut<Row extends object> {
 
     this.rowId = options.rowId;
     this.columns = options.columns;
+    this.editing = {
+      mode: options.editing?.mode ?? 'single',
+      button: options.editing?.button ?? true,
+    };
     this.onSave = options.onSave;
 
     this.tableEl = document.createElement('table');
@@ -55,7 +61,7 @@ export class Tadabut<Row extends object> {
     this.dataTable = new DataTable(this.tableEl, {
       // Copy, so DataTables never holds or changes the caller's array.
       data: [...options.data],
-      columns: toDataTables(options.columns),
+      columns: toDataTables(options.columns, hasEditor && this.editing.button),
     });
   }
 
@@ -82,15 +88,20 @@ export class Tadabut<Row extends object> {
    * Starts editing a row: its editable cells are replaced by editors showing
    * the row's values.
    *
-   * Only one row can be edited at a time for now.
+   * In `'single'` mode (the default), only one row can be open at a time.
+   * In `'multiple'` mode, any number can.
    *
    * @param id The row's id: the value of its `rowId` field.
    * @returns `true` if editing started. `false` if the row doesn't exist,
-   *   another row is open (including this one), no column is editable, or
-   *   the row is on a page that hasn't been shown yet.
+   *   it's already open, another row is open in `'single'` mode, no column
+   *   is editable, or the row is on a page that hasn't been shown yet.
    */
   public edit(id: string | number): boolean {
-    if (this.sessions.size > 0) {
+    if (this.sessions.has(id)) {
+      return false;
+    }
+
+    if (this.editing.mode === 'single' && this.sessions.size > 0) {
       return false;
     }
 
