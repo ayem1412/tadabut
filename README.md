@@ -16,7 +16,7 @@ Tadabut wraps [DataTables](https://datatables.net) and adds what it doesn't give
 
 DataTables is great for showing data. Editing that data inside the table is a different story: you either buy the Editor extension or write a lot of code yourself. Tadabut is that code, written once.
 
-- Edit a row in place, then save or cancel. Saving is async. If it fails, the row goes back to its old values.
+- Edit a row in place, then save or cancel. Saving can be async. If it fails, the row stays open with what the user typed, so nothing is lost.
 - Text, number, date, checkbox and select inputs, with validation.
 - Selects that depend on another field, like country and city. Old requests get cancelled when the user changes their mind.
 - Fully typed. The table knows what your rows look like, so a typo in a column name is a type error.
@@ -54,9 +54,9 @@ Not on npm yet.
 Give Tadabut the type of your rows. Every column's `prop` is checked against it.
 
 ```ts
-import { Tadabut, type Column } from "tadabut";
-import "datatables.net-dt";
-import "datatables.net-dt/css";
+import { Tadabut, type Column } from 'tadabut';
+import 'datatables.net-dt';
+import 'datatables.net-dt/css';
 
 type Employee = {
   id: number;
@@ -69,14 +69,14 @@ type Employee = {
 };
 
 const columns: Column<Employee>[] = [
-  { prop: "id", title: "ID" },
-  { prop: "name", title: "Name" },
-  { prop: "age", title: "Age" },
+  { prop: 'id', title: 'ID' },
+  { prop: 'name', title: 'Name' },
+  { prop: 'age', title: 'Age' },
 ];
 
-const table = new Tadabut<Employee>(document.querySelector("#employees")!, {
+const table = new Tadabut<Employee>(document.querySelector('#employees')!, {
   data: employees,
-  rowId: "id",
+  rowId: 'id',
   columns,
 });
 ```
@@ -91,19 +91,19 @@ Add an `editor` to a column to make it editable. Its `type` picks the input, and
 
 ```ts
 const columns: Column<Employee>[] = [
-  { prop: "id", title: "ID" },
-  { prop: "name", title: "Name", editor: { type: "text" } },
-  { prop: "age", title: "Age", editor: { type: "number", step: 1 } },
-  { prop: "hiredAt", title: "Hired", editor: { type: "date" } },
-  { prop: "active", title: "Active", editor: { type: "checkbox" } },
+  { prop: 'id', title: 'ID' },
+  { prop: 'name', title: 'Name', editor: { type: 'text' } },
+  { prop: 'age', title: 'Age', editor: { type: 'number', step: 1 } },
+  { prop: 'hiredAt', title: 'Hired', editor: { type: 'date' } },
+  { prop: 'active', title: 'Active', editor: { type: 'checkbox' } },
   {
-    prop: "countryId",
-    title: "Country",
+    prop: 'countryId',
+    title: 'Country',
     editor: {
-      type: "select",
+      type: 'select',
       options: [
-        { value: 1, label: "Morocco" },
-        { value: 2, label: "France" },
+        { value: 1, label: 'Morocco' },
+        { value: 2, label: 'France' },
       ],
     },
   },
@@ -131,16 +131,19 @@ A few things to know:
 
 ### Styling
 
-Tadabut doesn't ship any CSS. The inputs it creates get these classes, so you can style them however you want:
+Tadabut doesn't ship any CSS. Everything it creates gets these classes, so you can style it however you want:
 
-| Class                | Used on       |
-| -------------------- | ------------- |
-| `tdb-input`          | every input   |
-| `tdb-input-text`     | text inputs   |
-| `tdb-input-number`   | number inputs |
-| `tdb-input-date`     | date inputs   |
-| `tdb-input-checkbox` | checkboxes    |
-| `tdb-input-select`   | selects       |
+| Class                | Used on                                   |
+| -------------------- | ----------------------------------------- |
+| `tdb-input`          | every input                               |
+| `tdb-input-text`     | text inputs                               |
+| `tdb-input-number`   | number inputs                             |
+| `tdb-input-date`     | date inputs                               |
+| `tdb-input-checkbox` | checkboxes                                |
+| `tdb-input-select`   | selects                                   |
+| `tdb-error`          | a field's error message, under its input  |
+| `tdb-save-error`     | the error under a row that failed to save |
+| `tdb-row-saving`     | a row while it's being saved              |
 
 To use Bootstrap, Tailwind or anything else, put your classes in `className`. They get added next to the `tdb-` ones.
 
@@ -165,45 +168,45 @@ If the built-in inputs aren't enough, write your own. Select2, a date picker lib
 Here is Select2:
 
 ```ts
-import $ from "jquery";
-import "select2";
+import $ from 'jquery';
+import 'select2';
 
 const countryColumn: Column<Employee> = {
-  prop: "countryCode", // string | null
-  title: "Country",
+  prop: 'countryCode', // string | null
+  title: 'Country',
   editor: {
-    type: "custom",
+    type: 'custom',
     create: (context) => {
       // Select2 adds its own elements next to the <select>,
       // so wrap it: the wrapper is what goes in the cell.
-      const wrapper = document.createElement("div");
-      const select = document.createElement("select");
+      const wrapper = document.createElement('div');
+      const select = document.createElement('select');
       wrapper.appendChild(select);
 
       const $select = $(select).select2({
-        width: "100%",
+        width: '100%',
         data: [
-          { id: "MA", text: "Morocco" },
-          { id: "FR", text: "France" },
+          { id: 'MA', text: 'Morocco' },
+          { id: 'FR', text: 'France' },
         ],
       });
 
       // Nothing picked gives null, not the text 'null'.
       const read = () => ($select.val() as string | null) ?? null;
 
-      $select.val(context.value).trigger("change.select2");
+      $select.val(context.value).trigger('change.select2');
 
       // The user picked something: tell Tadabut.
-      $select.on("select2:select", () => context.onChange(read()));
+      $select.on('select2:select', () => context.onChange(read()));
 
       return {
         element: wrapper,
         getValue: read,
         // Update Select2's display only. This does not call onChange.
-        setValue: (value) => $select.val(value).trigger("change.select2"),
-        focus: () => $select.select2("open"),
+        setValue: (value) => $select.val(value).trigger('change.select2'),
+        focus: () => $select.select2('open'),
         destroy: () => {
-          $select.select2("destroy");
+          $select.select2('destroy');
           wrapper.remove();
         },
       };
@@ -260,7 +263,7 @@ The checks run in this order, and the first error wins:
 
 `pattern` has to match the whole value, like the HTML attribute. A checkbox is never empty, so `required` does nothing on it.
 
-Messages are in English for now. You'll be able to change them when translations are added. Errors will show under the input once row editing is done, and a row can't be saved until every field is valid.
+Errors show under their input when the user saves, and a row can't be saved until every field is valid. Messages are in English for now. You'll be able to change them when translations are added.
 
 ### Chained selects
 
@@ -285,26 +288,34 @@ If the user changes the country again before the cities come back, the old reque
 
 ### Saving
 
-`onSave` gets the edited row and the row as it was before. It returns a promise.
+`onSave` gets the edited row and the row as it was before editing. It can be async.
 
 ```ts
 const table = new Tadabut<Employee>(container, {
   data: employees,
-  rowId: "id",
+  rowId: 'id',
   columns,
   onSave: async (row, { previous }) => {
     const res = await fetch(`/api/employees/${row.id}`, {
-      method: "PUT",
+      method: 'PUT',
       body: JSON.stringify(row),
     });
-    if (!res.ok) throw new Error("Could not save the employee");
+    if (!res.ok) throw new Error('Could not save the employee');
     return res.json(); // optional: the server's version replaces the row
   },
 });
 ```
 
-- If it works, the row shows the new values. If you return a row, that one is used instead. That's handy for fields the server fills in, like `updatedAt`.
-- If it fails, throw. The row goes back to its old values and shows your error message.
+What happens when you save:
+
+1. Every field is validated. If one fails, its error shows under its input, the cursor goes to the first wrong field, and `onSave` isn't called.
+2. The row is locked while `onSave` runs. Clicking or typing in it does nothing, and it gets the `tdb-row-saving` class.
+3. If `onSave` works, the row closes and shows the new values. If you return a row, that one is used instead. That's handy for fields the server fills in, like `updatedAt`.
+4. If `onSave` throws, the row stays open with everything the user typed, and your error message shows under the row. They can fix it and save again, or cancel.
+
+The table's data only changes when saving works, so there's nothing to undo when it fails.
+
+`onSave` is optional. Without it, saving just updates the table.
 
 ### Editing options
 
@@ -313,11 +324,11 @@ When at least one column has an `editor`, every row gets an edit button. `editin
 ```ts
 const table = new Tadabut<Employee>(container, {
   data: employees,
-  rowId: "id",
+  rowId: 'id',
   columns,
   onSave: saveEmployee,
   editing: {
-    mode: "multiple", // default: 'single'
+    mode: 'multiple', // default: 'single'
     button: false, // default: true. false hides the edit button
   },
 });
@@ -331,7 +342,7 @@ const table = new Tadabut<Employee>(container, {
 
 ```ts
 table.edit(5); // start editing the row with id 5
-table.save(5); // save it
+await table.save(5); // validate and save it
 table.cancel(5); // cancel and restore its old values
 table.isEditing(5); // true while row 5 is open
 
@@ -341,7 +352,9 @@ table.destroy(); // remove everything Tadabut created
 
 `edit` returns `true` if editing started. It returns `false` when the row doesn't exist, another row is already open, or the row is on a page that hasn't been shown yet. DataTables only builds a row's cells once it's shown, so go to that page first.
 
-`cancel` does nothing if the row isn't being edited.
+`save` returns a promise of `true` if the row was saved and closed, `false` if it wasn't: a field is invalid, `onSave` failed, the row isn't being edited, or it's already saving.
+
+`cancel` does nothing if the row isn't being edited, or while it's saving.
 
 `setData` and `destroy` cancel any row being edited first. Unsaved changes are lost.
 
@@ -354,9 +367,9 @@ In `'single'` mode you can leave out the id: `save()` and `cancel()` use the ope
 Same options, as props. Keep `columns` outside your component, or in a `useMemo`, so it doesn't change on every render.
 
 ```tsx
-import { useRef } from "react";
-import type { Column } from "tadabut";
-import { Tadabut, type TadabutHandle } from "tadabut/react";
+import { useRef } from 'react';
+import type { Column } from 'tadabut';
+import { Tadabut, type TadabutHandle } from 'tadabut/react';
 
 const columns: Column<Employee>[] = [
   // …same as above
@@ -391,9 +404,9 @@ export function Employees({ employees }: { employees: Employee[] }) {
 - [x] Project setup
 - [x] Thin wrapper: typed columns, data loading, cleanup
 - [x] React adapter
-- [ ] Inputs: text, number, date, checkbox, select
-- [ ] Custom editors (Select2, date pickers, …)
-- [ ] Row editing: save, cancel, validation, rollback
+- [x] Inputs: text, number, date, checkbox, select
+- [x] Custom editors (Select2, date pickers, …)
+- [ ] Row editing: save, cancel, validation errors
 - [ ] Chained selects
 - [ ] Keyboard support, translations, theming
 - [ ] First release (0.1.0)
