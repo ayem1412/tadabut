@@ -68,7 +68,7 @@ describe('saving a row', () => {
       { id: 1, name: 'Nadia', age: 20 },
       { previous: { id: 1, name: 'Amina', age: 20 } },
     );
-    expect(cellTexts()).toEqual(['1', 'Nadia', '20']);
+    expect(cellTexts()).toEqual(['1', 'Nadia', '20', 'Edit']);
     expect(table.isEditing(1)).toBe(false);
   });
 
