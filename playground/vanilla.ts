@@ -1,8 +1,8 @@
 import 'datatables.net-dt';
 import 'datatables.net-dt/css';
 
-import { type EditingOptions, Tadabut, type TadabutOptions } from '../src/index';
-import { columns, type Row, rows } from './data';
+import { type EditingOptions, Tadabut } from '../src/index';
+import { columns, fakeSave, type Row, rows } from './data';
 
 const container = document.querySelector<HTMLElement>('#container');
 const createBtn = document.querySelector<HTMLButtonElement>('#create');
@@ -26,22 +26,13 @@ if (
 
 let table: Tadabut<Row> | null = null;
 
-/** A fake server: takes 1 second, and refuses the name "error". */
-const onSave: TadabutOptions<Row>['onSave'] = async (row) => {
-  await new Promise((resolve) => setTimeout(resolve, 1000));
-
-  if (row.name.toLowerCase() === 'error') {
-    throw new Error('The server refused this name');
-  }
-};
-
 const createTable = (): Tadabut<Row> => {
   const editing: EditingOptions = {
     mode: modeSelect.value === 'multiple' ? 'multiple' : 'single',
     button: buttonsCheckbox.checked,
   };
 
-  return new Tadabut(container, { data: rows, columns, rowId: 'id', onSave, editing });
+  return new Tadabut(container, { data: rows, columns, rowId: 'id', onSave: fakeSave, editing });
 };
 
 const updateStatus = (): void => {

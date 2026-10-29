@@ -52,3 +52,12 @@ export const columns: Column<Row>[] = [
   },
   { title: 'Age', prop: 'age', editor: { type: 'number', min: 18, max: 99 } },
 ];
+
+/** A fake server for both pages: takes 1 second, and refuses the name "error". */
+export async function fakeSave(row: Row): Promise<void> {
+  await new Promise((resolve) => setTimeout(resolve, 1000));
+
+  if (row.name.toLowerCase() === 'error') {
+    throw new Error('The server refused this name');
+  }
+}

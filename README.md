@@ -394,7 +394,8 @@ export function Employees({ employees }: { employees: Employee[] }) {
         data={employees}
         rowId="id"
         columns={columns}
-        onSave={saveEmployee}
+        editing={{ mode: 'multiple' }}
+        onSave={(row) => saveEmployee(row)}
       />
     </>
   );
@@ -402,7 +403,10 @@ export function Employees({ employees }: { employees: Employee[] }) {
 ```
 
 - When `employees` changes, the table updates in place. It doesn't get rebuilt.
-- The ref has the same methods as the core: `edit`, `save`, `cancel`, `setData`.
+- `onSave` can be a new function on every render. The table always calls the latest one.
+- `editing` can be a new object on every render too. The table is only rebuilt when `mode` or `button` really change. Changing `columns`, `rowId` or `editing` closes any row being edited.
+- The ref has `edit`, `save`, `cancel` and `isEditing`, the same as the core. Before the table is built, or after it's gone, `edit` and `save` give `false` and `cancel` does nothing.
+- There is no `setData` on the ref. To change the rows, change `data`.
 
 ## Roadmap
 
