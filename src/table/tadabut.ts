@@ -28,6 +28,10 @@ export class Tadabut<Row extends object> {
   /** The `editing` option, with its defaults filled in. */
   private readonly editing: Required<EditingOptions>;
   private readonly onSave: TadabutOptions<Row>['onSave'];
+  /** Whether the table has the actions column, with the Edit buttons. */
+  private readonly hasActions: boolean;
+  /** Whether at least one column has an editor. */
+  private readonly hasEditor: boolean;
   /** The rows being edited, by row id. */
   private readonly sessions: Map<string | number, EditSession<Row>> = new Map();
 
@@ -41,9 +45,9 @@ export class Tadabut<Row extends object> {
    *   needs `rowId` to find rows.
    */
   public constructor(container: HTMLElement, options: TadabutOptions<Row>) {
-    const hasEditor = options.columns.some((column) => column.editor !== undefined);
+    this.hasEditor = options.columns.some((column) => column.editor !== undefined);
 
-    if (hasEditor && options.rowId === undefined) {
+    if (this.hasEditor && options.rowId === undefined) {
       throw new Error('Tadabut: rowId is required when a column has an editor.');
     }
 
@@ -53,6 +57,7 @@ export class Tadabut<Row extends object> {
       mode: options.editing?.mode ?? 'single',
       button: options.editing?.button ?? true,
     };
+    this.hasActions = this.hasEditor && this.editing.button;
     this.onSave = options.onSave;
 
     this.tableEl = document.createElement('table');
@@ -61,8 +66,17 @@ export class Tadabut<Row extends object> {
     this.dataTable = new DataTable(this.tableEl, {
       // Copy, so DataTables never holds or changes the caller's array.
       data: [...options.data],
-      columns: toDataTables(options.columns, hasEditor && this.editing.button),
+      columns: toDataTables(options.columns, this.hasActions),
     });
+
+    if (this.hasActions) {
+      this.tableEl.addEventListener('click', this.onClick);
+    }
+
+    // The keyboard works with or without the buttons.
+    if (this.hasEditor) {
+      this.tableEl.addEventListener('keydown', this.onKeyDown);
+    }
   }
 
   /**
@@ -97,23 +111,19 @@ export class Tadabut<Row extends object> {
    *   is editable, or the row is on a page that hasn't been shown yet.
    */
   public edit(id: string | number): boolean {
-    if (this.sessions.has(id)) {
-      return false;
-    }
-
-    if (this.editing.mode === 'single' && this.sessions.size > 0) {
+    if (
+      !this.hasEditor ||
+      this.sessions.has(id) ||
+      (this.editing.mode === 'single' && this.sessions.size > 0)
+    ) {
       return false;
     }
 
     const row = this.findRow(id);
 
-    if (row === undefined) {
-      return false;
-    }
-
     // DataTables only creates a row's HTML once the row is shown. A row on
     // a page nobody has opened yet has no cells to put editors in.
-    if (row.node() === null) {
+    if (row === undefined || row.node() === null) {
       return false;
     }
 
@@ -128,6 +138,16 @@ export class Tadabut<Row extends object> {
     });
 
     this.sessions.set(id, new EditSession(row.data(), cells));
+
+    // The actions column comes right after the user's columns. Cancel and
+    // save rebuild the row's cells, and DataTables puts Edit back by itself.
+    if (this.hasActions) {
+      this.dataTable
+        .cell(rowIndex, this.columns.length)
+        .node()
+        .replaceChildren(actionButton('save', 'Save'), actionButton('cancel', 'Cancel'));
+    }
+
     return true;
   }
 
@@ -253,6 +273,9 @@ export class Tadabut<Row extends object> {
    * Any row being edited is cancelled first.
    */
   public destroy(): void {
+    // Removing a listener that was never added does nothing, so no checks.
+    this.tableEl.removeEventListener('click', this.onClick);
+    this.tableEl.removeEventListener('keydown', this.onKeyDown);
     this.destroySessions();
     this.dataTable.destroy();
     this.tableEl.remove();
@@ -326,4 +349,104 @@ export class Tadabut<Row extends object> {
   private clearSaveError(id: string | number): void {
     this.findRow(id)?.child.remove();
   }
+
+  /**
+   * Finds the id of the row an element is in.
+   *
+   * `undefined` if the element isn't in a row DataTables knows, like the
+   * save error line under a row, or a table inside a custom editor.
+   */
+  private rowIdOf(element: Element): string | number | undefined {
+    const tr = element.closest('tr');
+
+    if (tr === null || this.rowId === undefined) {
+      return undefined;
+    }
+
+    const row = this.dataTable.row(tr);
+
+    return row.any() ? (row.data()[this.rowId] as string | number) : undefined;
+  }
+
+  /**
+   * Handles clicks on the Edit, Save and Cancel buttons.
+   *
+   * One listener on the whole table, not one per button: DataTables adds and
+   * removes rows all the time (paging, `setData`), and new buttons would need
+   * new listeners.
+   *
+   * An arrow function, so `this` is still the Tadabut when the browser calls
+   * it, and the same function can be removed in `destroy`.
+   */
+  private readonly onClick = (event: MouseEvent): void => {
+    if (!(event.target instanceof Element)) {
+      return;
+    }
+
+    const button = event.target.closest<HTMLElement>('[data-tdb-action]');
+    const id = button ? this.rowIdOf(button) : undefined;
+
+    if (!button || id === undefined) {
+      return;
+    }
+
+    switch (button.dataset.tdbAction) {
+      case 'edit':
+        this.edit(id);
+        break;
+      case 'save':
+        void this.save(id);
+        break;
+      case 'cancel':
+        this.cancel(id);
+        break;
+    }
+  };
+
+  /**
+   * Enter saves the row being edited, Escape cancels it.
+   *
+   * An arrow function, for the same reasons as `onClick`.
+   */
+  private readonly onKeyDown = (event: KeyboardEvent): void => {
+    if (event.defaultPrevented) {
+      return;
+    }
+
+    if (!(event.target instanceof Element) || event.target.closest('button')) {
+      return;
+    }
+
+    const id = this.rowIdOf(event.target);
+    if (id === undefined || !this.sessions.has(id)) {
+      return;
+    }
+
+    switch (event.key) {
+      case 'Enter':
+        event.preventDefault();
+        void this.save(id);
+        break;
+      case 'Escape':
+        event.preventDefault();
+        this.cancel(id);
+        break;
+    }
+  };
+}
+
+/**
+ * Makes one of the buttons in the actions column.
+ *
+ * Built with `createElement`, not an HTML string, so a label can never be
+ * read as HTML, even once labels can be translated.
+ */
+function actionButton(action: 'save' | 'cancel', label: string): HTMLButtonElement {
+  const button = document.createElement('button');
+  button.type = 'button';
+  button.className = `tdb-button tdb-button-${action}`;
+  button.dataset.tdbAction = action;
+  button.textContent = label;
+
+  return button;
 }

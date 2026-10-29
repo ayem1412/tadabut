@@ -144,6 +144,11 @@ Tadabut doesn't ship any CSS. Everything it creates gets these classes, so you c
 | `tdb-error`          | a field's error message, under its input  |
 | `tdb-save-error`     | the error under a row that failed to save |
 | `tdb-row-saving`     | a row while it's being saved              |
+| `tdb-actions`        | the column with the buttons, header too   |
+| `tdb-button`         | every button                              |
+| `tdb-button-edit`    | the Edit button                           |
+| `tdb-button-save`    | the Save button                           |
+| `tdb-button-cancel`  | the Cancel button                         |
 
 To use Bootstrap, Tailwind or anything else, put your classes in `className`. They get added next to the `tdb-` ones.
 
@@ -319,7 +324,9 @@ The table's data only changes when saving works, so there's nothing to undo when
 
 ### Editing options
 
-When at least one column has an `editor`, every row gets an edit button. `editing` changes how that works:
+When at least one column has an `editor`, the table gets one more column at the end, with an Edit button in each row. While a row is being edited, its Edit button is replaced by Save and Cancel. The labels are in English for now.
+
+`editing` changes how that works:
 
 ```ts
 const table = new Tadabut<Employee>(container, {
@@ -336,7 +343,7 @@ const table = new Tadabut<Employee>(container, {
 
 - `'single'` mode: one row at a time. You can't start a new edit while another row is open.
 - `'multiple'` mode: several rows can be open. Each one saves on its own, so `onSave` runs once per row.
-- `button: false`: no edit button. Start edits from your own code.
+- `button: false`: no buttons column. Start edits from your own code. <kbd>Enter</kbd> and <kbd>Escape</kbd> still work.
 
 ### Controlling it from code
 
@@ -350,7 +357,7 @@ table.setData(newEmployees); // replace all rows, keeps sorting and search
 table.destroy(); // remove everything Tadabut created
 ```
 
-`edit` returns `true` if editing started. It returns `false` when the row doesn't exist, another row is already open, or the row is on a page that hasn't been shown yet. DataTables only builds a row's cells once it's shown, so go to that page first.
+`edit` returns `true` if editing started. It returns `false` when the row doesn't exist, it's already open, another row is open in `'single'` mode, no column has an editor, or the row is on a page that hasn't been shown yet. DataTables only builds a row's cells once it's shown, so go to that page first.
 
 `save` returns a promise of `true` if the row was saved and closed, `false` if it wasn't: a field is invalid, `onSave` failed, the row isn't being edited, or it's already saving.
 
@@ -358,9 +365,7 @@ table.destroy(); // remove everything Tadabut created
 
 `setData` and `destroy` cancel any row being edited first. Unsaved changes are lost.
 
-In `'single'` mode you can leave out the id: `save()` and `cancel()` use the open row.
-
-<kbd>Enter</kbd> saves the row you're in. <kbd>Escape</kbd> cancels it.
+<kbd>Enter</kbd> saves the row you're in. <kbd>Escape</kbd> cancels it. If something else already used the key, like Select2 picking an option with <kbd>Enter</kbd>, Tadabut leaves it alone.
 
 ### React
 
@@ -406,12 +411,12 @@ export function Employees({ employees }: { employees: Employee[] }) {
 - [x] React adapter
 - [x] Inputs: text, number, date, checkbox, select
 - [x] Custom editors (Select2, date pickers, …)
-- [ ] Row editing: save, cancel, validation errors
+- [x] Row editing: save, cancel, validation errors
 - [ ] Chained selects
 - [ ] Keyboard support, translations, theming
 - [ ] First release (0.1.0)
 
-Later: adding and deleting rows, popup editing, editing many rows at once, server-side mode, Vue and jQuery adapters.
+Later: adding and deleting rows, popup editing, changing many rows in one go, server-side mode, Vue and jQuery adapters.
 
 ## Contributing
 

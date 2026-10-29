@@ -214,6 +214,16 @@ describe('editing a row', () => {
     expect(container.childElementCount).toBe(0);
   });
 
+  it('returns false when no column is editable, even with rowId', () => {
+    const { table } = setup([
+      { title: 'ID', prop: 'id' },
+      { title: 'Name', prop: 'name' },
+    ]);
+
+    expect(table.edit(1)).toBe(false);
+    expect(table.isEditing(1)).toBe(false);
+  });
+
   it('does not need rowId when no column has an editor', () => {
     const container = document.createElement('div');
 

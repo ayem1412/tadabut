@@ -17,8 +17,7 @@
         align-items: center;
         margin-bottom: 1rem;
       }
-      #status,
-      #edit-status {
+      #status {
         color: #666;
         font-size: 0.9rem;
       }
@@ -30,6 +29,12 @@
       .tdb-row-saving {
         opacity: 0.5;
       }
+      .tdb-actions {
+        white-space: nowrap;
+      }
+      .tdb-button + .tdb-button {
+        margin-left: 0.25rem;
+      }
     </style>
   </head>
   <body>
@@ -39,19 +44,28 @@
       <button id="create" type="button">Create</button>
       <button id="destroy" type="button">Destroy</button>
       <button id="random-data" type="button">Random data</button>
-      <span id="status"></span>
     </div>
 
     <div class="toolbar">
       <label>
-        Row id
-        <input id="row-id" type="number" value="1" min="1" />
+        Mode
+        <select id="mode">
+          <option value="single">single</option>
+          <option value="multiple">multiple</option>
+        </select>
       </label>
-      <button id="edit" type="button">Edit</button>
-      <button id="save" type="button">Save</button>
-      <button id="cancel" type="button">Cancel</button>
-      <span id="edit-status"></span>
+      <label>
+        <input id="buttons" type="checkbox" checked />
+        Buttons
+      </label>
     </div>
+
+    <p id="status"></p>
+
+    <p>
+      Try: Edit, Save, Cancel, Enter and Escape in an input, a name of "error" to see a failed save,
+      and sorting before editing.
+    </p>
 
     <div id="container"></div>
 
