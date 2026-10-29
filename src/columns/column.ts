@@ -34,5 +34,5 @@ type ColumnFor<Row extends object, Key extends keyof Row & string> = {
    * How the value is edited, and its validation rules. Leave it out for a
    * read-only column.
    */
-  readonly editor?: EditorFor<Row[Key]> & ValidationOptions<Row, Row[Key]>;
+  readonly editor?: EditorFor<Row[Key], Row> & ValidationOptions<Row, Row[Key]>;
 };

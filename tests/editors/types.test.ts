@@ -265,3 +265,84 @@ describe('column types', () => {
     expect(column.prop).toBe('id');
   });
 });
+
+describe('select options types', () => {
+  type Place = { id: number; countryId: number; cityId: number | null; zone: string };
+
+  it('accepts a function with dependsOn, and types its row', async () => {
+    const column: Column<Place> = {
+      title: 'City',
+      prop: 'cityId',
+      editor: {
+        type: 'select',
+        dependsOn: 'countryId',
+        options: async (row, { signal }) => {
+          const countryId: number = row.countryId;
+          return signal.aborted ? [] : [{ value: countryId * 10, label: 'Rabat' }];
+        },
+      },
+    };
+
+    expect(column.editor?.type).toBe('select');
+  });
+
+  it('accepts a function that returns the list right away', () => {
+    const column: Column<Place> = {
+      title: 'Zone',
+      prop: 'zone',
+      editor: {
+        type: 'select',
+        dependsOn: 'countryId',
+        options: (row) => [{ value: `zone-${row.countryId}`, label: 'Zone' }],
+      },
+    };
+
+    expect(column.prop).toBe('zone');
+  });
+
+  it('rejects dependsOn on a field the row does not have', () => {
+    const column: Column<Place> = {
+      title: 'City',
+      prop: 'cityId',
+      // @ts-expect-error 'nope' is not a key of Place
+      editor: { type: 'select', dependsOn: 'nope', options: () => [] },
+    };
+
+    expect(column.prop).toBe('cityId');
+  });
+
+  it('rejects dependsOn with a fixed list', () => {
+    const column: Column<Place> = {
+      title: 'City',
+      prop: 'cityId',
+      // @ts-expect-error dependsOn needs options to be a function
+      editor: { type: 'select', dependsOn: 'countryId', options: [] },
+    };
+
+    expect(column.prop).toBe('cityId');
+  });
+
+  it('rejects a function that returns the wrong value type', () => {
+    // TypeScript reports a wrong select value on the whole column.
+    // @ts-expect-error 'x' is not a number
+    const column: Column<Place> = {
+      title: 'City',
+      prop: 'cityId',
+      editor: { type: 'select', options: () => [{ value: 'x', label: 'X' }] },
+    };
+
+    expect(column.prop).toBe('cityId');
+  });
+
+  it('rejects an async function that returns the wrong value type', () => {
+    // TypeScript reports a wrong select value on the whole column.
+    // @ts-expect-error 'x' is not a number
+    const column: Column<Place> = {
+      title: 'City',
+      prop: 'cityId',
+      editor: { type: 'select', options: async () => [{ value: 'x', label: 'X' }] },
+    };
+
+    expect(column.prop).toBe('cityId');
+  });
+});
