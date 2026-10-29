@@ -12,7 +12,28 @@
         padding: 0 1rem;
       }
       .toolbar {
+        display: flex;
+        gap: 0.5rem;
+        align-items: center;
         margin-bottom: 1rem;
+      }
+      .status {
+        color: #666;
+        font-size: 0.9rem;
+      }
+      .tdb-error,
+      .tdb-save-error {
+        color: #c62828;
+        font-size: 0.85rem;
+      }
+      .tdb-row-saving {
+        opacity: 0.5;
+      }
+      .tdb-actions {
+        white-space: nowrap;
+      }
+      .tdb-button + .tdb-button {
+        margin-left: 0.25rem;
       }
     </style>
   </head>
