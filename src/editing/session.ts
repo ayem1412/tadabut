@@ -1,7 +1,6 @@
 import type { Column } from '../columns/column';
-import { createEditor } from '../editors/create';
-import type { EditorInstance } from '../editors/instance';
-import { type AnyValidatedEditor, validateValue } from '../validation/validate';
+import { type AnyEditorInstance, createEditor } from '../editors/create';
+import { type AnyValidatedEditor, messages, validateValue } from '../validation/validate';
 
 /** An editable column, paired with its cell in the row being edited. */
 export type EditableCell<Row extends object> = {
@@ -14,7 +13,7 @@ let errorCount = 0;
 
 /** A live editor and the config it was created from. */
 type Field = {
-  readonly editor: EditorInstance<unknown>;
+  readonly editor: AnyEditorInstance;
   readonly config: AnyValidatedEditor;
 };
 
@@ -37,13 +36,23 @@ export class EditSession<Row extends object> {
   private readonly errors: Map<keyof Row & string, HTMLElement> = new Map();
 
   /**
+   * For each field, the selects that depend on it: when it changes, they
+   * are cleared and their options load again.
+   */
+  private readonly dependents: Map<string, (keyof Row & string)[]> = new Map();
+
+  /** The fields whose last options load failed. */
+  private readonly loadErrors: Set<keyof Row & string> = new Set();
+
+  /**
    * `true` while `onSave` runs. Set by `Tadabut`, which ignores a second
    * save, or a cancel, during that time.
    */
   public saving = false;
 
   /**
-   * Replaces each cell's content with an editor showing the row's value.
+   * Replaces each cell's content with an editor showing the row's value,
+   * then loads the options of every select whose `options` is a function.
    *
    * @param row The row to edit.
    * @param cells The editable columns and their cells. Columns without an
@@ -59,13 +68,25 @@ export class EditSession<Row extends object> {
 
       // Safe: `Column<Row>` already checked that the config fits the column.
       const config = column.editor as AnyValidatedEditor;
+
+      if (config.type === 'select' && config.dependsOn !== undefined) {
+        const list = this.dependents.get(config.dependsOn) ?? [];
+        list.push(column.prop);
+        this.dependents.set(config.dependsOn, list);
+      }
+
       const editor = createEditor(config, {
         value: this.originalData[column.prop],
-        onChange: () => {},
+        onChange: () => this.changed(column.prop),
       });
 
       cell.replaceChildren(editor.element);
       this.fields.set(column.prop, { editor, config });
+    }
+
+    // After the loop, so every field exists. Editors without an options function finish at once.
+    for (const prop of this.fields.keys()) {
+      void this.loadField(prop);
     }
   }
 
@@ -103,7 +124,11 @@ export class EditSession<Row extends object> {
     const errors = new Map<keyof Row & string, string>();
 
     for (const [prop, { editor, config }] of this.fields) {
-      const message = validateValue(config, editor.getValue(), row);
+      // A select whose options failed to load can't be valid: the user had
+      // nothing to pick from.
+      const message = this.loadErrors.has(prop)
+        ? messages.loadFailed
+        : validateValue(config, editor.getValue(), row);
 
       if (message !== undefined) {
         errors.set(prop, message);
@@ -116,9 +141,6 @@ export class EditSession<Row extends object> {
   /**
    * Shows each error message under its field's editor.
    *
-   * The editor's element gets `aria-invalid` and points at the message with
-   * `aria-describedby`, so screen readers read the error with the field.
-   *
    * Errors already shown are removed first.
    *
    * @param errors The error message of each invalid field, by row property,
@@ -128,23 +150,7 @@ export class EditSession<Row extends object> {
     this.clearErrors();
 
     for (const [prop, message] of errors) {
-      const field = this.fields.get(prop);
-
-      if (field === undefined) {
-        continue;
-      }
-
-      errorCount += 1;
-      const error = document.createElement('div');
-      error.id = `tdb-error-${errorCount}`;
-      error.className = 'tdb-error';
-      error.textContent = message;
-
-      field.editor.element.after(error);
-      field.editor.element.setAttribute('aria-invalid', 'true');
-      field.editor.element.setAttribute('aria-describedby', error.id);
-
-      this.errors.set(prop, error);
+      this.showError(prop, message);
     }
   }
 
@@ -152,15 +158,9 @@ export class EditSession<Row extends object> {
    * Removes every error message, and the ARIA attributes that point at them.
    */
   public clearErrors(): void {
-    for (const [prop, error] of this.errors) {
-      error.remove();
-
-      const element = this.fields.get(prop)?.editor.element;
-      element?.removeAttribute('aria-invalid');
-      element?.removeAttribute('aria-describedby');
+    for (const prop of [...this.errors.keys()]) {
+      this.hideError(prop);
     }
-
-    this.errors.clear();
   }
 
   /**
@@ -182,10 +182,130 @@ export class EditSession<Row extends object> {
   public destroy(): void {
     this.clearErrors();
 
+    // Destroying a select also stops its running load.
     for (const { editor } of this.fields.values()) {
       editor.destroy();
     }
 
     this.fields.clear();
+    this.dependents.clear();
+    this.loadErrors.clear();
+  }
+
+  /**
+   * Shows one error message under a field's editor, replacing the one that
+   * was there.
+   *
+   * The editor's element gets `aria-invalid` and points at the message with
+   * `aria-describedby`, so screen readers read the error with the field.
+   */
+  private showError(prop: keyof Row & string, message: string): void {
+    const field = this.fields.get(prop);
+
+    if (field === undefined) {
+      return;
+    }
+
+    this.hideError(prop);
+
+    errorCount += 1;
+    const error = document.createElement('div');
+    error.id = `tdb-error-${errorCount}`;
+    error.className = 'tdb-error';
+    error.textContent = message;
+
+    field.editor.element.after(error);
+    field.editor.element.setAttribute('aria-invalid', 'true');
+    field.editor.element.setAttribute('aria-describedby', error.id);
+
+    this.errors.set(prop, error);
+  }
+
+  /** Removes one field's error message and its ARIA attributes, if shown. */
+  private hideError(prop: keyof Row & string): void {
+    const error = this.errors.get(prop);
+
+    if (error === undefined) {
+      return;
+    }
+
+    error.remove();
+    this.errors.delete(prop);
+
+    const element = this.fields.get(prop)?.editor.element;
+    element?.removeAttribute('aria-invalid');
+    element?.removeAttribute('aria-describedby');
+  }
+
+  /**
+   * Runs when the user changes a field: every select below it in the chain
+   * is cleared, then loads its options again.
+   *
+   * Example, with Country → Region → City: changing the country clears the
+   * region and the city, then both reload.
+   */
+  private changed(prop: keyof Row & string): void {
+    // `prop` starts in the set so a loop never clears the field the user
+    // just changed. It's removed after: it doesn't need to reload.
+    const cleared = new Set<keyof Row & string>([prop]);
+    this.clearBelow(prop, cleared);
+    cleared.delete(prop);
+
+    // Only after everything is cleared, so each load gets a clean row: the
+    // new value, and nothing left from before below it.
+    for (const field of cleared) {
+      void this.loadField(field);
+    }
+  }
+
+  /**
+   * Clears the fields that depend on `prop`, then the ones that depend on
+   * those, and so on. `setValue` never calls `onChange`, so the chain has to
+   * be walked here.
+   *
+   * @param cleared The fields cleared so far. A field already in it is
+   *   skipped, so a loop (A depends on B, B depends on A) can't run forever.
+   */
+  private clearBelow(prop: string, cleared: Set<keyof Row & string>): void {
+    for (const dependent of this.dependents.get(prop) ?? []) {
+      if (cleared.has(dependent)) {
+        continue;
+      }
+
+      cleared.add(dependent);
+      this.fields.get(dependent)?.editor.setValue(null);
+      this.clearBelow(dependent, cleared);
+    }
+  }
+
+  /**
+   * Loads a field's options with the current row, and shows or hides
+   * "Could not load the options." under it.
+   *
+   * Fields that aren't selects with an options function finish at once.
+   */
+  private async loadField(prop: keyof Row & string): Promise<void> {
+    const field = this.fields.get(prop);
+
+    if (field?.editor.load === undefined) {
+      return;
+    }
+
+    const result = await field.editor.load(this.getRow() as Record<string, unknown>);
+
+    // A newer load or destroy took over: what happens next is up to them.
+    if (result === 'cancelled') {
+      return;
+    }
+
+    if (result === 'failed') {
+      this.loadErrors.add(prop);
+      this.showError(prop, messages.loadFailed);
+      return;
+    }
+
+    if (this.loadErrors.delete(prop)) {
+      this.hideError(prop);
+    }
   }
 }

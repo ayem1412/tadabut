@@ -272,24 +272,53 @@ Errors show under their input when the user saves, and a row can't be saved unti
 
 ### Chained selects
 
-A select can depend on another field. Its `options` becomes a function that gets the current row. When the other field changes, the select is cleared and its options load again.
+A select's `options` can be a function of the row instead of a fixed list. Add `dependsOn` and the select follows another field: when that field changes, the select is cleared and its options load again.
 
 ```ts
-{
-  prop: 'cityId',
-  title: 'City',
-  editor: {
-    type: 'select',
-    dependsOn: 'countryId',
-    options: async (row, { signal }) => {
-      const res = await fetch(`/api/cities?country=${row.countryId}`, { signal });
-      return res.json(); // [{ value, label }, …]
+const columns: Column<Employee>[] = [
+  {
+    prop: 'countryId',
+    title: 'Country',
+    editor: {
+      type: 'select',
+      options: [
+        { value: 1, label: 'Morocco' },
+        { value: 2, label: 'France' },
+      ],
     },
   },
-}
+  {
+    prop: 'cityId',
+    title: 'City',
+    editor: {
+      type: 'select',
+      required: true,
+      dependsOn: 'countryId',
+      options: async (row, { signal }) => {
+        if (row.countryId === null) return [];
+
+        const res = await fetch(`/api/cities?country=${row.countryId}`, { signal });
+        return res.json(); // [{ value, label }, …]
+      },
+    },
+  },
+];
 ```
 
-If the user changes the country again before the cities come back, the old request is cancelled through `signal`. Pass it to `fetch` so a late answer never shows up.
+How it works:
+
+- When a row opens, every `options` function runs with the row's values. The current value is kept while it loads, and picked once the options arrive.
+- While loading, the select is disabled and shows "Loading…". A function that returns the list right away (no promise) skips that step. That's useful for filtering a list you already have.
+- When a field changes, everything below it in the chain is cleared, then reloads. With Country → Region → City, changing the country clears both the region and the city.
+- A cleared field is `null`, and the functions below it still run. That's why the example checks `row.countryId === null`. Returning `[]` right away costs nothing.
+- If the user changes the country again before the cities come back, the old request is cancelled through `signal`. Pass it to `fetch` so the request really stops. Even if you don't, a late answer is thrown away.
+- Cancelling or saving the row, `setData` and `destroy` cancel every request still running.
+
+If `options` throws, the select stays empty and "Could not load the options." shows under it. The row can't be saved while that message is there. Changing the field it depends on tries again, or the user can cancel the row.
+
+`dependsOn` only works with a function. With a fixed list, it's a type error. It must be another field of the row, so a typo is a type error too.
+
+Outside edit mode, a cell shows the raw value, like `12` instead of "Rabat". Showing labels there is planned.
 
 ### Saving
 
@@ -416,7 +445,8 @@ export function Employees({ employees }: { employees: Employee[] }) {
 - [x] Inputs: text, number, date, checkbox, select
 - [x] Custom editors (Select2, date pickers, …)
 - [x] Row editing: save, cancel, validation errors
-- [ ] Chained selects
+- [x] Chained selects
+- [ ] Show labels instead of raw values in cells
 - [ ] Keyboard support, translations, theming
 - [ ] First release (0.1.0)
 

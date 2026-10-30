@@ -105,3 +105,182 @@ describe('select editor', () => {
     expect(document.body.contains(select)).toBe(false);
   });
 });
+
+describe('select editor with an options function', () => {
+  afterEach(() => {
+    document.body.innerHTML = '';
+  });
+
+  type Place = { countryId: number };
+
+  /** A loader you finish by hand, to control when the options arrive. */
+  function manualLoader() {
+    const calls: {
+      row: Place;
+      signal: AbortSignal;
+      resolve: (list: SelectOption<number>[]) => void;
+      reject: (error: unknown) => void;
+    }[] = [];
+
+    const options = (row: Place, { signal }: { signal: AbortSignal }) =>
+      new Promise<SelectOption<number>[]>((resolve, reject) => {
+        calls.push({ row, signal, resolve, reject });
+      });
+
+    return { options, calls };
+  }
+
+  function setupLoader(
+    options: (
+      row: Place,
+      context: { signal: AbortSignal },
+    ) => SelectOption<number>[] | Promise<SelectOption<number>[]>,
+    value: number | null = 2,
+  ) {
+    const onChange = vi.fn();
+    const editor = createSelectEditor<number, Place>(
+      { type: 'select', options },
+      { value, onChange },
+    );
+    const select = editor.element as HTMLSelectElement;
+    document.body.appendChild(select);
+
+    return { editor, select, onChange };
+  }
+
+  const labels = (select: HTMLSelectElement) =>
+    [...select.options].map((option) => option.textContent);
+
+  it('starts empty and keeps the starting value', () => {
+    const { options } = manualLoader();
+    const { editor, select } = setupLoader(options);
+
+    expect(select.options).toHaveLength(0);
+    expect(editor.getValue()).toBe(2);
+  });
+
+  it('shows Loading… then the options, with the value picked', async () => {
+    const { options, calls } = manualLoader();
+    const { editor, select } = setupLoader(options);
+
+    const loading = editor.load({ countryId: 1 });
+
+    expect(labels(select)).toEqual(['Loading…']);
+    expect(select.disabled).toBe(true);
+    expect(editor.getValue()).toBe(2);
+    expect(calls[0]?.row).toEqual({ countryId: 1 });
+
+    calls[0]?.resolve(countries);
+
+    expect(await loading).toBe('loaded');
+    expect(labels(select)).toEqual(['Morocco', 'France', 'Spain']);
+    expect(select.disabled).toBe(false);
+    expect(select.selectedIndex).toBe(1);
+    expect(editor.getValue()).toBe(2);
+  });
+
+  it('shows a list given right away, with no Loading… step', async () => {
+    const { editor, select } = setupLoader(() => countries);
+
+    const loading = editor.load({ countryId: 1 });
+
+    expect(labels(select)).toEqual(['Morocco', 'France', 'Spain']);
+    expect(await loading).toBe('loaded');
+  });
+
+  it('keeps a value set while loading', async () => {
+    const { options, calls } = manualLoader();
+    const { editor, select } = setupLoader(options);
+    const loading = editor.load({ countryId: 1 });
+
+    editor.setValue(3);
+    calls[0]?.resolve(countries);
+    await loading;
+
+    expect(editor.getValue()).toBe(3);
+    expect(select.selectedIndex).toBe(2);
+  });
+
+  it('gives null when the value is not in the loaded options', async () => {
+    const { options, calls } = manualLoader();
+    const { editor, select } = setupLoader(options, 9);
+    const loading = editor.load({ countryId: 1 });
+
+    calls[0]?.resolve(countries);
+    await loading;
+
+    expect(editor.getValue()).toBeNull();
+    expect(select.selectedIndex).toBe(-1);
+  });
+
+  it('ignores an answer that comes after a newer load', async () => {
+    const { options, calls } = manualLoader();
+    const { editor, select } = setupLoader(options);
+    const first = editor.load({ countryId: 1 });
+    const second = editor.load({ countryId: 2 });
+
+    expect(calls[0]?.signal.aborted).toBe(true);
+
+    calls[1]?.resolve([{ value: 2, label: 'Paris' }]);
+    calls[0]?.resolve(countries);
+
+    expect(await first).toBe('cancelled');
+    expect(await second).toBe('loaded');
+    expect(labels(select)).toEqual(['Paris']);
+  });
+
+  it('stays empty and disabled when the function throws', async () => {
+    const { options, calls } = manualLoader();
+    const { editor, select } = setupLoader(options);
+    const loading = editor.load({ countryId: 1 });
+
+    calls[0]?.reject(new Error('Network down'));
+
+    expect(await loading).toBe('failed');
+    expect(select.disabled).toBe(true);
+    expect(labels(select)).toEqual(['']);
+  });
+
+  it('gives cancelled, not failed, when a stopped load throws', async () => {
+    const { options, calls } = manualLoader();
+    const { editor } = setupLoader(options);
+    const first = editor.load({ countryId: 1 });
+    void editor.load({ countryId: 2 });
+
+    calls[0]?.reject(new DOMException('Aborted', 'AbortError'));
+
+    expect(await first).toBe('cancelled');
+  });
+
+  it('aborts the running load on destroy', async () => {
+    const { options, calls } = manualLoader();
+    const { editor } = setupLoader(options);
+    const loading = editor.load({ countryId: 1 });
+
+    editor.destroy();
+    calls[0]?.resolve(countries);
+
+    expect(calls[0]?.signal.aborted).toBe(true);
+    expect(await loading).toBe('cancelled');
+  });
+
+  it('reports a picked option after loading', async () => {
+    const { options, calls } = manualLoader();
+    const { editor, select, onChange } = setupLoader(options);
+    const loading = editor.load({ countryId: 1 });
+    calls[0]?.resolve(countries);
+    await loading;
+
+    choose(select, 0);
+
+    expect(onChange).toHaveBeenCalledWith(1);
+    expect(editor.getValue()).toBe(1);
+  });
+
+  it('gives loaded right away for a fixed list', async () => {
+    const { editor, select } = setup(2);
+
+    expect(await editor.load({})).toBe('loaded');
+    expect(select.selectedIndex).toBe(1);
+  });
+});

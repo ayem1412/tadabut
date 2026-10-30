@@ -86,13 +86,44 @@ export type SelectEditor<Value, Row> = BaseEditor & {
   );
 
 /**
+ * How a load ended.
+ *
+ * - `'loaded'`: the options are shown.
+ * - `'failed'`: `options` threw. The select stays empty and disabled.
+ * - `'cancelled'`: a newer load started, or the editor was destroyed, before
+ *   this one ended. Its answer was thrown away.
+ */
+export type LoadResult = 'loaded' | 'failed' | 'cancelled';
+
+/**
+ * A live select editor: the usual editor, plus `load`.
+ *
+ * @typeParam Value - The column's value type.
+ * @typeParam Row - The shape of one row.
+ */
+export type SelectInstance<Value, Row> = EditorInstance<Value | null> & {
+  /**
+   * Gets the options for `row` from the `options` function, and shows them.
+   * Stops the load before it, if it's still running.
+   *
+   * With a fixed list, there is nothing to load: it gives `'loaded'` right
+   * away.
+   */
+  readonly load: (row: Row) => Promise<LoadResult>;
+};
+
+/**
  * Creates a live select editor.
  *
  * Internal: Tadabut calls it when a row starts being edited.
  *
  * HTML `<option>` values are always strings, so the picked value is read
- * from `config.options` by position, which keeps its real type (`1`, not
+ * from the options list by position, which keeps its real type (`1`, not
  * `'1'`).
+ *
+ * With an `options` function, the select starts empty and Tadabut calls
+ * `load`. Until the options arrive, the starting value is remembered:
+ * `getValue` gives it, and it's picked once the options are shown.
  *
  * @param config The editor config from the column.
  * @param context The starting value, the classes and the change callback.
@@ -100,35 +131,121 @@ export type SelectEditor<Value, Row> = BaseEditor & {
 export function createSelectEditor<Value, Row>(
   config: SelectEditor<Value, Row>,
   context: EditorContext<Value | null>,
-): EditorInstance<Value | null> {
+): SelectInstance<Value, Row> {
   const select = document.createElement('select');
   addClasses(select, ['tdb-input', 'tdb-input-select'], context.className);
 
-  // TODO: load the options when they come from a function.
-  const options: readonly SelectOption<Value>[] =
-    typeof config.options === 'function' ? [] : config.options;
+  /** The options shown now. Empty until a function's options arrive. */
+  let options: readonly SelectOption<Value>[] = [];
 
-  for (const option of options) {
-    const element = document.createElement('option');
-    element.textContent = option.label;
-    select.appendChild(element);
-  }
+  /**
+   * The value, kept here and not only in the `<select>`: while options are
+   * loading, the `<select>` has nothing to pick, but the value must not be
+   * lost.
+   */
+  let current: Value | null = context.value;
 
-  const getValue = (): Value | null => options[select.selectedIndex]?.value ?? null;
+  /** The load that's running, so a newer one (or destroy) can stop it. */
+  let controller: AbortController | undefined;
 
-  const setValue = (value: Value | null): void => {
-    select.selectedIndex = options.findIndex((option) => option.value === value);
+  /** Picks `current` in the `<select>`. If it's not in the list, it's `null`. */
+  const pickCurrent = (): void => {
+    select.selectedIndex = options.findIndex((option) => option.value === current);
+
+    if (select.selectedIndex === -1) {
+      current = null;
+    }
   };
 
-  setValue(context.value);
+  /** Replaces the `<option>`s with `list`, enables the select and picks `current`. */
+  const fill = (list: readonly SelectOption<Value>[]): void => {
+    options = list;
+    select.replaceChildren(
+      ...list.map((option) => {
+        const element = document.createElement('option');
+        element.textContent = option.label;
+        return element;
+      }),
+    );
+    select.disabled = false;
+    pickCurrent();
+  };
 
-  select.addEventListener('change', () => context.onChange(getValue()));
+  /** Shows one disabled, unpickable line, like "Loading…". */
+  const showOnly = (text: string): void => {
+    options = [];
+    const element = document.createElement('option');
+    element.textContent = text;
+    select.replaceChildren(element);
+    select.disabled = true;
+  };
+
+  const load = async (row: Row): Promise<LoadResult> => {
+    if (typeof config.options !== 'function') {
+      return 'loaded';
+    }
+
+    controller?.abort();
+    const own = new AbortController();
+    controller = own;
+
+    try {
+      const result = config.options(row, { signal: own.signal });
+
+      if (!(result instanceof Promise)) {
+        fill(result);
+        return 'loaded';
+      }
+
+      showOnly('Loading…');
+      const list = await result;
+
+      // A newer load started, or the editor is gone: this answer is too late.
+      if (own.signal.aborted) {
+        return 'cancelled';
+      }
+
+      fill(list);
+      return 'loaded';
+    } catch {
+      if (own.signal.aborted) {
+        return 'cancelled';
+      }
+
+      showOnly('');
+      return 'failed';
+    }
+  };
+
+  const getValue = (): Value | null => current;
+
+  const setValue = (value: Value | null): void => {
+    current = value;
+
+    // While loading, the value is only remembered: it's picked once the options arrive.
+    if (!select.disabled) {
+      pickCurrent();
+    }
+  };
+
+  if (typeof config.options !== 'function') {
+    fill(config.options);
+  }
+
+  select.addEventListener('change', () => {
+    current = options[select.selectedIndex]?.value ?? null;
+    context.onChange(current);
+  });
 
   return {
     element: select,
     getValue,
     setValue,
+    load,
     focus: () => select.focus(),
-    destroy: () => select.remove(),
+    destroy: () => {
+      controller?.abort();
+      select.remove();
+    },
   };
 }

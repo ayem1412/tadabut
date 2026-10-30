@@ -3,8 +3,18 @@ import { createDateEditor } from './date';
 import type { AnyEditor } from './editor';
 import type { EditorContext, EditorInstance } from './instance';
 import { createNumberEditor } from './number';
-import { createSelectEditor } from './select';
+import { createSelectEditor, type LoadResult } from './select';
 import { createTextEditor } from './text';
+
+/**
+ * A live editor of any type. Only selects have `load`: for the others,
+ * `editor.load?.(row)` does nothing.
+ *
+ * Internal: what `createEditor` returns.
+ */
+export type AnyEditorInstance = EditorInstance<unknown> & {
+  readonly load?: (row: Record<string, unknown>) => Promise<LoadResult>;
+};
 
 /**
  * Creates the live editor that matches a column's editor config.
@@ -17,32 +27,34 @@ import { createTextEditor } from './text';
  * column, before the table was created.
  *
  * @param config The editor config from the column.
- * @param context The starting value and the change callback.
+ * @param context The starting value and the change callback. Its
+ *   `className` is filled in from `config`, so every editor, built-in or
+ *   custom, gets the same full context.
  */
 export function createEditor(
   config: AnyEditor,
   context: EditorContext<unknown>,
-): EditorInstance<unknown> {
-  const ctx = { ...context, className: config.className };
+): AnyEditorInstance {
+  const fullContext = { ...context, className: config.className };
 
   switch (config.type) {
     case 'text':
-      return loosen(createTextEditor(config, tighten(ctx)));
+      return loosen(createTextEditor(config, tighten(fullContext)));
 
     case 'number':
-      return loosen(createNumberEditor(config, tighten(ctx)));
+      return loosen(createNumberEditor(config, tighten(fullContext)));
 
     case 'date':
-      return loosen(createDateEditor(config, tighten(ctx)));
+      return loosen(createDateEditor(config, tighten(fullContext)));
 
     case 'checkbox':
-      return loosen(createCheckboxEditor(config, tighten(ctx)));
+      return loosen(createCheckboxEditor(config, tighten(fullContext)));
 
     case 'select':
-      return createSelectEditor(config, ctx);
+      return createSelectEditor(config, fullContext);
 
     case 'custom':
-      return config.create(ctx);
+      return config.create(fullContext);
 
     default: {
       // Fails to compile if an editor type above has no `case`.

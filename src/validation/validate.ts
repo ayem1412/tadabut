@@ -11,9 +11,12 @@ export type AnyValidatedEditor = AnyEditor & ValidationOptions<unknown, unknown>
 /**
  * Error messages. Plain English for now. They will become an option when
  * translations are added.
+ *
+ * Internal: exported for the edit session, which shows `loadFailed`.
  */
-const messages = {
+export const messages = {
   required: 'This field is required.',
+  loadFailed: 'Could not load the options.',
   tooShort: (min: number) => `Must be at least ${min} characters.`,
   tooLong: (max: number) => `Must be at most ${max} characters.`,
   patternMismatch: 'Wrong format.',
