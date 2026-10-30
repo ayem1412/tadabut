@@ -21,17 +21,19 @@ import type { TextEditor } from './text';
  * the row's value as it is.
  *
  * @typeParam Value - The column's value type.
+ * @typeParam Row - The shape of one row. Only selects use it, for `options`
+ *   functions and `dependsOn`.
  */
-export type EditorFor<Value> = EditorForValue<NonNullable<Value>> | CustomEditor<Value>;
+export type EditorFor<Value, Row> = EditorForValue<NonNullable<Value>, Row> | CustomEditor<Value>;
 
 // The `[…]` around both sides stops TypeScript from checking each member of
 // a union on its own. `'a' | 'b'` is checked as one string type.
-type EditorForValue<Value> = [Value] extends [string]
-  ? TextEditor | DateEditor | SelectEditor<Value>
+type EditorForValue<Value, Row> = [Value] extends [string]
+  ? TextEditor | DateEditor | SelectEditor<Value, Row>
   : [Value] extends [number]
-    ? NumberEditor | SelectEditor<Value>
+    ? NumberEditor | SelectEditor<Value, Row>
     : [Value] extends [boolean]
-      ? CheckboxEditor | SelectEditor<Value>
+      ? CheckboxEditor | SelectEditor<Value, Row>
       : never;
 
 /**
@@ -39,11 +41,14 @@ type EditorForValue<Value> = [Value] extends [string]
  *
  * Internal: used where the exact column type is no longer known, like
  * `createEditor`. Users write `EditorFor` instead.
+ *
+ * The row is a plain record here: any field can be read, and `dependsOn` is
+ * any string.
  */
 export type AnyEditor =
   | TextEditor
   | NumberEditor
   | DateEditor
   | CheckboxEditor
-  | SelectEditor<unknown>
+  | SelectEditor<unknown, Record<string, unknown>>
   | CustomEditor<unknown>;

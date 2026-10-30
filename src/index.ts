@@ -17,7 +17,12 @@ export type { DateEditor } from './editors/date';
 export type { EditorFor } from './editors/editor';
 export type { EditorContext, EditorInstance } from './editors/instance';
 export type { NumberEditor } from './editors/number';
-export type { SelectEditor, SelectOption } from './editors/select';
+export type {
+  OptionsContext,
+  SelectEditor,
+  SelectOption,
+  SelectOptionsLoader,
+} from './editors/select';
 export type { TextEditor } from './editors/text';
 export type { EditingOptions, SaveContext, TadabutOptions } from './table/options';
 export { Tadabut } from './table/tadabut';
