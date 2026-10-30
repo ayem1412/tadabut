@@ -111,7 +111,7 @@ git switch -c feat/my-change
 
 Start the branch name with what kind of change it is: `feat/`, `fix/`, `docs/`, `refactor/`, `test/` or `chore/`.
 
-Commit messages follow [Conventional Commits](https://www.conventionalcommits.org):
+Commit messages and pull request titles follow [Conventional Commits](https://www.conventionalcommits.org). Pull requests are squash-merged, and the PR title becomes the commit on `master`, so the title matters most:
 
 ```
 feat: add a date editor
@@ -140,7 +140,9 @@ Say what you changed and why. Link the issue if there is one. CI has to pass bef
 
 Tadabut follows [semver](https://semver.org). Before 1.0, `0.x.0` is for new features and breaking changes, and `0.0.x` is for fixes.
 
-Don't change the version in your pull request. I do that when I make a release.
+Versions are picked from the commits on `master` by [release-please](https://github.com/googleapis/release-please): `feat` gives a new `0.x.0`, `fix` gives a new `0.0.x`. It keeps a release pull request open with the next version and the changelog. Merging it tags the release and publishes it to npm.
+
+Don't change the version or `CHANGELOG.md` in your pull request.
 
 ## DataTables Editor
 

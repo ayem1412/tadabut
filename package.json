@@ -16,6 +16,12 @@
     "react"
   ],
   "author": "Anas Youssef ELMAHDAD <elmahdad.anasyoussef00@proton.me> (https://github.com/ayem1412)",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ayem1412/tadabut.git"
+  },
+  "homepage": "https://github.com/ayem1412/tadabut#readme",
+  "bugs": "https://github.com/ayem1412/tadabut/issues",
   "license": "MIT",
   "type": "module",
   "files": [
