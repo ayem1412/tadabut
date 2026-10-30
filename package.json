@@ -1,6 +1,6 @@
 {
   "name": "tadabut",
-  "version": "0.0.0",
+  "version": "1.0.0",
   "description": "Typed wrapper for DataTables with row editing, rich inputs and chained selects.",
   "keywords": [
     "datatables",
