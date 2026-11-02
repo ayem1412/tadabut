@@ -10,7 +10,7 @@
 Tadabut wraps [DataTables](https://datatables.net) and adds what it doesn't give you for free: editing rows, real inputs in the cells, and selects that depend on each other.
 
 > [!WARNING]
-> Tadabut is in early development. It is not on npm yet, and the API will change. Don't use it in production.
+> Tadabut is new. Until 1.0, the API can change between `0.x` versions, so pin the version you use and read the changelog before you update.
 
 ## Why
 
@@ -26,13 +26,13 @@ DataTables is great for showing data. Editing that data inside the table is a di
 
 The core has no framework in it. Each framework gets a small adapter on top.
 
-| Target     | Status      |
-| ---------- | ----------- |
-| TypeScript | In progress |
-| JavaScript | In progress |
-| React      | In progress |
-| Vue        | Planned     |
-| jQuery     | Planned     |
+| Target     | Status    |
+| ---------- | --------- |
+| TypeScript | Supported |
+| JavaScript | Supported |
+| React      | Supported |
+| Vue        | Planned   |
+| jQuery     | Planned   |
 
 ## Requirements
 
@@ -42,31 +42,65 @@ The core has no framework in it. Each framework gets a small adapter on top.
 
 ## Installation
 
-Not on npm yet.
+Install Tadabut with DataTables. `datatables.net-dt` is DataTables with its default look:
+
+```sh
+pnpm add tadabut datatables.net-dt
+# or
+npm install tadabut datatables.net-dt
+```
+
+For the React adapter, you also need React 19, which your app most likely has already.
+
+Then import DataTables and its CSS once, before you create a table:
+
+```ts
+import 'datatables.net-dt';
+import 'datatables.net-dt/css';
+```
+
+Tadabut works with any DataTables 3 styling package: `datatables.net-bs5` for Bootstrap 5, and so on.
 
 ## Usage
-
-> [!NOTE]
-> This is the planned API. Parts of it don't work yet, and it may change while it gets built.
 
 ### Create a table
 
 Give Tadabut the type of your rows. Every column's `prop` is checked against it.
 
+The examples on this page all use this `Employee` type.
+
 ```ts
-import { Tadabut, type Column } from 'tadabut';
 import 'datatables.net-dt';
 import 'datatables.net-dt/css';
+import { Tadabut, type Column } from 'tadabut';
 
 type Employee = {
   id: number;
   name: string;
   age: number;
+  salary: number;
   hiredAt: string; // 'YYYY-MM-DD'
   active: boolean;
-  countryId: number;
-  cityId: number;
+  countryId: number | null;
+  countryCode: string | null;
+  cityId: number | null;
+  cityName: string;
 };
+
+const employees: Employee[] = [
+  {
+    id: 1,
+    name: 'Amina',
+    age: 29,
+    salary: 12000,
+    hiredAt: '2024-01-05',
+    active: true,
+    countryId: 1,
+    countryCode: 'MA',
+    cityId: 10,
+    cityName: 'Rabat',
+  },
+];
 
 const columns: Column<Employee>[] = [
   { prop: 'id', title: 'ID' },
@@ -74,7 +108,9 @@ const columns: Column<Employee>[] = [
   { prop: 'age', title: 'Age' },
 ];
 
-const table = new Tadabut<Employee>(document.querySelector('#employees')!, {
+const container = document.querySelector<HTMLElement>('#employees')!;
+
+const table = new Tadabut(container, {
   data: employees,
   rowId: 'id',
   columns,
@@ -137,11 +173,11 @@ When a row isn't being edited, a cell shows its value as text. Two things change
 - `render` sets the text yourself, on any column:
 
 ```ts
-{ prop: "salary", title: "Salary", render: (value) => `${value} MAD` }
+{ prop: 'salary', title: 'Salary', render: (value) => `${value} MAD` }
 
 // A select whose options come from a function: Tadabut can't know the
 // label, but the row usually has it.
-{ prop: "cityId", title: "City", render: (value, row) => row.cityName, editor: { … } }
+{ prop: 'cityId', title: 'City', render: (value, row) => row.cityName, editor: { … } }
 ```
 
 A few things to know:
@@ -348,18 +384,28 @@ Outside edit mode, the city cell needs a `render` to show a name instead of an i
 `onSave` gets the edited row and the row as it was before editing. It can be async.
 
 ```ts
-const table = new Tadabut<Employee>(container, {
+import type { SaveContext } from 'tadabut';
+
+async function saveEmployee(row: Employee, { previous }: SaveContext<Employee>) {
+  console.log(`Saving ${previous.name} as ${row.name}`);
+
+  const res = await fetch(`/api/employees/${row.id}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(row),
+  });
+
+  if (!res.ok) throw new Error('Could not save the employee');
+
+  // Optional: the server's version replaces the row.
+  return (await res.json()) as Employee;
+}
+
+const table = new Tadabut(container, {
   data: employees,
   rowId: 'id',
   columns,
-  onSave: async (row, { previous }) => {
-    const res = await fetch(`/api/employees/${row.id}`, {
-      method: 'PUT',
-      body: JSON.stringify(row),
-    });
-    if (!res.ok) throw new Error('Could not save the employee');
-    return res.json(); // optional: the server's version replaces the row
-  },
+  onSave: saveEmployee,
 });
 ```
 
@@ -381,7 +427,7 @@ When at least one column has an `editor`, the table gets one more column at the 
 `editing` changes how that works:
 
 ```ts
-const table = new Tadabut<Employee>(container, {
+const table = new Tadabut(container, {
   data: employees,
   rowId: 'id',
   columns,
@@ -423,25 +469,58 @@ table.destroy(); // remove everything Tadabut created
 
 Same options, as props. Keep `columns` outside your component, or in a `useMemo`, so it doesn't change on every render.
 
+A whole file you can copy:
+
 ```tsx
-import { useRef } from 'react';
+import 'datatables.net-dt';
+import 'datatables.net-dt/css';
+
+import { useRef, useState } from 'react';
 import type { Column } from 'tadabut';
 import { Tadabut, type TadabutHandle } from 'tadabut/react';
 
+type Employee = { id: number; name: string; countryId: number | null };
+
 const columns: Column<Employee>[] = [
-  // …same as above
+  { prop: 'id', title: 'ID' },
+  { prop: 'name', title: 'Name', editor: { type: 'text', required: true } },
+  {
+    prop: 'countryId',
+    title: 'Country',
+    editor: {
+      type: 'select',
+      options: [
+        { value: 1, label: 'Morocco' },
+        { value: 2, label: 'France' },
+      ],
+    },
+  },
 ];
 
-export function Employees({ employees }: { employees: Employee[] }) {
+async function saveEmployee(row: Employee): Promise<void> {
+  const res = await fetch(`/api/employees/${row.id}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(row),
+  });
+
+  if (!res.ok) throw new Error('Could not save the employee');
+}
+
+export default function Employees() {
+  const [employees] = useState<Employee[]>([
+    { id: 1, name: 'Amina', countryId: 1 },
+    { id: 2, name: 'Paul', countryId: 2 },
+  ]);
   const tableRef = useRef<TadabutHandle<Employee>>(null);
 
   return (
     <>
-      <button type="button" onClick={() => tableRef.current?.edit(5)}>
-        Edit employee 5
+      <button type="button" onClick={() => tableRef.current?.edit(1)}>
+        Edit Amina
       </button>
 
-      <Tadabut<Employee>
+      <Tadabut
         ref={tableRef}
         data={employees}
         rowId="id"
@@ -470,8 +549,8 @@ export function Employees({ employees }: { employees: Employee[] }) {
 - [x] Row editing: save, cancel, validation errors
 - [x] Chained selects
 - [x] Show labels instead of raw values in cells
-- [ ] Keyboard support, translations, theming
 - [ ] First release (0.1.0)
+- [ ] Keyboard navigation, translations, theming
 
 Later: adding and deleting rows, popup editing, changing many rows in one go, server-side mode, Vue and jQuery adapters.
 
