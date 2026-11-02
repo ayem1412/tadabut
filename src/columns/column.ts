@@ -35,4 +35,18 @@ type ColumnFor<Row extends object, Key extends keyof Row & string> = {
    * read-only column.
    */
   readonly editor?: EditorFor<Row[Key], Row> & ValidationOptions<Row, Row[Key]>;
+  /**
+   * The text shown in the cell, when the row isn't being edited.
+   *
+   * Without it, a select with a fixed list shows its option's label, and
+   * any other column shows its value as text.
+   *
+   * The result is shown as plain text, never as HTML. Searching uses it,
+   * sorting still uses the raw value.
+   *
+   * @example
+   * render: (value, row) => row.cityName
+   * render: (value) => `${value} MAD`
+   */
+  readonly render?: (value: Row[Key], row: Row) => string;
 };
