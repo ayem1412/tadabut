@@ -3,29 +3,38 @@ import type { Column } from '../src/index';
 export type Row = {
   id: number;
   name: string;
+  /** A country code, like 'MA'. The cell shows its label, like "Morocco". */
   country: string;
   city: string;
   age: number;
 };
 
 export const rows: Row[] = [
-  { id: 1, name: 'Amina Benali', country: 'Morocco', city: 'Rabat', age: 29 },
-  { id: 2, name: 'Youness Idrissi', country: 'Morocco', city: 'Casablanca', age: 34 },
-  { id: 3, name: 'Salma Ait Ouahmane', country: 'Morocco', city: 'Agadir', age: 25 },
-  { id: 4, name: 'Karim El Fassi', country: 'Morocco', city: 'Fès', age: 41 },
-  { id: 5, name: 'Nadia Amrani', country: 'Morocco', city: 'Tanger', age: 37 },
-  { id: 6, name: 'Hamza Ouchen', country: 'Morocco', city: 'Marrakech', age: 22 },
-  { id: 7, name: 'Leila Berrada', country: 'Morocco', city: 'Meknès', age: 31 },
-  { id: 8, name: 'Omar Tazi', country: 'Morocco', city: 'Oujda', age: 45 },
-  { id: 9, name: 'Ilham Zerouali', country: 'Morocco', city: 'Tétouan', age: 28 },
-  { id: 10, name: 'Mehdi Alaoui', country: 'Morocco', city: 'Kénitra', age: 33 },
-  { id: 11, name: 'Sara Lahlou', country: 'France', city: 'Paris', age: 26 },
-  { id: 12, name: 'Anass Bennani', country: 'Spain', city: 'Madrid', age: 39 },
+  { id: 1, name: 'Amina Benali', country: 'MA', city: 'Rabat', age: 29 },
+  { id: 2, name: 'Youness Idrissi', country: 'MA', city: 'Casablanca', age: 34 },
+  { id: 3, name: 'Salma Ait Ouahmane', country: 'MA', city: 'Agadir', age: 25 },
+  { id: 4, name: 'Karim El Fassi', country: 'MA', city: 'Fès', age: 41 },
+  { id: 5, name: 'Nadia Amrani', country: 'MA', city: 'Tanger', age: 37 },
+  { id: 6, name: 'Hamza Ouchen', country: 'MA', city: 'Marrakech', age: 22 },
+  { id: 7, name: 'Leila Berrada', country: 'MA', city: 'Meknès', age: 31 },
+  { id: 8, name: 'Omar Tazi', country: 'MA', city: 'Oujda', age: 45 },
+  { id: 9, name: 'Ilham Zerouali', country: 'MA', city: 'Tétouan', age: 28 },
+  { id: 10, name: 'Mehdi Alaoui', country: 'MA', city: 'Kénitra', age: 33 },
+  { id: 11, name: 'Sara Lahlou', country: 'FR', city: 'Paris', age: 26 },
+  { id: 12, name: 'Anass Bennani', country: 'ES', city: 'Madrid', age: 39 },
 ];
 
-/** What the fake server knows. Atlantis is here so its cities fail to load. */
+/** The countries, by code. Atlantis is here so its cities fail to load. */
+const countries: { value: string; label: string }[] = [
+  { value: 'MA', label: 'Morocco' },
+  { value: 'FR', label: 'France' },
+  { value: 'ES', label: 'Spain' },
+  { value: 'XX', label: 'Atlantis' },
+];
+
+/** What the fake server knows, by country code. */
 const citiesByCountry: Record<string, string[]> = {
-  Morocco: [
+  MA: [
     'Agadir',
     'Casablanca',
     'Fès',
@@ -37,12 +46,10 @@ const citiesByCountry: Record<string, string[]> = {
     'Tanger',
     'Tétouan',
   ],
-  France: ['Lyon', 'Marseille', 'Paris', 'Toulouse'],
-  Spain: ['Barcelona', 'Madrid', 'Sevilla', 'Valencia'],
-  Atlantis: [],
+  FR: ['Lyon', 'Marseille', 'Paris', 'Toulouse'],
+  ES: ['Barcelona', 'Madrid', 'Sevilla', 'Valencia'],
+  XX: [],
 };
-
-const countries = Object.keys(citiesByCountry);
 
 /** Waits `ms`, or stops early with an error when `signal` is aborted. */
 function wait(ms: number, signal: AbortSignal): Promise<void> {
@@ -63,7 +70,7 @@ function wait(ms: number, signal: AbortSignal): Promise<void> {
 async function fetchCities(country: string, signal: AbortSignal): Promise<string[]> {
   await wait(500, signal);
 
-  if (country === 'Atlantis') {
+  if (country === 'XX') {
     throw new Error('The server has no cities for Atlantis');
   }
 
@@ -82,7 +89,8 @@ export const columns: Column<Row>[] = [
     prop: 'country',
     editor: {
       type: 'select',
-      options: countries.map((country) => ({ value: country, label: country })),
+      // A fixed list: the cell shows "Morocco" for 'MA' by itself.
+      options: countries,
     },
   },
   {
@@ -98,7 +106,13 @@ export const columns: Column<Row>[] = [
       },
     },
   },
-  { title: 'Age', prop: 'age', editor: { type: 'number', min: 18, max: 99 } },
+  {
+    title: 'Age',
+    prop: 'age',
+    editor: { type: 'number', min: 18, max: 99 },
+    // Only the text changes: the column still sorts by number.
+    render: (value) => `${value} years`,
+  },
 ];
 
 /** A fake server for both pages: takes 1 second, and refuses the name "error". */

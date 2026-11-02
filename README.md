@@ -1,4 +1,4 @@
-# Tadabut · ⵜⴰⴷⴰⴱⵓⵜ
+# ⵜⴰⴷⴰⴱⵓⵜ · ⵜⴰⴷⴰⴱⵓⵜ
 
 [![CI](https://github.com/ayem1412/tadabut/actions/workflows/ci.yml/badge.svg)](https://github.com/ayem1412/tadabut/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](./LICENSE)
@@ -128,6 +128,29 @@ A few things to know:
 - A checkbox is always `true` or `false`. A `null` value shows as unchecked.
 - A `string | null` column gets the same editors as a `string` column. `null` shows as an empty input.
 - Date columns must hold `'YYYY-MM-DD'`. Something like `'2024-01-05T00:00:00'` shows as empty, and saving turns it into `null`. Convert your dates first.
+
+### What cells show
+
+When a row isn't being edited, a cell shows its value as text. Two things change that:
+
+- A select with a fixed list shows the option's label. A `countryId` of `1` shows "Morocco", with nothing to write.
+- `render` sets the text yourself, on any column:
+
+```ts
+{ prop: "salary", title: "Salary", render: (value) => `${value} MAD` }
+
+// A select whose options come from a function: Tadabut can't know the
+// label, but the row usually has it.
+{ prop: "cityId", title: "City", render: (value, row) => row.cityName, editor: { … } }
+```
+
+A few things to know:
+
+- `render` wins over a select's label.
+- What `render` returns is shown as plain text, never as HTML. `<b>` shows as `<b>`, so text from a server can't break the page or run code.
+- Searching uses the text. Sorting uses the raw value, so `200 MAD` comes before `1000 MAD`. A city column sorts by id, not by name.
+- An empty value (`null` or `undefined`) shows an empty cell. On a nullable column, `render` gets `null` too.
+- Editors always get the raw value. After saving or cancelling, the text is worked out again.
 
 ### Styling
 
@@ -318,7 +341,7 @@ If `options` throws, the select stays empty and "Could not load the options." sh
 
 `dependsOn` only works with a function. With a fixed list, it's a type error. It must be another field of the row, so a typo is a type error too.
 
-Outside edit mode, a cell shows the raw value, like `12` instead of "Rabat". Showing labels there is planned.
+Outside edit mode, the city cell needs a `render` to show a name instead of an id. See [What cells show](#what-cells-show).
 
 ### Saving
 
@@ -446,7 +469,7 @@ export function Employees({ employees }: { employees: Employee[] }) {
 - [x] Custom editors (Select2, date pickers, …)
 - [x] Row editing: save, cancel, validation errors
 - [x] Chained selects
-- [ ] Show labels instead of raw values in cells
+- [x] Show labels instead of raw values in cells
 - [ ] Keyboard support, translations, theming
 - [ ] First release (0.1.0)
 
