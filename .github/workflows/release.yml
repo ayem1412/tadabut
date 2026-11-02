@@ -32,8 +32,9 @@ jobs:
         with:
           node-version: 24
           cache: pnpm
-
       - run: npm install -g npm@latest
       - run: pnpm install --frozen-lockfile
       - run: pnpm check
-      - run: npm publish
+      - run: pnpm pack --pack-destination "$RUNNER_TEMP"
+      - run: npm stage publish ./tadabut-*.tgz
+        working-directory: ${{ runner.temp }}
