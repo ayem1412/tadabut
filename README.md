@@ -549,7 +549,7 @@ export default function Employees() {
 - [x] Row editing: save, cancel, validation errors
 - [x] Chained selects
 - [x] Show labels instead of raw values in cells
-- [ ] First release (0.1.0)
+- [x] First release (0.1.0)
 - [ ] Keyboard navigation, translations, theming
 
 Later: adding and deleting rows, popup editing, changing many rows in one go, server-side mode, Vue and jQuery adapters.
