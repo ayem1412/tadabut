@@ -44,9 +44,11 @@ export type TadabutProps<Row extends object> = TadabutOptions<Row> & {
  *
  * - New `data` updates the table in place: sorting, search and the current
  *   page are kept.
- * - New `columns`, `rowId`, `editing.mode` or `editing.button` rebuild the
- *   table, and any row being edited is lost. Define `columns` outside the
- *   component, or with `useMemo`.
+ * - New `columns`, `rowId`, `editing.mode`, `editing.button` or `classNames`
+ *   values rebuild the table, and any row being edited is lost. Define
+ *   `columns` outside the component, or with `useMemo`.
+ * - `editing` and `classNames` can be new objects on every render: only a
+ *   change in their values rebuilds the table.
  * - `onSave` can be a new function on every render. The table always calls
  *   the latest one, without being rebuilt.
  *
@@ -57,6 +59,7 @@ export function Tadabut<Row extends object>({
   columns,
   rowId,
   editing,
+  classNames,
   onSave,
   ref,
 }: TadabutProps<Row>): ReactElement {
@@ -82,8 +85,16 @@ export function Tadabut<Row extends object>({
    */
   const onSaveRef = useRef(onSave);
 
+  // Strings and booleans compare by value. A new `editing` or `classNames`
+  // object with the same values on every render doesn't rebuild the table,
+  // a real change does.
   const mode = editing?.mode;
   const button = editing?.button;
+  const tableClass = classNames?.table;
+  const buttonClass = classNames?.button;
+  const editClass = classNames?.edit;
+  const saveClass = classNames?.save;
+  const cancelClass = classNames?.cancel;
 
   useEffect(() => {
     const container = containerRef.current;
@@ -97,6 +108,13 @@ export function Tadabut<Row extends object>({
       columns,
       rowId,
       editing: { mode, button },
+      classNames: {
+        table: tableClass,
+        button: buttonClass,
+        edit: editClass,
+        save: saveClass,
+        cancel: cancelClass,
+      },
       onSave: (row, context) => onSaveRef.current?.(row, context),
     });
     tableRef.current = table;
@@ -105,7 +123,7 @@ export function Tadabut<Row extends object>({
       table.destroy();
       tableRef.current = null;
     };
-  }, [columns, rowId, mode, button]);
+  }, [columns, rowId, mode, button, tableClass, buttonClass, editClass, saveClass, cancelClass]);
 
   useEffect(() => {
     dataRef.current = data;

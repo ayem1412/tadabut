@@ -25,7 +25,7 @@ export const rows: Row[] = [
 ];
 
 /** The countries, by code. Atlantis is here so its cities fail to load. */
-const countries: { value: string; label: string }[] = [
+export const countries: { value: string; label: string }[] = [
   { value: 'MA', label: 'Morocco' },
   { value: 'FR', label: 'France' },
   { value: 'ES', label: 'Spain' },
@@ -67,7 +67,7 @@ function wait(ms: number, signal: AbortSignal): Promise<void> {
  * A fake city request: takes half a second, uses `signal` like `fetch`
  * would, and fails for Atlantis.
  */
-async function fetchCities(country: string, signal: AbortSignal): Promise<string[]> {
+export async function fetchCities(country: string, signal: AbortSignal): Promise<string[]> {
   await wait(500, signal);
 
   if (country === 'XX') {

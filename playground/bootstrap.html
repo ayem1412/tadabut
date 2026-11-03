@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Tadabut · Bootstrap</title>
+    <style>
+      /* Tadabut ships no CSS: the errors use Bootstrap's own red. The save
+         error's class is on the message, because Bootstrap sets a color on
+         every cell, which would hide a color set on the row. */
+      .tdb-error,
+      .tdb-save-error-message {
+        color: var(--bs-form-invalid-color);
+        font-size: 0.875em;
+      }
+      /* While editing, line everything up at the top, so an error under one
+         input makes the row taller without moving the other inputs. */
+      .table > tbody > tr.tdb-row-editing > td {
+        vertical-align: top;
+      }
+      /* Plain text cells in that row (like the ID): move the text down to the
+         middle of the small inputs next to it. */
+      .table > tbody > tr.tdb-row-editing > td:not(:has(.tdb-input, .tdb-button)) {
+        padding-top: calc(0.5rem + 4px);
+      }
+      .tdb-row-saving {
+        opacity: 0.5;
+      }
+      .tdb-actions {
+        white-space: nowrap;
+      }
+      .tdb-button + .tdb-button {
+        margin-left: 0.25rem;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container py-4">
+      <h1 class="h3 mb-3">Tadabut · Bootstrap 5</h1>
+
+      <p class="text-body-secondary">
+        Same table as the vanilla page, styled with Bootstrap: <code>datatables.net-bs5</code>,
+        <code>className</code> on each editor, and <code>classNames</code> for the table and the
+        buttons.
+      </p>
+
+      <div id="container"></div>
+    </div>
+
+    <script type="module" src="./bootstrap.ts"></script>
+  </body>
+</html>

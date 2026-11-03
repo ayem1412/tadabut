@@ -367,3 +367,22 @@ describe('render types', () => {
     expect(column.prop).toBe('salary');
   });
 });
+
+describe('classNames types', () => {
+  it('accepts the known keys, and nothing else', () => {
+    const options: TadabutOptions<Row> = {
+      data: [],
+      columns: [],
+      classNames: { table: 'table', button: 'btn', edit: 'a', save: 'b', cancel: 'c' },
+    };
+    const wrong: TadabutOptions<Row> = {
+      data: [],
+      columns: [],
+      // @ts-expect-error 'tabel' is not a classNames key
+      classNames: { tabel: 'table' },
+    };
+
+    expect(options.classNames?.table).toBe('table');
+    expect(wrong.classNames).toBeDefined();
+  });
+});

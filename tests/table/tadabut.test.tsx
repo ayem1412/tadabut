@@ -239,4 +239,42 @@ describe('React Tadabut editing', () => {
 
     expect(container.querySelectorAll('tbody button')).toHaveLength(0);
   });
+
+  it('passes classNames to the table', async () => {
+    await renderWith({ classNames: { table: 'table', save: 'btn-primary' } });
+
+    expect(container.querySelector('table')?.classList.contains('table')).toBe(true);
+  });
+
+  it('keeps the table when classNames is a new object with the same values', async () => {
+    await renderWith({ classNames: { table: 'table' } });
+    const table = container.querySelector('table');
+
+    await renderWith({ classNames: { table: 'table' } });
+
+    expect(container.querySelector('table')).toBe(table);
+  });
+
+  it('rebuilds the table when a classNames value changes', async () => {
+    await renderWith({ classNames: { table: 'table' } });
+    const table = container.querySelector('table');
+
+    await renderWith({ classNames: { table: 'table table-dark' } });
+
+    const rebuilt = container.querySelector('table');
+    expect(rebuilt).not.toBe(table);
+    expect(rebuilt?.classList.contains('table-dark')).toBe(true);
+  });
+
+  it('passes the button classes too', async () => {
+    const ref = createRef<TadabutHandle<Row>>();
+    await renderWith({ ref, classNames: { button: 'btn', save: 'btn-primary' } });
+
+    act(() => {
+      ref.current?.edit(1);
+    });
+
+    const save = container.querySelector('[data-tdb-action="save"]');
+    expect(save?.className).toBe('tdb-button tdb-button-save btn btn-primary');
+  });
 });
