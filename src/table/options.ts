@@ -32,6 +32,36 @@ export type EditingOptions = {
 };
 
 /**
+ * Your own CSS classes for the table and its buttons, like Bootstrap's or
+ * Tailwind's.
+ *
+ * They are added next to the `tdb-` classes, never instead of them, so CSS
+ * that targets `tdb-` classes keeps working.
+ *
+ * @example
+ * // Bootstrap 5
+ * {
+ *   table: 'table table-striped table-hover',
+ *   button: 'btn btn-sm',
+ *   edit: 'btn-outline-primary',
+ *   save: 'btn-primary',
+ *   cancel: 'btn-outline-secondary',
+ * }
+ */
+export type TableClassNames = {
+  /** Added to the `<table>`. */
+  readonly table?: string;
+  /** Added to the Edit, Save and Cancel buttons. */
+  readonly button?: string;
+  /** Added to the Edit button only. */
+  readonly edit?: string;
+  /** Added to the Save button only. */
+  readonly save?: string;
+  /** Added to the Cancel button only. */
+  readonly cancel?: string;
+};
+
+/**
  * Options for creating a Tadabut table.
  *
  * @typeParam Row - The shape of one row. Usually worked out from `data`.
@@ -50,6 +80,8 @@ export type TadabutOptions<Row extends object> = {
   readonly rowId?: keyof Row & string;
   /** How rows are edited. Only used when a column has an `editor`. */
   readonly editing?: EditingOptions;
+  /** Your CSS classes for the table and the buttons, like Bootstrap's. */
+  readonly classNames?: TableClassNames;
   /**
    * Called when a row is saved, after every field passed validation.
    * It can be async.

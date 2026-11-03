@@ -192,36 +192,141 @@ A few things to know:
 
 Tadabut doesn't ship any CSS. Everything it creates gets these classes, so you can style it however you want:
 
-| Class                | Used on                                   |
-| -------------------- | ----------------------------------------- |
-| `tdb-input`          | every input                               |
-| `tdb-input-text`     | text inputs                               |
-| `tdb-input-number`   | number inputs                             |
-| `tdb-input-date`     | date inputs                               |
-| `tdb-input-checkbox` | checkboxes                                |
-| `tdb-input-select`   | selects                                   |
-| `tdb-error`          | a field's error message, under its input  |
-| `tdb-save-error`     | the error under a row that failed to save |
-| `tdb-row-saving`     | a row while it's being saved              |
-| `tdb-actions`        | the column with the buttons, header too   |
-| `tdb-button`         | every button                              |
-| `tdb-button-edit`    | the Edit button                           |
-| `tdb-button-save`    | the Save button                           |
-| `tdb-button-cancel`  | the Cancel button                         |
+| Class                    | Used on                                           |
+| ------------------------ | ------------------------------------------------- |
+| `tdb-input`              | every input                                       |
+| `tdb-input-text`         | text inputs                                       |
+| `tdb-input-number`       | number inputs                                     |
+| `tdb-input-date`         | date inputs                                       |
+| `tdb-input-checkbox`     | checkboxes                                        |
+| `tdb-input-select`       | selects                                           |
+| `tdb-error`              | a field's error message, under its input          |
+| `tdb-save-error`         | the line (`<tr>`) under a row that failed to save |
+| `tdb-save-error-message` | the message inside that line                      |
+| `tdb-row-editing`        | a row while it's being edited                     |
+| `tdb-row-saving`         | a row while it's being saved                      |
+| `tdb-actions`            | the column with the buttons, header too           |
+| `tdb-button`             | every button                                      |
+| `tdb-button-edit`        | the Edit button                                   |
+| `tdb-button-save`        | the Save button                                   |
+| `tdb-button-cancel`      | the Cancel button                                 |
 
-To use Bootstrap, Tailwind or anything else, put your classes in `className`. They get added next to the `tdb-` ones.
+To use Bootstrap, Tailwind or anything else, add your own classes. They always go next to the `tdb-` ones, never instead of them. There are two places:
+
+- `className` on an editor, for its input.
+- `classNames` on the table, for the `<table>` and the buttons.
 
 ```ts
-// Bootstrap
-{ prop: 'name', title: 'Name', editor: { type: 'text', className: 'form-control' } }
-
-// Tailwind
-{ prop: 'name', title: 'Name', editor: { type: 'text', className: 'w-full rounded border px-2 py-1' } }
+const table = new Tadabut(container, {
+  data: employees,
+  rowId: 'id',
+  columns: [
+    { prop: 'id', title: 'ID' },
+    {
+      prop: 'name',
+      title: 'Name',
+      editor: { type: 'text', className: 'w-full rounded border px-2 py-1' },
+    },
+  ],
+  classNames: {
+    table: 'w-full text-sm',
+    button: 'rounded px-2 py-1',
+    save: 'bg-blue-600 text-white',
+  },
+});
 ```
 
-If you use Tailwind: it only keeps classes it finds in your own files. Classes in your column config count, so they work.
+| `classNames` key | Added to                          |
+| ---------------- | --------------------------------- |
+| `table`          | the `<table>`                     |
+| `button`         | the Edit, Save and Cancel buttons |
+| `edit`           | the Edit button only              |
+| `save`           | the Save button only              |
+| `cancel`         | the Cancel button only            |
 
-The table itself is styled by the DataTables package you install: `datatables.net-dt` for the default look, `datatables.net-bs5` for Bootstrap 5, and so on.
+All of them are optional. Tadabut doesn't know any CSS framework: it adds the classes you give it, and nothing else. If you use Tailwind: it only keeps classes it finds in your own files. Classes in your column config count, so they work.
+
+DataTables' own parts (the search box, the page size, the paging buttons) are styled by the DataTables package you install: `datatables.net-dt` for the default look, `datatables.net-bs5` for Bootstrap 5, and so on.
+
+#### With Bootstrap 5
+
+Install the Bootstrap version of DataTables instead of `datatables.net-dt`, and Bootstrap itself:
+
+```sh
+pnpm add tadabut datatables.net-bs5 bootstrap
+```
+
+Import them once:
+
+```ts
+import 'bootstrap/dist/css/bootstrap.min.css';
+import 'datatables.net-bs5';
+import 'datatables.net-bs5/css';
+```
+
+Then give the editors and the table Bootstrap's classes:
+
+```ts
+const columns: Column<Employee>[] = [
+  { prop: 'id', title: 'ID' },
+  {
+    prop: 'name',
+    title: 'Name',
+    editor: { type: 'text', className: 'form-control form-control-sm' },
+  },
+  {
+    prop: 'countryId',
+    title: 'Country',
+    editor: {
+      type: 'select',
+      className: 'form-select form-select-sm',
+      options: [
+        { value: 1, label: 'Morocco' },
+        { value: 2, label: 'France' },
+      ],
+    },
+  },
+  { prop: 'active', title: 'Active', editor: { type: 'checkbox', className: 'form-check-input' } },
+];
+
+const table = new Tadabut(container, {
+  data: employees,
+  rowId: 'id',
+  columns,
+  classNames: {
+    table: 'table table-striped table-hover align-middle',
+    button: 'btn btn-sm',
+    edit: 'btn-outline-primary',
+    save: 'btn-primary',
+    cancel: 'btn-outline-secondary',
+  },
+});
+```
+
+Error messages and the rows being edited need a few lines of your own CSS:
+
+```css
+/* Errors in Bootstrap's red. Use the message's class, not the row's:
+   Bootstrap sets a color on every table cell. */
+.tdb-error,
+.tdb-save-error-message {
+  color: var(--bs-form-invalid-color);
+  font-size: 0.875em;
+}
+
+/* While editing, line the inputs up at the top, so an error under one
+   input doesn't move the others. */
+.table > tbody > tr.tdb-row-editing > td {
+  vertical-align: top;
+}
+
+.tdb-row-saving {
+  opacity: 0.5;
+}
+```
+
+> [!TIP]
+> Each DataTables styling package needs one exact version of `datatables.net`. Don't add `datatables.net` yourself next to it. If you have to, use the same version as the styling package. Two different versions means two copies of DataTables: the table works, but the Bootstrap look doesn't show up on the search box and the paging buttons.
 
 ### Custom editors
 

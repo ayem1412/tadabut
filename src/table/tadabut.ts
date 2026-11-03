@@ -2,7 +2,8 @@ import DataTable, { type Api, type ApiRowMethods } from 'datatables.net';
 import type { Column } from '../columns/column';
 import { toDataTables } from '../columns/to-datatables';
 import { type EditableCell, EditSession } from '../editing/session';
-import type { EditingOptions, TadabutOptions } from './options';
+import { addClasses, splitClasses } from '../editors/classes';
+import type { EditingOptions, TableClassNames, TadabutOptions } from './options';
 
 /**
  * A DataTables table, created and owned by Tadabut.
@@ -27,6 +28,8 @@ export class Tadabut<Row extends object> {
   private readonly columns: readonly Column<Row>[];
   /** The `editing` option, with its defaults filled in. */
   private readonly editing: Required<EditingOptions>;
+  /** The user's extra classes. `{}` when there are none. */
+  private readonly classNames: TableClassNames;
   private readonly onSave: TadabutOptions<Row>['onSave'];
   /** Whether the table has the actions column, with the Edit buttons. */
   private readonly hasActions: boolean;
@@ -59,14 +62,16 @@ export class Tadabut<Row extends object> {
     };
     this.hasActions = this.hasEditor && this.editing.button;
     this.onSave = options.onSave;
+    this.classNames = options.classNames ?? {};
 
     this.tableEl = document.createElement('table');
+    addClasses(this.tableEl, [], this.classNames.table);
     container.appendChild(this.tableEl);
 
     this.dataTable = new DataTable(this.tableEl, {
       // Copy, so DataTables never holds or changes the caller's array.
       data: [...options.data],
-      columns: toDataTables(options.columns, this.hasActions),
+      columns: toDataTables(options.columns, this.hasActions, this.classNames),
     });
 
     if (this.hasActions) {
@@ -138,6 +143,9 @@ export class Tadabut<Row extends object> {
     });
 
     this.sessions.set(id, new EditSession(row.data(), cells));
+    // A hook for CSS, like `vertical-align: top` so an error under one input
+    // doesn't move the others.
+    row.node()?.classList.add('tdb-row-editing');
 
     // The actions column comes right after the user's columns. Cancel and
     // save rebuild the row's cells, and DataTables puts Edit back by itself.
@@ -145,7 +153,14 @@ export class Tadabut<Row extends object> {
       this.dataTable
         .cell(rowIndex, this.columns.length)
         .node()
-        .replaceChildren(actionButton('save', 'Save'), actionButton('cancel', 'Cancel'));
+        .replaceChildren(
+          actionButton('save', 'Save', splitClasses(this.classNames.button, this.classNames.save)),
+          actionButton(
+            'cancel',
+            'Cancel',
+            splitClasses(this.classNames.button, this.classNames.cancel),
+          ),
+        );
     }
 
     return true;
@@ -172,6 +187,7 @@ export class Tadabut<Row extends object> {
     this.sessions.delete(id);
 
     this.clearSaveError(id);
+    this.findRow(id)?.node()?.classList.remove('tdb-row-editing');
 
     // 'data': the row's data is right, rebuild its cells from it. Without
     // it, DataTables could read the now empty cells back into the data.
@@ -263,6 +279,7 @@ export class Tadabut<Row extends object> {
     this.findRow(id)
       ?.data({ ...saved })
       .draw(false);
+    this.findRow(id)?.node()?.classList.remove('tdb-row-editing');
     this.setSaving(id, false);
 
     return true;
@@ -332,14 +349,19 @@ export class Tadabut<Row extends object> {
   }
 
   /**
-   * Shows a save error on its own line under the row, with the
-   * `tdb-save-error` class.
+   * Shows a save error on its own line under the row. The line (a `<tr>`)
+   * gets `tdb-save-error`, and the message inside it gets
+   * `tdb-save-error-message`.
+   *
+   * The message needs its own class: frameworks like Bootstrap set a color
+   * on every table cell, which hides a color set on the `<tr>`.
    *
    * The message is set as text, never as HTML: it often comes from a server,
    * and HTML in it could run code in the page.
    */
   private showSaveError(id: string | number, message: string): void {
     const error = document.createElement('div');
+    error.className = 'tdb-save-error-message';
     error.textContent = message;
 
     this.findRow(id)?.child(error, 'tdb-save-error').show();
@@ -395,6 +417,7 @@ export class Tadabut<Row extends object> {
         this.edit(id);
         break;
       case 'save':
+        // save handles its own errors, so nothing is left to catch here.
         void this.save(id);
         break;
       case 'cancel':
@@ -409,21 +432,29 @@ export class Tadabut<Row extends object> {
    * An arrow function, for the same reasons as `onClick`.
    */
   private readonly onKeyDown = (event: KeyboardEvent): void => {
+    // Something already used this key, like Select2 picking an option with
+    // Enter. It's not ours to handle.
     if (event.defaultPrevented) {
       return;
     }
 
+    // On a button, Enter clicks it: Enter on Cancel must cancel, not save.
+    // The click listener handles that.
     if (!(event.target instanceof Element) || event.target.closest('button')) {
       return;
     }
 
     const id = this.rowIdOf(event.target);
+
     if (id === undefined || !this.sessions.has(id)) {
       return;
     }
 
+    // event.key, not event.code: key is what the key means (Enter), code is
+    // where it sits on the keyboard. The numpad Enter is also 'Enter'.
     switch (event.key) {
       case 'Enter':
+        // Stops the browser from also submitting a <form> around the table.
         event.preventDefault();
         void this.save(id);
         break;
@@ -440,11 +471,17 @@ export class Tadabut<Row extends object> {
  *
  * Built with `createElement`, not an HTML string, so a label can never be
  * read as HTML, even once labels can be translated.
+ *
+ * @param extra The user's classes from `classNames`, already split.
  */
-function actionButton(action: 'save' | 'cancel', label: string): HTMLButtonElement {
+function actionButton(
+  action: 'save' | 'cancel',
+  label: string,
+  extra: readonly string[],
+): HTMLButtonElement {
   const button = document.createElement('button');
   button.type = 'button';
-  button.className = `tdb-button tdb-button-${action}`;
+  button.classList.add('tdb-button', `tdb-button-${action}`, ...extra);
   button.dataset.tdbAction = action;
   button.textContent = label;
 

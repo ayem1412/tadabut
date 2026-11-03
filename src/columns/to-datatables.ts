@@ -1,6 +1,8 @@
 import type { ColumnOptions } from 'datatables.net';
 
+import { splitClasses } from '../editors/classes';
 import type { AnyEditor } from '../editors/editor';
+import type { TableClassNames } from '../table/options';
 import type { Column } from './column';
 import { escapeHtml } from './escape';
 
@@ -8,19 +10,27 @@ import { escapeHtml } from './escape';
  * The last column, with the Edit button. When a row is being edited, its
  * cell holds Save and Cancel instead.
  *
- * The HTML is a string because it is our own fixed text, never user data,
- * so nothing in it can run code.
+ * DataTables wants the button as an HTML string. The user's classes go
+ * inside that string, so they are escaped: a class like `x" onclick="…`
+ * stays a (strange) class, and can't close the attribute and add code.
  */
-const actionsColumn: ColumnOptions = {
-  title: '',
-  data: null,
-  className: 'tdb-actions',
-  // Nobody sorts by buttons, and searching "Edit" shouldn't match every row.
-  orderable: false,
-  searchable: false,
-  defaultContent:
-    '<button type="button" class="tdb-button tdb-button-edit" data-tdb-action="edit">Edit</button>',
-};
+function actionsColumn(classNames: TableClassNames): ColumnOptions {
+  const classes = [
+    'tdb-button',
+    'tdb-button-edit',
+    ...splitClasses(classNames.button, classNames.edit),
+  ].join(' ');
+
+  return {
+    title: '',
+    data: null,
+    className: 'tdb-actions',
+    // Nobody sorts by buttons, and searching "Edit" shouldn't match every row.
+    orderable: false,
+    searchable: false,
+    defaultContent: `<button type="button" class="${escapeHtml(classes)}" data-tdb-action="edit">Edit</button>`,
+  };
+}
 
 /**
  * A column with its value type forgotten. `Column<Row>` is a union with one
@@ -42,12 +52,16 @@ type LooseColumn<Row> = {
  * @param withActions Adds the actions column at the end. It must stay last:
  *   the user's columns keep their positions, and Tadabut finds cells by
  *   position.
+ * @param classNames The user's classes. Only the Edit button uses them here.
  */
 export function toDataTables<Row extends object>(
   columns: readonly Column<Row>[],
   withActions: boolean,
+  classNames: TableClassNames,
 ): ColumnOptions[] {
   const converted = columns.map((column): ColumnOptions => {
+    // Safe: `Column<Row>` already checked that `render` and `editor` fit the
+    // column's value.
     const label = labelOf(column as LooseColumn<Row>);
 
     return {
@@ -58,18 +72,23 @@ export function toDataTables<Row extends object>(
       render: (value: unknown, type: unknown, row: Row) => {
         switch (type) {
           case 'display':
+            // Put in the cell as HTML by DataTables: escape it.
             return escapeHtml(label(value, row));
+
           case 'filter':
+            // Only searched, never put in the page: no need to escape.
             return label(value, row);
+
           default:
+            // Sorting uses the real value, so 200 comes before 1000.
             return value;
         }
       },
     };
   });
 
-  // A copy for each table, in case DataTables changes the object it gets.
-  return withActions ? [...converted, { ...actionsColumn }] : converted;
+  // A new object on each call, so tables never share it.
+  return withActions ? [...converted, actionsColumn(classNames)] : converted;
 }
 
 /**

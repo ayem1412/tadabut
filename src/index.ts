@@ -24,6 +24,11 @@ export type {
   SelectOptionsLoader,
 } from './editors/select';
 export type { TextEditor } from './editors/text';
-export type { EditingOptions, SaveContext, TadabutOptions } from './table/options';
+export type {
+  EditingOptions,
+  SaveContext,
+  TableClassNames,
+  TadabutOptions,
+} from './table/options';
 export { Tadabut } from './table/tadabut';
 export type { ValidationOptions } from './validation/rules';
