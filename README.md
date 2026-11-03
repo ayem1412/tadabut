@@ -650,6 +650,8 @@ export default function Employees() {
 
 ## Roadmap
 
+Done:
+
 - [x] Project setup
 - [x] Thin wrapper: typed columns, data loading, cleanup
 - [x] React adapter
@@ -659,9 +661,27 @@ export default function Employees() {
 - [x] Chained selects
 - [x] Show labels instead of raw values in cells
 - [x] First release (0.1.0)
-- [ ] Keyboard navigation, translations, theming
+- [x] Your own classes on the table and buttons (`classNames`), and a Bootstrap 5 recipe
+- [x] API reference site
 
-Later: adding and deleting rows, popup editing, changing many rows in one go, server-side mode, Vue and jQuery adapters.
+Next, roughly in this order:
+
+- [ ] Pass DataTables settings through (paging, page sizes, default order, language, extensions like Buttons), and column `width`, `visible`, `orderable`, `searchable` and `className`
+- [ ] Selects that also save their label in the row (`labelProp`), so the cell shows the new label after a save
+- [ ] Translations for Tadabut's own texts (buttons and error messages), French first
+- [ ] Adding new rows, and deleting rows, with a confirmation step
+- [ ] Checkboxes with your own values, like `'O'` and `'N'` instead of `true` and `false`
+- [ ] Money inputs, formatted while typing (`12 500.00`)
+- [ ] Dates as `dd/mm/yyyy`, in the input and when sorting
+- [ ] Totals in the footer
+- [ ] A checkbox column to select rows, with "check all"
+- [ ] More events: when editing starts, after saving, row click and double click
+- [ ] Detail rows that open under a row
+- [ ] Time and read-only inputs
+- [ ] Methods to read rows (`getData`, `getRow`), add and remove rows from code, and reach the DataTables API
+- [ ] Keyboard navigation and theming
+
+Later: popup editing, changing many rows in one go, server-side mode, Vue and jQuery adapters.
 
 ## Contributing
 
