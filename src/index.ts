@@ -8,6 +8,7 @@
  * For React, use the `tadabut/react` entry point.
  *
  * @packageDocumentation
+ * @module tadabut
  */
 
 export type { Column } from './columns/column';

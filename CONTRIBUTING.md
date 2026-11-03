@@ -25,9 +25,12 @@ pnpm dev
 | `pnpm lint`      | Checks formatting and lint rules       |
 | `pnpm format`    | Fixes formatting and sorts imports     |
 | `pnpm build`     | Builds the library into `dist/`        |
+| `pnpm docs`      | Builds the API docs into `docs-site/`  |
 | `pnpm check`     | Runs everything once                   |
 
 Run `pnpm check` before you push. CI runs the same thing.
+
+`pnpm docs` uses TypeScript 6 on purpose: TypeDoc can't read TypeScript 7 yet. It downloads both by itself the first time, so there's nothing to install.
 
 Formatting is done by [Biome](https://biomejs.dev). Set your editor to use it. Please don't add Prettier or ESLint.
 
@@ -44,6 +47,7 @@ src/
   react/        the React adapter
 tests/          same folders as src/
 playground/     pages to try things by hand
+typedoc.json    settings for the API docs
 ```
 
 Code is grouped by feature. A new feature gets its own folder. If you add one, add it to this list too.
@@ -63,7 +67,7 @@ The public API:
 
 - `src/index.ts` is the only place things are exported from.
 - Export as little as you can. Every export is something users will depend on.
-- Every export has a `/** */` comment. Users see it when they hover.
+- Every export has a `/** */` comment. Users see it when they hover, and `pnpm docs` turns these comments into the [API reference](https://ayem1412.github.io/tadabut/). Write them for someone who has never seen the code.
 
 TypeScript:
 
@@ -140,7 +144,7 @@ Say what you changed and why. Link the issue if there is one. CI has to pass bef
 
 Tadabut follows [semver](https://semver.org). Before 1.0, `0.x.0` is for new features and breaking changes, and `0.0.x` is for fixes.
 
-Versions are picked from the commits on `master` by [release-please](https://github.com/googleapis/release-please): `feat` gives a new `0.x.0`, `fix` gives a new `0.0.x`. It keeps a release pull request open with the next version and the changelog. Merging it tags the release and publishes it to npm.
+Versions are picked from the commits on `master` by [release-please](https://github.com/googleapis/release-please): `feat` gives a new `0.x.0`, `fix` gives a new `0.0.x`. It keeps a release pull request open with the next version and the changelog. Merging it tags the release and sends it to npm, where it waits until a maintainer approves it.
 
 Don't change the version or `CHANGELOG.md` in your pull request.
 

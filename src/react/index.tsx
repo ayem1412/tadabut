@@ -1,12 +1,15 @@
 /**
  * React adapter for Tadabut.
  *
+ * @packageDocumentation
+ * @module tadabut/react
+ *
  * @example
+ * ```tsx
  * import { Tadabut } from 'tadabut/react';
  *
  * <Tadabut data={employees} columns={columns} rowId='id' />
- *
- * @packageDocumentation
+ * ```
  */
 
 import { type ReactElement, type Ref, useEffect, useImperativeHandle, useRef } from 'react';
