@@ -65,6 +65,13 @@ export function toDataTables<Row extends object>(
     const label = labelOf(column as LooseColumn<Row>);
 
     return {
+      ...defined({
+        width: column.width,
+        visible: column.visible,
+        orderable: column.orderable,
+        searchable: column.searchable,
+        className: column.className,
+      }),
       title: column.title,
       data: column.prop,
       // DataTables asks for a cell's value for four jobs, by `type`:
@@ -72,15 +79,10 @@ export function toDataTables<Row extends object>(
       render: (value: unknown, type: unknown, row: Row) => {
         switch (type) {
           case 'display':
-            // Put in the cell as HTML by DataTables: escape it.
             return escapeHtml(label(value, row));
-
           case 'filter':
-            // Only searched, never put in the page: no need to escape.
             return label(value, row);
-
           default:
-            // Sorting uses the real value, so 200 comes before 1000.
             return value;
         }
       },
@@ -114,4 +116,17 @@ function labelOf<Row>(column: LooseColumn<Row>): (value: unknown, row: Row) => s
 /** The value as text. `null` and `undefined` give an empty cell. */
 function asText(value: unknown): string {
   return value === null || value === undefined ? '' : String(value);
+}
+
+/**
+ * A copy of `values` without the keys whose value is `undefined`.
+ *
+ * @example
+ * defined({ width: '60px', visible: undefined }) // { width: '60px' }
+ */
+function defined<T extends object>(values: T): Partial<T> {
+  const kept = Object.entries(values).filter(([, value]) => value !== undefined);
+
+  // Safe: only keys of `values` are kept, with their own values.
+  return Object.fromEntries(kept) as Partial<T>;
 }

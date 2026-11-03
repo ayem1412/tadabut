@@ -5,7 +5,7 @@ import { StrictMode, useRef, useState } from 'react';
 import { createRoot } from 'react-dom/client';
 
 import { Tadabut, type TadabutHandle } from '../src/react/index';
-import { columns, fakeSave, type Row, rows } from './data';
+import { columns, fakeSave, type Row, rows, settings } from './data';
 
 function App() {
   const [data, setData] = useState(rows);
@@ -37,6 +37,11 @@ function App() {
         data={data}
         columns={columns}
         rowId='id'
+        // A constant from data.ts: a new object here would rebuild the
+        // table on every render.
+        dataTables={settings}
+        // A new function on every render, on purpose: it must not rebuild
+        // the table.
         onSave={async (row) => {
           await fakeSave(row);
           setStatus(`Saved ${row.name}`);

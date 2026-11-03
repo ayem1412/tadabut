@@ -2,7 +2,7 @@ import 'datatables.net-dt';
 import 'datatables.net-dt/css';
 
 import { type EditingOptions, Tadabut } from '../src/index';
-import { columns, fakeSave, type Row, rows } from './data';
+import { columns, fakeSave, french, type Row, rows, settings } from './data';
 
 const container = document.querySelector<HTMLElement>('#container');
 const createBtn = document.querySelector<HTMLButtonElement>('#create');
@@ -10,6 +10,7 @@ const destroyBtn = document.querySelector<HTMLButtonElement>('#destroy');
 const randomDataBtn = document.querySelector<HTMLButtonElement>('#random-data');
 const modeSelect = document.querySelector<HTMLSelectElement>('#mode');
 const buttonsCheckbox = document.querySelector<HTMLInputElement>('#buttons');
+const frenchCheckbox = document.querySelector<HTMLInputElement>('#french');
 const status = document.querySelector<HTMLElement>('#status');
 
 if (
@@ -19,6 +20,7 @@ if (
   !randomDataBtn ||
   !modeSelect ||
   !buttonsCheckbox ||
+  !frenchCheckbox ||
   !status
 ) {
   throw new Error('Playground: missing elements in vanilla.html');
@@ -32,7 +34,14 @@ const createTable = (): Tadabut<Row> => {
     button: buttonsCheckbox.checked,
   };
 
-  return new Tadabut(container, { data: rows, columns, rowId: 'id', onSave: fakeSave, editing });
+  return new Tadabut(container, {
+    data: rows,
+    columns,
+    rowId: 'id',
+    onSave: fakeSave,
+    editing,
+    dataTables: frenchCheckbox.checked ? { ...settings, language: french } : settings,
+  });
 };
 
 const updateStatus = (): void => {
@@ -42,7 +51,7 @@ const updateStatus = (): void => {
   status.textContent = `Elements inside container: ${container.childElementCount}`;
 };
 
-/** The editing options are only read when a table is created, so rebuild it. */
+/** The options are only read when a table is created, so rebuild it. */
 const recreate = (): void => {
   if (table === null) {
     return;
@@ -70,6 +79,7 @@ randomDataBtn.addEventListener('click', () => {
 
 modeSelect.addEventListener('change', recreate);
 buttonsCheckbox.addEventListener('change', recreate);
+frenchCheckbox.addEventListener('change', recreate);
 
 table = createTable();
 updateStatus();

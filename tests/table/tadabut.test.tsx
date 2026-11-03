@@ -277,4 +277,29 @@ describe('React Tadabut editing', () => {
     const save = container.querySelector('[data-tdb-action="save"]');
     expect(save?.className).toBe('tdb-button tdb-button-save btn btn-primary');
   });
+
+  it('passes dataTables to the table', async () => {
+    await renderWith({ dataTables: { pageLength: 2 } });
+
+    expect(container.querySelectorAll('tbody tr')).toHaveLength(2);
+  });
+
+  it('keeps the table when dataTables is the same object', async () => {
+    const settings = { pageLength: 2 };
+    await renderWith({ dataTables: settings });
+    const table = container.querySelector('table');
+
+    await renderWith({ dataTables: settings });
+
+    expect(container.querySelector('table')).toBe(table);
+  });
+
+  it('rebuilds the table when dataTables is a new object', async () => {
+    await renderWith({ dataTables: { pageLength: 2 } });
+    const table = container.querySelector('table');
+
+    await renderWith({ dataTables: { pageLength: 2 } });
+
+    expect(container.querySelector('table')).not.toBe(table);
+  });
 });

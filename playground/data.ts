@@ -1,4 +1,4 @@
-import type { Column } from '../src/index';
+import type { Column, DataTablesSettings } from '../src/index';
 
 export type Row = {
   id: number;
@@ -78,7 +78,8 @@ export async function fetchCities(country: string, signal: AbortSignal): Promise
 }
 
 export const columns: Column<Row>[] = [
-  { title: 'ID', prop: 'id' },
+  // A narrow, centered column. `dt-center` comes with DataTables' own CSS.
+  { title: 'ID', prop: 'id', width: '60px', className: 'dt-center' },
   {
     title: 'Name',
     prop: 'name',
@@ -123,3 +124,24 @@ export async function fakeSave(row: Row): Promise<void> {
     throw new Error('The server refused this name');
   }
 }
+
+/**
+ * DataTables settings shared by the pages: sort by name, and more page sizes.
+ * A constant, so the React page doesn't rebuild the table on every render.
+ */
+export const settings: DataTablesSettings = {
+  order: [[1, 'asc']],
+  lengthMenu: [5, 10, 20, -1],
+};
+
+/** DataTables' texts in French, to try `language`. */
+export const french: DataTablesSettings['language'] = {
+  search: 'Rechercher:',
+  lengthMenu: '_MENU_ lignes par page',
+  info: 'Lignes _START_ à _END_ sur _TOTAL_',
+  infoEmpty: 'Aucune ligne',
+  infoFiltered: '(filtré de _MAX_ lignes)',
+  zeroRecords: 'Aucune ligne trouvée',
+  emptyTable: 'Aucune donnée',
+  // paginate: { first: 'Premier', previous: 'Précédent', next: 'Suivant', last: 'Dernier' },
+};

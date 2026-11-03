@@ -61,7 +61,7 @@ The core:
 - The core never imports React, Vue or jQuery. That code goes in an adapter, like `src/react/`.
 - Adapters stay small. They create the table, update it, and destroy it. Real logic goes in the core.
 - Adapters import from `src/index.ts` only.
-- DataTables types don't show up in the public API.
+- DataTables types don't show up in the public API, except `DataTablesSettings`: the escape hatch for DataTables' own settings. Anything Tadabut controls (like `data` and `columns`) is taken out of it with `Omit`.
 
 The public API:
 

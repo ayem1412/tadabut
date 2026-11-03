@@ -192,6 +192,69 @@ A few things to know:
 - An empty value (`null` or `undefined`) shows an empty cell. On a nullable column, `render` gets `null` too.
 - Editors always get the raw value. After saving or cancelling, the text is worked out again.
 
+### Column options
+
+A few more column settings, passed to DataTables:
+
+```ts
+const columns: Column<Employee>[] = [
+  { prop: 'id', title: 'ID', width: '60px', className: 'dt-center' },
+  { prop: 'name', title: 'Name', editor: { type: 'text' } },
+  { prop: 'countryCode', title: 'Code', visible: false },
+  { prop: 'salary', title: 'Salary', orderable: false, searchable: false },
+];
+```
+
+| Option       | What it does                                                                |
+| ------------ | --------------------------------------------------------------------------- |
+| `width`      | the column's width, like `'60px'` or `'20%'`                                |
+| `visible`    | `false` hides the column. Its value stays in the row, and `onSave` gets it. |
+| `orderable`  | `false`: clicking the header doesn't sort by it                             |
+| `searchable` | `false`: the search box ignores it                                          |
+| `className`  | classes for the column's cells, header included                             |
+
+`className` here is for the cells. The input's classes go in the editor's `className`.
+
+A hidden column can't have an `editor`: nobody could see the input. Tadabut throws an error when you try.
+
+### DataTables settings
+
+`dataTables` passes DataTables' own settings through as they are: paging, page sizes, the default order, the texts, and the settings of extensions like Buttons. See [DataTables' options](https://datatables.net/reference/option/) for the full list.
+
+```ts
+const table = new Tadabut(container, {
+  data: employees,
+  rowId: 'id',
+  columns,
+  dataTables: {
+    order: [[1, 'asc']], // sort by the second column
+    pageLength: 20,
+    lengthMenu: [10, 20, 50, -1], // -1 means "All"
+    language: {
+      search: 'Rechercher :',
+      lengthMenu: '_MENU_ lignes par page',
+      info: 'Lignes _START_ à _END_ sur _TOTAL_',
+      zeroRecords: 'Aucune ligne trouvée',
+      paginate: { first: 'Premier', previous: 'Précédent', next: 'Suivant', last: 'Dernier' },
+    },
+  },
+});
+```
+
+Columns are counted from 0, in the order of your `columns`. The Edit button column always comes last, so it never moves your columns.
+
+Five settings aren't allowed, because Tadabut controls them:
+
+- `data` and `columns`: Tadabut makes them from its own `data` and `columns`.
+- `columnDefs`: use the column options above instead.
+- `ajax` and `serverSide`: DataTables would load and replace rows behind Tadabut's back. Load the rows yourself and call `setData`.
+
+These are type errors, and Tadabut's own values win even in plain JavaScript.
+
+`language` only changes DataTables' texts. Tadabut's own texts (the Edit, Save and Cancel buttons, and error messages) are still in English for now.
+
+In React, keep `dataTables` outside your component or in a `useMemo`, like `columns`. A new object on every render rebuilds the table.
+
 ### Styling
 
 Tadabut doesn't ship any CSS. Everything it creates gets these classes, so you can style it however you want:
@@ -663,10 +726,10 @@ Done:
 - [x] First release (0.1.0)
 - [x] Your own classes on the table and buttons (`classNames`), and a Bootstrap 5 recipe
 - [x] API reference site
+- [x] Pass DataTables settings through (paging, page sizes, default order, language, extensions like Buttons), and column `width`, `visible`, `orderable`, `searchable` and `className`
 
 Next, roughly in this order:
 
-- [ ] Pass DataTables settings through (paging, page sizes, default order, language, extensions like Buttons), and column `width`, `visible`, `orderable`, `searchable` and `className`
 - [ ] Selects that also save their label in the row (`labelProp`), so the cell shows the new label after a save
 - [ ] Translations for Tadabut's own texts (buttons and error messages), French first
 - [ ] Adding new rows, and deleting rows, with a confirmation step

@@ -1,3 +1,4 @@
+import type { Config } from 'datatables.net';
 import type { Column } from '../columns/column';
 
 /**
@@ -62,6 +63,34 @@ export type TableClassNames = {
 };
 
 /**
+ * DataTables' own settings, like `paging`, `pageLength`, `order` or
+ * `language`, passed to DataTables as they are. Settings from DataTables
+ * extensions, like Buttons, work too.
+ *
+ * All of DataTables' settings are allowed except these, which Tadabut needs
+ * to control itself:
+ * - `data` and `columns`: Tadabut makes them from its own `data` and
+ *   `columns`.
+ * - `columnDefs`: it would change columns behind Tadabut's back. Use the
+ *   column options instead (`width`, `visible`, …).
+ * - `ajax` and `serverSide`: DataTables would load and replace the rows by
+ *   itself, without Tadabut knowing.
+ *
+ * See {@link https://datatables.net/reference/option/ | DataTables' options}.
+ *
+ * @example
+ * {
+ *   order: [[1, 'asc']],
+ *   pageLength: 20,
+ *   language: { search: 'Rechercher :' },
+ * }
+ */
+export type DataTablesSettings = Omit<
+  Config,
+  'data' | 'columns' | 'columnDefs' | 'ajax' | 'serverSide'
+>;
+
+/**
  * Options for creating a Tadabut table.
  *
  * @typeParam Row - The shape of one row. Usually worked out from `data`.
@@ -82,6 +111,11 @@ export type TadabutOptions<Row extends object> = {
   readonly editing?: EditingOptions;
   /** Your CSS classes for the table and the buttons, like Bootstrap's. */
   readonly classNames?: TableClassNames;
+  /**
+   * DataTables' own settings, passed as they are. Tadabut's own options win
+   * when both set the same thing.
+   */
+  readonly dataTables?: DataTablesSettings;
   /**
    * Called when a row is saved, after every field passed validation.
    * It can be async.

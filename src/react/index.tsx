@@ -47,9 +47,10 @@ export type TadabutProps<Row extends object> = TadabutOptions<Row> & {
  *
  * - New `data` updates the table in place: sorting, search and the current
  *   page are kept.
- * - New `columns`, `rowId`, `editing.mode`, `editing.button` or `classNames`
- *   values rebuild the table, and any row being edited is lost. Define
- *   `columns` outside the component, or with `useMemo`.
+ * - New `columns`, `rowId`, `dataTables`, `editing.mode`, `editing.button`
+ *   or `classNames` values rebuild the table, and any row being edited is
+ *   lost. Define `columns` and `dataTables` outside the component, or with
+ *   `useMemo`: a new object on every render would rebuild it every time.
  * - `editing` and `classNames` can be new objects on every render: only a
  *   change in their values rebuilds the table.
  * - `onSave` can be a new function on every render. The table always calls
@@ -63,6 +64,7 @@ export function Tadabut<Row extends object>({
   rowId,
   editing,
   classNames,
+  dataTables,
   onSave,
   ref,
 }: TadabutProps<Row>): ReactElement {
@@ -111,6 +113,7 @@ export function Tadabut<Row extends object>({
       columns,
       rowId,
       editing: { mode, button },
+      dataTables,
       classNames: {
         table: tableClass,
         button: buttonClass,
@@ -126,7 +129,20 @@ export function Tadabut<Row extends object>({
       table.destroy();
       tableRef.current = null;
     };
-  }, [columns, rowId, mode, button, tableClass, buttonClass, editClass, saveClass, cancelClass]);
+  }, [
+    columns,
+    rowId,
+    // As an object, like `columns`: it's too big and nested to compare by
+    // value. Users keep it stable with `useMemo` or a constant.
+    dataTables,
+    mode,
+    button,
+    tableClass,
+    buttonClass,
+    editClass,
+    saveClass,
+    cancelClass,
+  ]);
 
   useEffect(() => {
     dataRef.current = data;
