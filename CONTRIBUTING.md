@@ -25,12 +25,12 @@ pnpm dev
 | `pnpm lint`      | Checks formatting and lint rules       |
 | `pnpm format`    | Fixes formatting and sorts imports     |
 | `pnpm build`     | Builds the library into `dist/`        |
-| `pnpm docs`      | Builds the API docs into `docs-site/`  |
+| `pnpm run docs`  | Builds the API docs into `docs-site/`  |
 | `pnpm check`     | Runs everything once                   |
 
 Run `pnpm check` before you push. CI runs the same thing.
 
-`pnpm docs` uses TypeScript 6 on purpose: TypeDoc can't read TypeScript 7 yet. It downloads both by itself the first time, so there's nothing to install.
+`pnpm run docs` (with `run`: `pnpm docs` alone is a pnpm command that opens a package's website) uses TypeScript 6 on purpose: TypeDoc can't read TypeScript 7 yet. It downloads both by itself the first time, so there's nothing to install.
 
 Formatting is done by [Biome](https://biomejs.dev). Set your editor to use it. Please don't add Prettier or ESLint.
 
@@ -67,7 +67,7 @@ The public API:
 
 - `src/index.ts` is the only place things are exported from.
 - Export as little as you can. Every export is something users will depend on.
-- Every export has a `/** */` comment. Users see it when they hover, and `pnpm docs` turns these comments into the [API reference](https://ayem1412.github.io/tadabut/). Write them for someone who has never seen the code.
+- Every export has a `/** */` comment. Users see it when they hover, and `pnpm run docs` turns these comments into the [API reference](https://ayem1412.github.io/tadabut/). Write them for someone who has never seen the code.
 
 TypeScript:
 
