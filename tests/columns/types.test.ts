@@ -386,3 +386,59 @@ describe('classNames types', () => {
     expect(wrong.classNames).toBeDefined();
   });
 });
+
+describe('DataTables settings and column options types', () => {
+  it('accepts DataTables settings', () => {
+    const options: TadabutOptions<Row> = {
+      data: [],
+      columns: [],
+      dataTables: { order: [[0, 'asc']], pageLength: 20, paging: true },
+    };
+
+    expect(options.dataTables?.pageLength).toBe(20);
+  });
+
+  it('rejects the settings Tadabut controls', () => {
+    const withData: TadabutOptions<Row> = {
+      data: [],
+      columns: [],
+      // @ts-expect-error data is set by Tadabut
+      dataTables: { data: [] },
+    };
+    const withColumns: TadabutOptions<Row> = {
+      data: [],
+      columns: [],
+      // @ts-expect-error columns are set by Tadabut
+      dataTables: { columns: [] },
+    };
+    const withAjax: TadabutOptions<Row> = {
+      data: [],
+      columns: [],
+      // @ts-expect-error Tadabut doesn't let DataTables load rows by itself
+      dataTables: { ajax: '/rows' },
+    };
+
+    expect([withData, withColumns, withAjax]).toHaveLength(3);
+  });
+
+  it('accepts the column options', () => {
+    const column: Column<Row> = {
+      title: 'ID',
+      prop: 'id',
+      width: '60px',
+      visible: false,
+      orderable: false,
+      searchable: false,
+      className: 'text-end',
+    };
+
+    expect(column.width).toBe('60px');
+  });
+
+  it('rejects column options of the wrong type', () => {
+    // @ts-expect-error visible is a boolean
+    const column: Column<Row> = { title: 'ID', prop: 'id', visible: 'no' };
+
+    expect(column.prop).toBe('id');
+  });
+});

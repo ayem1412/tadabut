@@ -46,12 +46,24 @@ export class Tadabut<Row extends object> {
    * @param options The data and columns to show.
    * @throws If a column has an `editor` but `rowId` is missing. Editing
    *   needs `rowId` to find rows.
+   * @throws If a column has an `editor` and `visible: false`. DataTables
+   *   keeps hidden cells out of the page, so nobody could see the input.
    */
   public constructor(container: HTMLElement, options: TadabutOptions<Row>) {
     this.hasEditor = options.columns.some((column) => column.editor !== undefined);
 
     if (this.hasEditor && options.rowId === undefined) {
       throw new Error('Tadabut: rowId is required when a column has an editor.');
+    }
+
+    const hiddenEditable = options.columns.find(
+      (column) => column.editor !== undefined && column.visible === false,
+    );
+
+    if (hiddenEditable !== undefined) {
+      throw new Error(
+        `Tadabut: the "${hiddenEditable.prop}" column can't have both an editor and visible: false.`,
+      );
     }
 
     this.rowId = options.rowId;
@@ -69,6 +81,7 @@ export class Tadabut<Row extends object> {
     container.appendChild(this.tableEl);
 
     this.dataTable = new DataTable(this.tableEl, {
+      ...options.dataTables,
       // Copy, so DataTables never holds or changes the caller's array.
       data: [...options.data],
       columns: toDataTables(options.columns, this.hasActions, this.classNames),

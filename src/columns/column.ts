@@ -49,4 +49,21 @@ type ColumnFor<Row extends object, Key extends keyof Row & string> = {
    * render: (value) => `${value} MAD`
    */
   readonly render?: (value: Row[Key], row: Row) => string;
+  /** The column's width, like `'60px'` or `'20%'`. */
+  readonly width?: string;
+  /**
+   * `false` hides the column. Its value stays in the row, and `onSave` still
+   * gets it. A hidden column can't have an `editor`.
+   */
+  readonly visible?: boolean;
+  /** `false`: clicking the header doesn't sort by this column. */
+  readonly orderable?: boolean;
+  /** `false`: the search box ignores this column. */
+  readonly searchable?: boolean;
+  /**
+   * Classes added to this column's cells, header included, like
+   * `'text-end'`. Not the input's classes: those go in the editor's
+   * `className`.
+   */
+  readonly className?: string;
 };
