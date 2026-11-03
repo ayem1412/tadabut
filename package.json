@@ -20,7 +20,7 @@
     "type": "git",
     "url": "git+https://github.com/ayem1412/tadabut.git"
   },
-  "homepage": "https://github.com/ayem1412/tadabut#readme",
+  "homepage": "https://ayem1412.github.io/tadabut/",
   "bugs": "https://github.com/ayem1412/tadabut/issues",
   "license": "MIT",
   "type": "module",
@@ -29,6 +29,7 @@
   ],
   "sideEffects": false,
   "scripts": {
+    "docs": "pnpm dlx --package typedoc@0.28.20 --package typescript@6.0.x typedoc",
     "dev": "vite",
     "build": "tsdown",
     "test": "vitest",

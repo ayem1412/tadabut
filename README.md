@@ -5,9 +5,13 @@
 [![TypeScript](https://img.shields.io/badge/TypeScript-strict-3178c6?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
 [![DataTables 3](https://img.shields.io/badge/DataTables-3.x-0d6efd)](https://datatables.net)
 [![Status](https://img.shields.io/badge/status-early%20development-orange)](#roadmap)
+[![npm](https://img.shields.io/npm/v/tadabut)](https://www.npmjs.com/package/tadabut)
+[![Docs](https://img.shields.io/badge/docs-API%20reference-blue)](https://ayem1412.github.io/tadabut/)
 [![PRs welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](./CONTRIBUTING.md)
 
 Tadabut wraps [DataTables](https://datatables.net) and adds what it doesn't give you for free: editing rows, real inputs in the cells, and selects that depend on each other.
+
+📖 [API reference](https://ayem1412.github.io/tadabut/): every option and type, from the code's own comments.
 
 > [!WARNING]
 > Tadabut is new. Until 1.0, the API can change between `0.x` versions, so pin the version you use and read the changelog before you update.

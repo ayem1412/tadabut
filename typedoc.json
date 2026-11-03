@@ -1,0 +1,18 @@
+{
+  "$schema": "https://typedoc.org/schema.json",
+  "name": "Tadabut",
+  "entryPoints": ["src/index.ts", "src/react/index.tsx"],
+  "out": "docs-site",
+  "readme": "README.md",
+  "includeVersion": true,
+  "excludePrivate": true,
+  "excludeInternal": true,
+  "sort": ["kind", "alphabetical"],
+  "navigationLinks": {
+    "GitHub": "https://github.com/ayem1412/tadabut",
+    "npm": "https://www.npmjs.com/package/tadabut"
+  },
+  "validation": {
+    "notExported": false
+  }
+}
