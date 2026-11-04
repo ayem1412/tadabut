@@ -6,30 +6,17 @@ import { createNumberEditor } from './number';
 import { createSelectEditor, type LoadResult } from './select';
 import { createTextEditor } from './text';
 
-/**
- * A live editor of any type. Only selects have `load`: for the others,
- * `editor.load?.(row)` does nothing.
- *
- * Internal: what `createEditor` returns.
- */
+/** Only selects have `load` and `getLabel`. */
 export type AnyEditorInstance = EditorInstance<unknown> & {
+  /** Loads the options of a select. */
   readonly load?: (row: Record<string, unknown>) => Promise<LoadResult>;
+  /** The picked option's label, for `labelProp`. */
+  readonly getLabel?: () => string | null | undefined;
 };
 
 /**
- * Creates the live editor that matches a column's editor config.
- *
- * Internal: Tadabut calls it for each editable cell when a row starts being
- * edited.
- *
- * The exact column type is not known here, so values are `unknown`.
- * That is safe: `Column<Row>` already checked that the config fits the
- * column, before the table was created.
- *
- * @param config The editor config from the column.
- * @param context The starting value and the change callback. Its
- *   `className` is filled in from `config`, so every editor, built-in or
- *   custom, gets the same full context.
+ * `Column<Row>` already checked that each config fits its column, so the
+ * casts below are safe.
  */
 export function createEditor(
   config: AnyEditor,
@@ -57,7 +44,6 @@ export function createEditor(
       return config.create(fullContext);
 
     default: {
-      // Fails to compile if an editor type above has no `case`.
       const missing: never = config;
       throw new Error(`Unknown editor: ${JSON.stringify(missing)}`);
     }
@@ -69,7 +55,7 @@ function tighten<Value>(context: EditorContext<unknown>): EditorContext<Value> {
   return context as EditorContext<Value>;
 }
 
-/** Turns a typed editor back into the loose type `createEditor` returns. */
+/** Turns a typed editor back into the loose type. */
 function loosen<Value>(editor: EditorInstance<Value>): EditorInstance<unknown> {
   return editor as unknown as EditorInstance<unknown>;
 }

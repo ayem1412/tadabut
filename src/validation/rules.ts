@@ -1,14 +1,7 @@
 /**
- * Validation options. They go on any editor, built-in or custom.
- *
- * Checks run in this order, and the first error wins:
- * 1. Empty value (`null`, `undefined` or `''`): an error if `required`,
- *    otherwise no error and nothing else is checked.
- * 2. The editor's own rules, like `min` or `maxLength`.
- * 3. `validate`.
- *
- * @typeParam Row - The shape of one row.
- * @typeParam Value - The column's value type.
+ * Works on every editor. An empty value fails `required` and skips every
+ * other check. Otherwise the editor's own rules (`min`, `maxLength`…) run,
+ * then `validate`. The first error wins.
  *
  * @example
  * {
@@ -22,17 +15,12 @@
  * }
  */
 export type ValidationOptions<Row, Value> = {
-  /**
-   * The value can't be empty. Has no effect on a checkbox, which is never
-   * empty.
-   */
+  /** Does nothing on a checkbox, which is never empty. */
   readonly required?: boolean;
   /**
-   * Your own check. Return an error message, or `undefined` if the value is
-   * fine. Runs last, only on values that passed the other rules.
-   *
-   * `value` can be `null`, because editors give `null` when empty, even on
-   * columns that can't hold `null`.
+   * Return an error message, or `undefined` if the value is fine. `value`
+   * can be `null` even on non-nullable columns, since empty inputs give
+   * `null`.
    */
   readonly validate?: (value: Value | null, row: Row) => string | undefined;
 };

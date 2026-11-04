@@ -442,3 +442,56 @@ describe('DataTables settings and column options types', () => {
     expect(column.prop).toBe('id');
   });
 });
+
+describe('labelProp types', () => {
+  type City = { id: number; cityId: number | null; cityName: string; note?: string; age: number };
+  const cities = [{ value: 1, label: 'Rabat' }];
+
+  it('accepts a text field, with a fixed list and with a function', () => {
+    const fixed: Column<City> = {
+      title: 'City',
+      prop: 'cityId',
+      editor: { type: 'select', options: cities, labelProp: 'cityName' },
+    };
+    const loaded: Column<City> = {
+      title: 'City',
+      prop: 'cityId',
+      editor: { type: 'select', options: () => cities, labelProp: 'note' },
+    };
+
+    expect([fixed, loaded]).toHaveLength(2);
+  });
+
+  it('rejects a field that does not hold text', () => {
+    const column: Column<City> = {
+      title: 'City',
+      prop: 'cityId',
+      // @ts-expect-error age is a number
+      editor: { type: 'select', options: cities, labelProp: 'age' },
+    };
+
+    expect(column.prop).toBe('cityId');
+  });
+
+  it('rejects a field the row does not have', () => {
+    const column: Column<City> = {
+      title: 'City',
+      prop: 'cityId',
+      // @ts-expect-error nope is not a key of City
+      editor: { type: 'select', options: cities, labelProp: 'nope' },
+    };
+
+    expect(column.prop).toBe('cityId');
+  });
+
+  it('rejects labelProp on editors that are not selects', () => {
+    const column: Column<City> = {
+      title: 'Name',
+      prop: 'cityName',
+      // @ts-expect-error only selects have labelProp
+      editor: { type: 'text', labelProp: 'cityName' },
+    };
+
+    expect(column.prop).toBe('cityName');
+  });
+});

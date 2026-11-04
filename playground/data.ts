@@ -5,23 +5,26 @@ export type Row = {
   name: string;
   /** A country code, like 'MA'. The cell shows its label, like "Morocco". */
   country: string;
-  city: string;
+  /** The city's id, like a foreign key in a database. */
+  cityId: number | null;
+  /** The city's name. The select saves it here, with `labelProp`. */
+  cityName: string | null;
   age: number;
 };
 
 export const rows: Row[] = [
-  { id: 1, name: 'Amina Benali', country: 'MA', city: 'Rabat', age: 29 },
-  { id: 2, name: 'Youness Idrissi', country: 'MA', city: 'Casablanca', age: 34 },
-  { id: 3, name: 'Salma Ait Ouahmane', country: 'MA', city: 'Agadir', age: 25 },
-  { id: 4, name: 'Karim El Fassi', country: 'MA', city: 'Fès', age: 41 },
-  { id: 5, name: 'Nadia Amrani', country: 'MA', city: 'Tanger', age: 37 },
-  { id: 6, name: 'Hamza Ouchen', country: 'MA', city: 'Marrakech', age: 22 },
-  { id: 7, name: 'Leila Berrada', country: 'MA', city: 'Meknès', age: 31 },
-  { id: 8, name: 'Omar Tazi', country: 'MA', city: 'Oujda', age: 45 },
-  { id: 9, name: 'Ilham Zerouali', country: 'MA', city: 'Tétouan', age: 28 },
-  { id: 10, name: 'Mehdi Alaoui', country: 'MA', city: 'Kénitra', age: 33 },
-  { id: 11, name: 'Sara Lahlou', country: 'FR', city: 'Paris', age: 26 },
-  { id: 12, name: 'Anass Bennani', country: 'ES', city: 'Madrid', age: 39 },
+  { id: 1, name: 'Amina Benali', country: 'MA', cityId: 8, cityName: 'Rabat', age: 29 },
+  { id: 2, name: 'Youness Idrissi', country: 'MA', cityId: 2, cityName: 'Casablanca', age: 34 },
+  { id: 3, name: 'Salma Ait Ouahmane', country: 'MA', cityId: 1, cityName: 'Agadir', age: 25 },
+  { id: 4, name: 'Karim El Fassi', country: 'MA', cityId: 3, cityName: 'Fès', age: 41 },
+  { id: 5, name: 'Nadia Amrani', country: 'MA', cityId: 9, cityName: 'Tanger', age: 37 },
+  { id: 6, name: 'Hamza Ouchen', country: 'MA', cityId: 5, cityName: 'Marrakech', age: 22 },
+  { id: 7, name: 'Leila Berrada', country: 'MA', cityId: 6, cityName: 'Meknès', age: 31 },
+  { id: 8, name: 'Omar Tazi', country: 'MA', cityId: 7, cityName: 'Oujda', age: 45 },
+  { id: 9, name: 'Ilham Zerouali', country: 'MA', cityId: 10, cityName: 'Tétouan', age: 28 },
+  { id: 10, name: 'Mehdi Alaoui', country: 'MA', cityId: 4, cityName: 'Kénitra', age: 33 },
+  { id: 11, name: 'Sara Lahlou', country: 'FR', cityId: 13, cityName: 'Paris', age: 26 },
+  { id: 12, name: 'Anass Bennani', country: 'ES', cityId: 16, cityName: 'Madrid', age: 39 },
 ];
 
 /** The countries, by code. Atlantis is here so its cities fail to load. */
@@ -32,22 +35,35 @@ export const countries: { value: string; label: string }[] = [
   { value: 'XX', label: 'Atlantis' },
 ];
 
-/** What the fake server knows, by country code. */
-const citiesByCountry: Record<string, string[]> = {
+/** One city, the way the fake server sends it. */
+type City = { id: number; name: string };
+
+/** What the fake server knows, by country code. Each city has an id. */
+const citiesByCountry: Record<string, City[]> = {
   MA: [
-    'Agadir',
-    'Casablanca',
-    'Fès',
-    'Kénitra',
-    'Marrakech',
-    'Meknès',
-    'Oujda',
-    'Rabat',
-    'Tanger',
-    'Tétouan',
+    { id: 1, name: 'Agadir' },
+    { id: 2, name: 'Casablanca' },
+    { id: 3, name: 'Fès' },
+    { id: 4, name: 'Kénitra' },
+    { id: 5, name: 'Marrakech' },
+    { id: 6, name: 'Meknès' },
+    { id: 7, name: 'Oujda' },
+    { id: 8, name: 'Rabat' },
+    { id: 9, name: 'Tanger' },
+    { id: 10, name: 'Tétouan' },
   ],
-  FR: ['Lyon', 'Marseille', 'Paris', 'Toulouse'],
-  ES: ['Barcelona', 'Madrid', 'Sevilla', 'Valencia'],
+  FR: [
+    { id: 11, name: 'Lyon' },
+    { id: 12, name: 'Marseille' },
+    { id: 13, name: 'Paris' },
+    { id: 14, name: 'Toulouse' },
+  ],
+  ES: [
+    { id: 15, name: 'Barcelona' },
+    { id: 16, name: 'Madrid' },
+    { id: 17, name: 'Sevilla' },
+    { id: 18, name: 'Valencia' },
+  ],
   XX: [],
 };
 
@@ -67,7 +83,7 @@ function wait(ms: number, signal: AbortSignal): Promise<void> {
  * A fake city request: takes half a second, uses `signal` like `fetch`
  * would, and fails for Atlantis.
  */
-export async function fetchCities(country: string, signal: AbortSignal): Promise<string[]> {
+export async function fetchCities(country: string, signal: AbortSignal): Promise<City[]> {
   await wait(500, signal);
 
   if (country === 'XX') {
@@ -96,14 +112,17 @@ export const columns: Column<Row>[] = [
   },
   {
     title: 'City',
-    prop: 'city',
+    prop: 'cityId',
     editor: {
       type: 'select',
       required: true,
       dependsOn: 'country',
+      // The server sends ids and names. The id goes in `cityId`, and the
+      // name in `cityName`: the cell shows it, and onSave gets both.
+      labelProp: 'cityName',
       options: async (row, { signal }) => {
         const cities = await fetchCities(row.country, signal);
-        return cities.map((city) => ({ value: city, label: city }));
+        return cities.map((city) => ({ value: city.id, label: city.name }));
       },
     },
   },
@@ -136,12 +155,12 @@ export const settings: DataTablesSettings = {
 
 /** DataTables' texts in French, to try `language`. */
 export const french: DataTablesSettings['language'] = {
-  search: 'Rechercher:',
+  search: 'Rechercher :',
   lengthMenu: '_MENU_ lignes par page',
   info: 'Lignes _START_ à _END_ sur _TOTAL_',
   infoEmpty: 'Aucune ligne',
   infoFiltered: '(filtré de _MAX_ lignes)',
   zeroRecords: 'Aucune ligne trouvée',
   emptyTable: 'Aucune donnée',
-  // paginate: { first: 'Premier', previous: 'Précédent', next: 'Suivant', last: 'Dernier' },
+  paginate: { first: 'Premier', previous: 'Précédent', next: 'Suivant', last: 'Dernier' },
 };

@@ -3,38 +3,24 @@ import { addClasses } from './classes';
 import type { EditorContext, EditorInstance } from './instance';
 
 /**
- * A number input, for `number` columns.
- *
- * An empty input gives `null`, not `0`.
- *
- * The options match the HTML `<input type="number">` attributes of the same
- * name.
+ * For `number` columns. Empty gives `null`, not `0`. The options work like
+ * the HTML attributes.
  *
  * @example
  * { type: 'number', min: 18, max: 65, step: 1 }
  */
 export type NumberEditor = BaseEditor & {
+  /** Picks this editor. */
   readonly type: 'number';
   /** Smallest value allowed. */
   readonly min?: number;
   /** Largest value allowed. */
   readonly max?: number;
-  /**
-   * Allowed gap between values, counted from `min` (or 0).
-   * `1` allows only whole numbers, `0.01` allows cents, and `'any'` allows
-   * any decimal. Default: `1`.
-   */
+  /** Defaults to `1`. Use `0.01` for cents, or `'any'`. */
   readonly step?: number | 'any';
 };
 
-/**
- * Creates a live number editor.
- *
- * Internal: Tadabut calls it when a row starts being edited.
- *
- * @param config The editor config from the column.
- * @param context The starting value, the classes and the change callback.
- */
+/** Builds the number input. */
 export function createNumberEditor(
   config: NumberEditor,
   context: EditorContext<number | null>,
@@ -55,8 +41,10 @@ export function createNumberEditor(
     input.step = String(config.step);
   }
 
+  /** Empty gives `null`, not `0`. */
   const getValue = (): number | null => (input.value === '' ? null : input.valueAsNumber);
 
+  /** `null` shows as empty. */
   const setValue = (value: number | null): void => {
     input.value = value === null ? '' : String(value);
   };

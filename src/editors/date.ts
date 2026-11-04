@@ -3,35 +3,23 @@ import { addClasses } from './classes';
 import type { EditorContext, EditorInstance } from './instance';
 
 /**
- * A date picker, for `string` columns holding dates as `'YYYY-MM-DD'`.
- *
- * The options match the HTML `<input type="date">` attributes of the same
- * name. An empty input gives `null`.
- *
- * The column must hold exactly `'YYYY-MM-DD'`. Any other format, like
- * `'2024-01-05T00:00:00'`, shows as an empty input, and saving would turn it
- * into `null`. Convert dates to `'YYYY-MM-DD'` before giving them to the
- * table.
+ * For `string` columns holding `'YYYY-MM-DD'`. Anything else, like
+ * `'2024-01-05T00:00:00'`, shows as empty and saves as `null`. Empty gives
+ * `null`.
  *
  * @example
  * { type: 'date', min: '2020-01-01', max: '2030-12-31' }
  */
 export type DateEditor = BaseEditor & {
+  /** Picks this editor. */
   readonly type: 'date';
-  /** Earliest date allowed, as `'YYYY-MM-DD'`. */
+  /** Earliest date, as `'YYYY-MM-DD'`. */
   readonly min?: string;
-  /** Latest date allowed, as `'YYYY-MM-DD'`. */
+  /** Latest date, as `'YYYY-MM-DD'`. */
   readonly max?: string;
 };
 
-/**
- * Creates a live date editor.
- *
- * Internal: Tadabut calls it when a row starts being edited.
- *
- * @param config The editor config from the column.
- * @param context The starting value, the classes and the change callback.
- */
+/** Builds the date input. */
 export function createDateEditor(
   config: DateEditor,
   context: EditorContext<string | null>,
@@ -48,8 +36,10 @@ export function createDateEditor(
     input.max = config.max;
   }
 
+  /** Empty gives `null`. */
   const getValue = (): string | null => (input.value === '' ? null : input.value);
 
+  /** `null` shows as empty. */
   const setValue = (value: string | null): void => {
     input.value = value ?? '';
   };

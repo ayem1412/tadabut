@@ -40,15 +40,18 @@ const columns: Column<Row>[] = [
   },
   {
     title: 'City',
-    prop: 'city',
+    prop: 'cityId',
     editor: {
       type: 'select',
       required: true,
       dependsOn: 'country',
       className: 'form-select form-select-sm',
+      // The server sends ids and names. The id goes in `cityId`, and the
+      // name in `cityName`: the cell shows it, and onSave gets both.
+      labelProp: 'cityName',
       options: async (row, { signal }) => {
         const cities = await fetchCities(row.country, signal);
-        return cities.map((city) => ({ value: city, label: city }));
+        return cities.map((city) => ({ value: city.id, label: city.name }));
       },
     },
   },
