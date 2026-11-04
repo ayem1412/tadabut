@@ -39,7 +39,6 @@ function setup(columns: Column<Row>[]) {
   return { table, container, column, search };
 }
 
-/** DataTables sorts on the next tick. */
 const flush = () => new Promise((resolve) => setTimeout(resolve, 0));
 
 describe('labels in cells', () => {
@@ -159,8 +158,7 @@ describe('labelProp in cells', () => {
     const container = document.createElement('div');
     document.body.appendChild(container);
     const table = new Tadabut<Place>(container, {
-      // The row's own name is on purpose different from the list's label,
-      // to see which one the cell shows.
+      // Different from the list's 'Rabat', to tell which one is shown.
       data: [{ id: 1, cityId: 1, cityName: 'Rabat (from the row)' }],
       rowId: 'id',
       onSave,

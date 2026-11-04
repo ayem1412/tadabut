@@ -220,8 +220,7 @@ describe('clicking the buttons', () => {
 
   it('works on rows sorted into a new order', async () => {
     const { table, container } = setup();
-    // Sort by Name, descending: Salma comes first. DataTables sorts on the
-    // next tick, so wait after each click.
+    // Name descending. DataTables sorts on the next tick.
     const nameHeader = container.querySelectorAll<HTMLElement>('thead th')[1] as HTMLElement;
     nameHeader.click();
     await new Promise((resolve) => setTimeout(resolve, 0));

@@ -51,7 +51,6 @@ const updateStatus = (): void => {
   status.textContent = `Elements inside container: ${container.childElementCount}`;
 };
 
-/** The options are only read when a table is created, so rebuild it. */
 const recreate = (): void => {
   if (table === null) {
     return;

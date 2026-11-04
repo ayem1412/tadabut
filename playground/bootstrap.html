@@ -5,21 +5,15 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Tadabut · Bootstrap</title>
     <style>
-      /* Tadabut ships no CSS: the errors use Bootstrap's own red. The save
-         error's class is on the message, because Bootstrap sets a color on
-         every cell, which would hide a color set on the row. */
       .tdb-error,
       .tdb-save-error-message {
         color: var(--bs-form-invalid-color);
         font-size: 0.875em;
       }
-      /* While editing, line everything up at the top, so an error under one
-         input makes the row taller without moving the other inputs. */
+      /* keeps inputs aligned when one shows an error */
       .table > tbody > tr.tdb-row-editing > td {
         vertical-align: top;
       }
-      /* Plain text cells in that row (like the ID): move the text down to the
-         middle of the small inputs next to it. */
       .table > tbody > tr.tdb-row-editing > td:not(:has(.tdb-input, .tdb-button)) {
         padding-top: calc(0.5rem + 4px);
       }

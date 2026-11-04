@@ -3,11 +3,9 @@ import type { Column, DataTablesSettings } from '../src/index';
 export type Row = {
   id: number;
   name: string;
-  /** A country code, like 'MA'. The cell shows its label, like "Morocco". */
+  /** 'MA', 'FR'… */
   country: string;
-  /** The city's id, like a foreign key in a database. */
   cityId: number | null;
-  /** The city's name. The select saves it here, with `labelProp`. */
   cityName: string | null;
   age: number;
 };
@@ -27,7 +25,7 @@ export const rows: Row[] = [
   { id: 12, name: 'Anass Bennani', country: 'ES', cityId: 16, cityName: 'Madrid', age: 39 },
 ];
 
-/** The countries, by code. Atlantis is here so its cities fail to load. */
+// Atlantis is there to show a failed load.
 export const countries: { value: string; label: string }[] = [
   { value: 'MA', label: 'Morocco' },
   { value: 'FR', label: 'France' },
@@ -35,10 +33,8 @@ export const countries: { value: string; label: string }[] = [
   { value: 'XX', label: 'Atlantis' },
 ];
 
-/** One city, the way the fake server sends it. */
 type City = { id: number; name: string };
 
-/** What the fake server knows, by country code. Each city has an id. */
 const citiesByCountry: Record<string, City[]> = {
   MA: [
     { id: 1, name: 'Agadir' },
@@ -67,7 +63,6 @@ const citiesByCountry: Record<string, City[]> = {
   XX: [],
 };
 
-/** Waits `ms`, or stops early with an error when `signal` is aborted. */
 function wait(ms: number, signal: AbortSignal): Promise<void> {
   return new Promise((resolve, reject) => {
     const timer = setTimeout(resolve, ms);
@@ -79,10 +74,7 @@ function wait(ms: number, signal: AbortSignal): Promise<void> {
   });
 }
 
-/**
- * A fake city request: takes half a second, uses `signal` like `fetch`
- * would, and fails for Atlantis.
- */
+// Pretends to be a slow API. Honors `signal` like fetch does.
 export async function fetchCities(country: string, signal: AbortSignal): Promise<City[]> {
   await wait(500, signal);
 
@@ -94,7 +86,6 @@ export async function fetchCities(country: string, signal: AbortSignal): Promise
 }
 
 export const columns: Column<Row>[] = [
-  // A narrow, centered column. `dt-center` comes with DataTables' own CSS.
   { title: 'ID', prop: 'id', width: '60px', className: 'dt-center' },
   {
     title: 'Name',
@@ -106,7 +97,6 @@ export const columns: Column<Row>[] = [
     prop: 'country',
     editor: {
       type: 'select',
-      // A fixed list: the cell shows "Morocco" for 'MA' by itself.
       options: countries,
     },
   },
@@ -117,8 +107,6 @@ export const columns: Column<Row>[] = [
       type: 'select',
       required: true,
       dependsOn: 'country',
-      // The server sends ids and names. The id goes in `cityId`, and the
-      // name in `cityName`: the cell shows it, and onSave gets both.
       labelProp: 'cityName',
       options: async (row, { signal }) => {
         const cities = await fetchCities(row.country, signal);
@@ -130,12 +118,11 @@ export const columns: Column<Row>[] = [
     title: 'Age',
     prop: 'age',
     editor: { type: 'number', min: 18, max: 99 },
-    // Only the text changes: the column still sorts by number.
     render: (value) => `${value} years`,
   },
 ];
 
-/** A fake server for both pages: takes 1 second, and refuses the name "error". */
+// Name a row "error" to see a failed save.
 export async function fakeSave(row: Row): Promise<void> {
   await new Promise((resolve) => setTimeout(resolve, 1000));
 
@@ -144,16 +131,11 @@ export async function fakeSave(row: Row): Promise<void> {
   }
 }
 
-/**
- * DataTables settings shared by the pages: sort by name, and more page sizes.
- * A constant, so the React page doesn't rebuild the table on every render.
- */
 export const settings: DataTablesSettings = {
   order: [[1, 'asc']],
   lengthMenu: [5, 10, 20, -1],
 };
 
-/** DataTables' texts in French, to try `language`. */
 export const french: DataTablesSettings['language'] = {
   search: 'Rechercher :',
   lengthMenu: '_MENU_ lignes par page',

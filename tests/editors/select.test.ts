@@ -113,7 +113,7 @@ describe('select editor with an options function', () => {
 
   type Place = { countryId: number };
 
-  /** A loader you finish by hand, to control when the options arrive. */
+  // Resolved by hand, so the test decides when options arrive.
   function manualLoader() {
     const calls: {
       row: Place;

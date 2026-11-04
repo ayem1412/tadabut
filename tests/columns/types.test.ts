@@ -323,7 +323,6 @@ describe('select options types', () => {
   });
 
   it('rejects a function that returns the wrong value type', () => {
-    // TypeScript reports a wrong select value on the whole column.
     // @ts-expect-error 'x' is not a number
     const column: Column<Place> = {
       title: 'City',
@@ -335,7 +334,7 @@ describe('select options types', () => {
   });
 
   it('rejects an async function that returns the wrong value type', () => {
-    // TypeScript reports a wrong select value on the whole column.
+    // These errors land on the column, not the editor.
     // @ts-expect-error 'x' is not a number
     const column: Column<Place> = {
       title: 'City',

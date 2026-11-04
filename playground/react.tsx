@@ -37,11 +37,8 @@ function App() {
         data={data}
         columns={columns}
         rowId='id'
-        // A constant from data.ts: a new object here would rebuild the
-        // table on every render.
         dataTables={settings}
-        // A new function on every render, on purpose: it must not rebuild
-        // the table.
+        // Inline on purpose: this must not rebuild the table.
         onSave={async (row) => {
           await fakeSave(row);
           setStatus(`Saved ${row.name}`);

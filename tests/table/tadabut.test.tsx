@@ -103,7 +103,6 @@ const editable: Column<Row>[] = [
   { title: 'Name', prop: 'name', editor: { type: 'text' } },
 ];
 
-/** Renders with any props. `columns` defaults to the editable ones. */
 async function renderWith(props: Partial<TadabutProps<Row>>): Promise<void> {
   await act(async () => {
     root.render(
@@ -191,7 +190,6 @@ describe('React Tadabut editing', () => {
     await renderWith({ ref, onSave: (row) => first(row) });
     const table = container.querySelector('table');
 
-    // A new inline function, like on every real render.
     await renderWith({ ref, onSave: (row) => second(row) });
     act(() => {
       ref.current?.edit(1);

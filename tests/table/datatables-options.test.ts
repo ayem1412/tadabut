@@ -33,7 +33,6 @@ function setup(columns: Column<Row>[] = basic, dataTables?: DataTablesSettings) 
   return { container, table, ids, headers, search };
 }
 
-/** DataTables sorts on the next tick. */
 const flush = () => new Promise((resolve) => setTimeout(resolve, 0));
 
 describe('dataTables settings', () => {
@@ -73,7 +72,7 @@ describe('dataTables settings', () => {
   });
 
   it('always uses its own data and columns', () => {
-    // A JavaScript user can pass anything: the type check is skipped here.
+    // What a plain JS user could pass.
     const { ids, headers } = setup(basic, {
       data: [],
       columns: [{ title: 'Wrong' }],
@@ -134,7 +133,6 @@ describe('column options', () => {
 
     search('Name 05');
 
-    // Nothing matched: DataTables shows its "no records" line instead.
     expect(container.querySelector('tbody td.dt-empty')).not.toBeNull();
   });
 
@@ -156,9 +154,8 @@ describe('column options', () => {
       { title: 'ID', prop: 'id', width: '60px' },
       { title: 'Name', prop: 'name' },
     ]);
-    // jsdom has no layout, so DataTables measures every width as 0px. Check
-    // the width DataTables was given instead: it keeps it as `widthOrig`.
-    // `new DataTable` on an existing table gives back its API.
+    // jsdom has no layout (every width is 0px), so check what DataTables
+    // was given instead.
     const api = new DataTable(container.querySelector('table') as HTMLTableElement);
     const settings = api.settings()[0] as unknown as {
       columns: { widthOrig: string | null }[];
