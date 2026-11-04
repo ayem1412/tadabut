@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.3.0](https://github.com/ayem1412/tadabut/compare/v0.2.0...v0.3.0) (2026-11-04)
+
+
+### Features
+
+* pass DataTables settings and column options through ([#36](https://github.com/ayem1412/tadabut/issues/36)) ([43da37e](https://github.com/ayem1412/tadabut/commit/43da37ebf23d7f7681b392f55de6b6ef2dcac4a9))
+* translate Tadabut's texts, with French built in ([#39](https://github.com/ayem1412/tadabut/issues/39)) ([22c2bab](https://github.com/ayem1412/tadabut/commit/22c2bab3fe4c6d6e78cfeed7c4f60ebab5f70ca8))
+
 ## [0.2.0](https://github.com/ayem1412/tadabut/compare/v0.1.0...v0.2.0) (2026-11-03)
 
 
