@@ -1,4 +1,4 @@
-/** The characters that mean something in HTML, and what replaces them. */
+/** Characters that mean something in HTML. */
 const entities: Record<string, string> = {
   '&': '&amp;',
   '<': '&lt;',
@@ -7,13 +7,7 @@ const entities: Record<string, string> = {
   "'": '&#39;',
 };
 
-/**
- * Makes text safe to put in HTML: `<b>` shows as the text `<b>`, and can
- * never become a tag or run code.
- *
- * Internal: DataTables puts what a column's `render` returns into the cell
- * as HTML, so every label goes through this first.
- */
+/** DataTables inserts rendered cells as HTML, so labels go through this. */
 export function escapeHtml(text: string): string {
   return text.replace(/[&<>"']/g, (char) => entities[char] ?? char);
 }

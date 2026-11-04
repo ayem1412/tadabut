@@ -82,3 +82,70 @@ describe('EditSession', () => {
     expect(nameCell?.childElementCount).toBe(0);
   });
 });
+
+describe('EditSession labelProp', () => {
+  type Place = { id: number; cityId: number | null; cityName: string | null };
+
+  const cities = [
+    { value: 1, label: 'Rabat' },
+    { value: 2, label: 'Fès' },
+  ];
+
+  function setupPlace(column: Column<Place>) {
+    const columns: Column<Place>[] = [column];
+    const cells = columns.map((column) => ({ column, cell: document.createElement('td') }));
+    const session = new EditSession<Place>({ id: 1, cityId: 1, cityName: 'Rabat' }, cells);
+    const select = cells[0]?.cell.querySelector('select') as HTMLSelectElement;
+
+    return { session, select };
+  }
+
+  it('saves the picked label in the row', () => {
+    const { session, select } = setupPlace({
+      title: 'City',
+      prop: 'cityId',
+      editor: { type: 'select', options: cities, labelProp: 'cityName' },
+    });
+
+    select.selectedIndex = 1;
+    select.dispatchEvent(new Event('change'));
+
+    expect(session.getRow()).toEqual({ id: 1, cityId: 2, cityName: 'Fès' });
+  });
+
+  it('saves null when nothing is picked', () => {
+    const { session, select } = setupPlace({
+      title: 'City',
+      prop: 'cityId',
+      editor: { type: 'select', options: cities, labelProp: 'cityName' },
+    });
+
+    select.selectedIndex = -1;
+    select.dispatchEvent(new Event('change'));
+
+    expect(session.getRow()).toEqual({ id: 1, cityId: null, cityName: null });
+  });
+
+  it('keeps the old label while the options load', () => {
+    const { session } = setupPlace({
+      title: 'City',
+      prop: 'cityId',
+      editor: { type: 'select', options: () => new Promise(() => {}), labelProp: 'cityName' },
+    });
+
+    expect(session.getRow()).toEqual({ id: 1, cityId: 1, cityName: 'Rabat' });
+  });
+
+  it('leaves the row alone without labelProp', () => {
+    const { session, select } = setupPlace({
+      title: 'City',
+      prop: 'cityId',
+      editor: { type: 'select', options: cities },
+    });
+
+    select.selectedIndex = 1;
+    select.dispatchEvent(new Event('change'));
+
+    expect(session.getRow()).toEqual({ id: 1, cityId: 2, cityName: 'Rabat' });
+  });
+});

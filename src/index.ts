@@ -1,11 +1,5 @@
 /**
- * Tadabut: a typed wrapper for DataTables with row editing, rich inputs and
- * chained selects.
- *
- * Only what is exported here is part of the public API. Everything else in
- * `src/` is internal and can change at any time.
- *
- * For React, use the `tadabut/react` entry point.
+ * Editable, typed DataTables. The React component lives in `tadabut/react`.
  *
  * @packageDocumentation
  * @module tadabut

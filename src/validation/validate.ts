@@ -1,19 +1,10 @@
 import type { AnyEditor } from '../editors/editor';
 import type { ValidationOptions } from './rules';
 
-/**
- * An editor config with its validation rules, whatever the column type.
- *
- * Internal: the loose version of what users write in `Column<Row>`.
- */
+/** An editor config with its rules, type erased. */
 export type AnyValidatedEditor = AnyEditor & ValidationOptions<unknown, unknown>;
 
-/**
- * Error messages. Plain English for now. They will become an option when
- * translations are added.
- *
- * Internal: exported for the edit session, which shows `loadFailed`.
- */
+/** The error messages. English only until translations land. */
 export const messages = {
   required: 'This field is required.',
   loadFailed: 'Could not load the options.',
@@ -26,23 +17,7 @@ export const messages = {
   tooLate: (max: string) => `Must be on or before ${max}.`,
 };
 
-/**
- * Checks a value against a column's rules.
- *
- * Internal: Tadabut calls it before saving a row.
- *
- * The checks run in this order, and the first error wins:
- * 1. Empty value (`null`, `undefined` or `''`): an error if `required`,
- *    otherwise no error and nothing else is checked. An empty optional field
- *    never fails a rule like `min`.
- * 2. The editor's own rules (`minLength`, `min`, and so on).
- * 3. The user's `validate`.
- *
- * @param config The editor config, with its validation rules.
- * @param value The value the editor gave.
- * @param row The row being edited.
- * @returns The error message, or `undefined` if the value is fine.
- */
+/** Returns the first error message, or `undefined`. */
 export function validateValue(
   config: AnyValidatedEditor,
   value: unknown,
@@ -55,7 +30,7 @@ export function validateValue(
   return builtInError(config, value) ?? config.validate?.(value, row);
 }
 
-/** Checks the rules that come with each built-in editor. */
+/** The rules each built-in editor brings. */
 function builtInError(config: AnyEditor, value: unknown): string | undefined {
   switch (config.type) {
     case 'text':
@@ -65,7 +40,7 @@ function builtInError(config: AnyEditor, value: unknown): string | undefined {
       return typeof value === 'number' ? rangeError(config, value) : undefined;
 
     case 'date':
-      // 'YYYY-MM-DD' sorts like the dates it holds, so text comparison works.
+      // 'YYYY-MM-DD' strings compare correctly as text.
       return typeof value === 'string' ? dateError(config, value) : undefined;
 
     case 'checkbox':
@@ -80,6 +55,7 @@ function builtInError(config: AnyEditor, value: unknown): string | undefined {
   }
 }
 
+/** `minLength`, `maxLength` and `pattern`. */
 function textError(
   config: Extract<AnyEditor, { type: 'text' }>,
   value: string,
@@ -99,6 +75,7 @@ function textError(
   return undefined;
 }
 
+/** `min` and `max` for numbers. */
 function rangeError(
   config: Extract<AnyEditor, { type: 'number' }>,
   value: number,
@@ -114,6 +91,7 @@ function rangeError(
   return undefined;
 }
 
+/** `min` and `max` for dates. */
 function dateError(
   config: Extract<AnyEditor, { type: 'date' }>,
   value: string,
@@ -130,11 +108,8 @@ function dateError(
 }
 
 /**
- * Checks that `pattern` matches the whole value, like the HTML `pattern`
- * attribute: same `v` flag, and an invalid pattern is ignored.
- *
- * The `(?:…)` keeps `^` and `$` around the whole pattern: without it,
- * `a|b` would become `^a|b$`, which means something else.
+ * Same rules as the HTML `pattern` attribute: whole value, `v` flag, and an
+ * invalid pattern is ignored. The group stops `a|b` from becoming `^a|b$`.
  */
 function matchesWhole(pattern: string, value: string): boolean {
   let regex: RegExp;

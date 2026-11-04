@@ -7,7 +7,7 @@ type Row = { id: number; countryId: number | null; regionId: number | null; city
 
 const row: Row = { id: 1, countryId: 1, regionId: 10, cityId: 100 };
 
-/** A loader you finish by hand. Each call is recorded with the row it got. */
+// Resolved by hand. Each call keeps the row it was given.
 function manualLoader() {
   const calls: {
     row: Row;
@@ -29,7 +29,6 @@ const countries: SelectOption<number>[] = [
   { value: 2, label: 'France' },
 ];
 
-/** Lets pending promises finish. */
 const flush = () => new Promise((resolve) => setTimeout(resolve, 0));
 
 function setup() {

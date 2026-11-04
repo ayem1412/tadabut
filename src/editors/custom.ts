@@ -2,17 +2,9 @@ import type { BaseEditor } from './base';
 import type { EditorContext, EditorInstance } from './instance';
 
 /**
- * An editor you build yourself, like a Select2 dropdown or a date picker
- * library. Works on any column, including object columns that have no
- * built-in editor.
- *
- * Tadabut calls `create` each time a row starts being edited. It gets the
- * starting value (which can be `null` on a nullable column), the
- * `className` from this config, and an `onChange` to call when the user
- * changes the value.
- *
- * @typeParam Value - The column's value type, including `null` if the
- *   column can hold it.
+ * Bring your own editor (Select2, a date picker library…). Works on any
+ * column, objects included. `create` runs every time a row is opened; call
+ * `context.onChange` when the user changes the value.
  *
  * @example
  * {
@@ -32,7 +24,8 @@ import type { EditorContext, EditorInstance } from './instance';
  * }
  */
 export type CustomEditor<Value> = BaseEditor & {
+  /** Picks this editor. */
   readonly type: 'custom';
-  /** Builds the live editor. Called once per row edit. */
+  /** Builds your editor. Runs every time a row opens. */
   readonly create: (context: EditorContext<Value>) => EditorInstance<Value>;
 };

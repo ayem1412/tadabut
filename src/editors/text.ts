@@ -3,35 +3,23 @@ import { addClasses } from './classes';
 import type { EditorContext, EditorInstance } from './instance';
 
 /**
- * A one-line text input, for `string` columns.
- *
- * The options match the HTML `<input>` attributes of the same name.
+ * For `string` columns. The options work like the HTML attributes.
  *
  * @example
  * { type: 'text', minLength: 2, maxLength: 50 }
  */
 export type TextEditor = BaseEditor & {
+  /** Picks this editor. */
   readonly type: 'text';
   /** Fewest characters allowed. */
   readonly minLength?: number;
-  /** Most characters allowed. The input stops accepting more. */
+  /** Most characters allowed. */
   readonly maxLength?: number;
-  /**
-   * A regular expression the whole value must match, written as a string,
-   * like `'[A-Z]{2}[0-9]{4}'`. No `/…/` slashes and no `^` or `$`:
-   * the browser always checks the full value.
-   */
+  /** Must match the whole value, like `'[A-Z]{2}[0-9]{4}'`. No slashes, no `^`/`$`. */
   readonly pattern?: string;
 };
 
-/**
- * Creates a live text editor.
- *
- * Internal: Tadabut calls it when a row starts being edited.
- *
- * @param options The editor config from the column.
- * @param context The starting value, the classes and the change callback.
- */
+/** Builds the text input. `null` shows as empty. */
 export function createTextEditor(
   config: TextEditor,
   context: EditorContext<string>,
@@ -52,7 +40,6 @@ export function createTextEditor(
     input.pattern = config.pattern;
   }
 
-  // A nullable column can hold null: show it as an empty input.
   input.value = context.value ?? '';
 
   input.addEventListener('input', () => context.onChange(input.value));

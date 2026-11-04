@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { type Column, Tadabut } from '../../src/index';
 
@@ -39,7 +39,6 @@ function setup(columns: Column<Row>[]) {
   return { table, container, column, search };
 }
 
-/** DataTables sorts on the next tick. */
 const flush = () => new Promise((resolve) => setTimeout(resolve, 0));
 
 describe('labels in cells', () => {
@@ -139,5 +138,87 @@ describe('labels in cells', () => {
     table.cancel(1);
 
     expect(column(2)[0]).toBe('Morocco');
+  });
+});
+
+describe('labelProp in cells', () => {
+  afterEach(() => {
+    document.body.innerHTML = '';
+  });
+
+  type Place = { id: number; cityId: number | null; cityName: string | null };
+
+  const cities = [
+    { value: 1, label: 'Rabat' },
+    { value: 2, label: 'Fès' },
+  ];
+
+  function setupPlace(options: 'fixed' | 'loaded') {
+    const onSave = vi.fn((_row: Place) => {});
+    const container = document.createElement('div');
+    document.body.appendChild(container);
+    const table = new Tadabut<Place>(container, {
+      // Different from the list's 'Rabat', to tell which one is shown.
+      data: [{ id: 1, cityId: 1, cityName: 'Rabat (from the row)' }],
+      rowId: 'id',
+      onSave,
+      columns: [
+        { title: 'ID', prop: 'id' },
+        {
+          title: 'City',
+          prop: 'cityId',
+          editor:
+            options === 'fixed'
+              ? { type: 'select', options: cities, labelProp: 'cityName' }
+              : { type: 'select', options: () => cities, labelProp: 'cityName' },
+        },
+      ],
+    });
+    const cell = () => container.querySelector('tbody td:nth-child(2)')?.textContent;
+
+    return { table, container, cell, onSave };
+  }
+
+  it('shows the labelProp field, not the list label', () => {
+    const { cell } = setupPlace('fixed');
+
+    expect(cell()).toBe('Rabat (from the row)');
+  });
+
+  it('shows the new label after picking another option and saving', async () => {
+    const { table, container, cell, onSave } = setupPlace('loaded');
+    table.edit(1);
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    const select = container.querySelector('tbody select') as HTMLSelectElement;
+    select.selectedIndex = 1;
+    select.dispatchEvent(new Event('change'));
+
+    expect(await table.save(1)).toBe(true);
+
+    expect(cell()).toBe('Fès');
+    expect(onSave).toHaveBeenCalledWith({ id: 1, cityId: 2, cityName: 'Fès' }, expect.anything());
+  });
+
+  it('refuses a labelProp that is the column itself', () => {
+    const container = document.createElement('div');
+
+    expect(
+      () =>
+        new Tadabut(container, {
+          data: [{ id: 1, name: 'Amina' }],
+          rowId: 'id',
+          columns: [
+            {
+              title: 'Name',
+              prop: 'name',
+              editor: {
+                type: 'select',
+                options: [{ value: 'Amina', label: 'A' }],
+                labelProp: 'name',
+              },
+            },
+          ],
+        }),
+    ).toThrow('Tadabut: the "name" column\'s labelProp can\'t be "name" itself.');
   });
 });

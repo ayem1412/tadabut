@@ -2,131 +2,91 @@ import type { BaseEditor } from './base';
 import { addClasses } from './classes';
 import type { EditorContext, EditorInstance } from './instance';
 
-/**
- * One choice in a select.
- *
- * @typeParam Value - The column's value type.
- */
+/** One choice in a select. */
 export type SelectOption<Value> = {
-  /** Text shown to the user. */
+  /** What the user sees. */
   readonly label: string;
-  /** Value saved in the row when this choice is picked. */
+  /** What gets saved in the row. */
   readonly value: Value;
 };
 
-/**
- * What a select's `options` function gets next to the row.
- */
+/** The second argument of an `options` function. */
 export type OptionsContext = {
   /**
-   * Aborted when the options aren't needed anymore: the field it depends on
-   * changed again, or the row was closed. Pass it to `fetch` so old requests
-   * stop.
+   * Aborted when the result isn't needed anymore (the field above changed
+   * again, or the row closed). Pass it to `fetch`.
    */
   readonly signal: AbortSignal;
 };
 
-/**
- * A select's options as a function of the row. It can return the list right
- * away, or a promise of it.
- *
- * @typeParam Value - The column's value type.
- * @typeParam Row - The shape of one row.
- */
+/** Can return the list directly or a promise of it. */
 export type SelectOptionsLoader<Value, Row> = (
   row: Row,
   context: OptionsContext,
 ) => readonly SelectOption<Value>[] | Promise<readonly SelectOption<Value>[]>;
 
+/** Fields that hold a string, so they can store a label. */
+type TextKeys<Row> = {
+  [Key in keyof Row]: Row[Key] extends string | null | undefined ? Key : never;
+}[keyof Row] &
+  string;
+
 /**
- * A dropdown list. Works for `string`, `number` and `boolean` columns.
+ * A dropdown for `string`, `number` or `boolean` columns. Option values must
+ * have the column's type (`1`, not `'1'`). A value that matches no option
+ * gives `null`.
  *
- * Option values must have the same type as the column: a `number` column
- * needs `value: 1`, not `value: '1'`.
- *
- * When the row's value matches no option (or is `null`), nothing is picked
- * and the editor gives `null`.
- *
- * `options` is either a fixed list, or a function of the row. Only a
- * function can have `dependsOn`: when that field changes, this select is
- * cleared and its options load again.
- *
- * @typeParam Value - The column's value type.
- * @typeParam Row - The shape of one row.
+ * `options` is a list, or a function of the row. With a function you can set
+ * `dependsOn`: when that field changes, this select is cleared and reloaded.
  *
  * @example
- * // A fixed list
  * { type: 'select', options: [{ value: 1, label: 'Morocco' }] }
  *
- * // Options that depend on another field
  * {
  *   type: 'select',
  *   dependsOn: 'countryId',
+ *   labelProp: 'cityName',
  *   options: (row, { signal }) => fetchCities(row.countryId, signal),
  * }
  */
 export type SelectEditor<Value, Row> = BaseEditor & {
+  /** Picks this editor. */
   readonly type: 'select';
+  /**
+   * Where to save the picked label, like `'cityName'`. The cell shows that
+   * field too. While options are loading, the old label is kept.
+   */
+  readonly labelProp?: TextKeys<Row>;
 } & (
     | {
-        /** The choices, in the order they are shown. */
+        /** The choices, in order. */
         readonly options: readonly SelectOption<Value>[];
         /** Only allowed when `options` is a function. */
         readonly dependsOn?: never;
       }
     | {
-        /** Gives the choices for the row being edited. */
+        /** Gives the choices for the open row. */
         readonly options: SelectOptionsLoader<Value, Row>;
-        /**
-         * Another field of the row. When it changes, this select is cleared
-         * and `options` runs again.
-         */
+        /** When this field changes, the select is cleared and `options` runs again. */
         readonly dependsOn?: keyof Row & string;
       }
   );
 
-/**
- * How a load ended.
- *
- * - `'loaded'`: the options are shown.
- * - `'failed'`: `options` threw. The select stays empty and disabled.
- * - `'cancelled'`: a newer load started, or the editor was destroyed, before
- *   this one ended. Its answer was thrown away.
- */
+/** `'cancelled'`: a newer load started (or the editor was destroyed) first. */
 export type LoadResult = 'loaded' | 'failed' | 'cancelled';
 
-/**
- * A live select editor: the usual editor, plus `load`.
- *
- * @typeParam Value - The column's value type.
- * @typeParam Row - The shape of one row.
- */
+/** A live select: an editor, plus `load` and `getLabel`. */
 export type SelectInstance<Value, Row> = EditorInstance<Value | null> & {
-  /**
-   * Gets the options for `row` from the `options` function, and shows them.
-   * Stops the load before it, if it's still running.
-   *
-   * With a fixed list, there is nothing to load: it gives `'loaded'` right
-   * away.
-   */
+  /** Cancels any load still running. Resolves at once for a fixed list. */
   readonly load: (row: Row) => Promise<LoadResult>;
+  /** `null` when nothing is picked, `undefined` while options aren't loaded. */
+  readonly getLabel: () => string | null | undefined;
 };
 
 /**
- * Creates a live select editor.
- *
- * Internal: Tadabut calls it when a row starts being edited.
- *
- * HTML `<option>` values are always strings, so the picked value is read
- * from the options list by position, which keeps its real type (`1`, not
- * `'1'`).
- *
- * With an `options` function, the select starts empty and Tadabut calls
- * `load`. Until the options arrive, the starting value is remembered:
- * `getValue` gives it, and it's picked once the options are shown.
- *
- * @param config The editor config from the column.
- * @param context The starting value, the classes and the change callback.
+ * `<option>` values are always strings, so the picked value is looked up by
+ * index to keep its real type. Until a loader's options arrive, the starting
+ * value is kept in `current`.
  */
 export function createSelectEditor<Value, Row>(
   config: SelectEditor<Value, Row>,
@@ -135,20 +95,16 @@ export function createSelectEditor<Value, Row>(
   const select = document.createElement('select');
   addClasses(select, ['tdb-input', 'tdb-input-select'], context.className);
 
-  /** The options shown now. Empty until a function's options arrive. */
+  /** The options on screen. Empty while a loader runs. */
   let options: readonly SelectOption<Value>[] = [];
 
-  /**
-   * The value, kept here and not only in the `<select>`: while options are
-   * loading, the `<select>` has nothing to pick, but the value must not be
-   * lost.
-   */
+  /** The value, kept even while there are no options to pick it from. */
   let current: Value | null = context.value;
 
-  /** The load that's running, so a newer one (or destroy) can stop it. */
+  /** The running load, so a newer one or `destroy` can abort it. */
   let controller: AbortController | undefined;
 
-  /** Picks `current` in the `<select>`. If it's not in the list, it's `null`. */
+  /** Selects `current`. A value that isn't in the list becomes `null`. */
   const pickCurrent = (): void => {
     select.selectedIndex = options.findIndex((option) => option.value === current);
 
@@ -157,7 +113,7 @@ export function createSelectEditor<Value, Row>(
     }
   };
 
-  /** Replaces the `<option>`s with `list`, enables the select and picks `current`. */
+  /** Shows `list`, enables the select and picks `current`. */
   const fill = (list: readonly SelectOption<Value>[]): void => {
     options = list;
     select.replaceChildren(
@@ -171,7 +127,7 @@ export function createSelectEditor<Value, Row>(
     pickCurrent();
   };
 
-  /** Shows one disabled, unpickable line, like "Loading…". */
+  /** Shows a single disabled line, like "Loading…". */
   const showOnly = (text: string): void => {
     options = [];
     const element = document.createElement('option');
@@ -180,6 +136,7 @@ export function createSelectEditor<Value, Row>(
     select.disabled = true;
   };
 
+  /** Runs the `options` function and shows its result. */
   const load = async (row: Row): Promise<LoadResult> => {
     if (typeof config.options !== 'function') {
       return 'loaded';
@@ -192,6 +149,7 @@ export function createSelectEditor<Value, Row>(
     try {
       const result = config.options(row, { signal: own.signal });
 
+      // Sync loaders skip the "Loading…" flash.
       if (!(result instanceof Promise)) {
         fill(result);
         return 'loaded';
@@ -200,7 +158,7 @@ export function createSelectEditor<Value, Row>(
       showOnly('Loading…');
       const list = await result;
 
-      // A newer load started, or the editor is gone: this answer is too late.
+      // Ignore late answers even if the loader didn't use the signal.
       if (own.signal.aborted) {
         return 'cancelled';
       }
@@ -217,12 +175,17 @@ export function createSelectEditor<Value, Row>(
     }
   };
 
+  /** The value, even while options are loading. */
   const getValue = (): Value | null => current;
 
+  /** `undefined` while options aren't loaded. */
+  const getLabel = (): string | null | undefined =>
+    current === null ? null : options.find((option) => option.value === current)?.label;
+
+  /** While loading, the value is only remembered. */
   const setValue = (value: Value | null): void => {
     current = value;
 
-    // While loading, the value is only remembered: it's picked once the options arrive.
     if (!select.disabled) {
       pickCurrent();
     }
@@ -240,6 +203,7 @@ export function createSelectEditor<Value, Row>(
   return {
     element: select,
     getValue,
+    getLabel,
     setValue,
     load,
     focus: () => select.focus(),

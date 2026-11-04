@@ -11,7 +11,6 @@ if (!container) {
   throw new Error('Playground: missing #container in bootstrap.html');
 }
 
-/** Bootstrap's classes for the table and the Edit, Save and Cancel buttons. */
 const classNames: TableClassNames = {
   table: 'table table-striped table-hover align-middle',
   button: 'btn btn-sm',
@@ -20,7 +19,7 @@ const classNames: TableClassNames = {
   cancel: 'btn-outline-secondary',
 };
 
-/** The same columns as data.ts, with Bootstrap's classes on each editor. */
+// Same columns as data.ts, plus Bootstrap classes on the inputs.
 const columns: Column<Row>[] = [
   { title: 'ID', prop: 'id' },
   {
@@ -40,15 +39,16 @@ const columns: Column<Row>[] = [
   },
   {
     title: 'City',
-    prop: 'city',
+    prop: 'cityId',
     editor: {
       type: 'select',
       required: true,
       dependsOn: 'country',
       className: 'form-select form-select-sm',
+      labelProp: 'cityName',
       options: async (row, { signal }) => {
         const cities = await fetchCities(row.country, signal);
-        return cities.map((city) => ({ value: city, label: city }));
+        return cities.map((city) => ({ value: city.id, label: city.name }));
       },
     },
   },

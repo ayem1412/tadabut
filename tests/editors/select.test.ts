@@ -113,7 +113,7 @@ describe('select editor with an options function', () => {
 
   type Place = { countryId: number };
 
-  /** A loader you finish by hand, to control when the options arrive. */
+  // Resolved by hand, so the test decides when options arrive.
   function manualLoader() {
     const calls: {
       row: Place;
@@ -282,5 +282,68 @@ describe('select editor with an options function', () => {
 
     expect(await editor.load({})).toBe('loaded');
     expect(select.selectedIndex).toBe(1);
+  });
+});
+
+describe('select editor labels', () => {
+  afterEach(() => {
+    document.body.innerHTML = '';
+  });
+
+  it('gives the label of the starting value', () => {
+    const { editor } = setup(2);
+
+    expect(editor.getLabel()).toBe('France');
+  });
+
+  it('gives null when nothing is picked', () => {
+    const { editor } = setup(null);
+
+    expect(editor.getLabel()).toBeNull();
+  });
+
+  it('gives the label of what the user picked', () => {
+    const { editor, select } = setup(1);
+
+    choose(select, 2);
+
+    expect(editor.getLabel()).toBe('Spain');
+  });
+
+  it('gives null after setValue(null)', () => {
+    const { editor } = setup(1);
+
+    editor.setValue(null);
+
+    expect(editor.getLabel()).toBeNull();
+  });
+
+  it('gives undefined while options load, then the label', async () => {
+    let resolve!: (list: SelectOption<number>[]) => void;
+    const editor = createSelectEditor<number, object>(
+      {
+        type: 'select',
+        options: () => new Promise<SelectOption<number>[]>((res) => (resolve = res)),
+      },
+      { value: 3, onChange: vi.fn() },
+    );
+    const loading = editor.load({});
+
+    expect(editor.getLabel()).toBeUndefined();
+
+    resolve(countries);
+    await loading;
+
+    expect(editor.getLabel()).toBe('Spain');
+  });
+
+  it('gives undefined after a failed load', async () => {
+    const editor = createSelectEditor<number, object>(
+      { type: 'select', options: () => Promise.reject(new Error('down')) },
+      { value: 3, onChange: vi.fn() },
+    );
+
+    expect(await editor.load({})).toBe('failed');
+    expect(editor.getLabel()).toBeUndefined();
   });
 });

@@ -2,28 +2,15 @@ import type { BaseEditor } from './base';
 import { addClasses } from './classes';
 import type { EditorContext, EditorInstance } from './instance';
 
-/**
- * A checkbox, for `boolean` columns. Checked means `true`.
- *
- * A `null` value shows as unchecked. The checkbox always gives back `true`
- * or `false`, never `null`.
- *
- * @example
- * { type: 'checkbox' }
- */
+/** For `boolean` columns. `null` shows unchecked; it never returns `null`. */
 export type CheckboxEditor = BaseEditor & {
+  /** Picks this editor. */
   readonly type: 'checkbox';
 };
 
 /**
- * Creates a live checkbox editor.
- *
- * Internal: Tadabut calls it when a row starts being edited.
- *
- * @param _config The editor config from the column. A checkbox has no
- *   options of its own yet; the parameter keeps the same shape as the other
- *   editors.
- * @param context The starting value, the classes and the change callback.
+ * Builds the checkbox. `_config` is unused for now, but keeps the same
+ * shape as the other editors.
  */
 export function createCheckboxEditor(
   _config: CheckboxEditor,
@@ -33,6 +20,7 @@ export function createCheckboxEditor(
   input.type = 'checkbox';
   addClasses(input, ['tdb-input', 'tdb-input-checkbox'], context.className);
 
+  /** `null` shows as unchecked. */
   const setValue = (value: boolean | null): void => {
     input.checked = value === true;
   };

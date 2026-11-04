@@ -1,43 +1,29 @@
 import type { Config } from 'datatables.net';
 import type { Column } from '../columns/column';
 
-/**
- * Extra information `onSave` gets next to the edited row.
- *
- * @typeParam Row - The shape of one row.
- */
+/** The second argument of `onSave`. */
 export type SaveContext<Row extends object> = {
-  /** The row as it was when editing started. */
+  /** The row as it was before editing. */
   readonly previous: Row;
 };
 
-/**
- * How rows are edited.
- */
+/** How rows are edited. */
 export type EditingOptions = {
   /**
-   * How many rows can be edited at once.
-   *
-   * - `'single'` (default): one row. `edit` returns `false` while another
-   *   row is open.
-   * - `'multiple'`: any number of rows. Each one is saved or cancelled on
-   *   its own.
+   * `'single'` (default) allows one open row at a time. `'multiple'` allows
+   * any number, each saved on its own.
    */
   readonly mode?: 'single' | 'multiple';
   /**
-   * Adds a column at the end with Edit, Save and Cancel buttons.
-   * Default `true`. Turn it off to start editing from your own code with
-   * `edit`, `save` and `cancel`.
+   * Adds an Edit/Save/Cancel column at the end. Defaults to `true`. Turn it
+   * off if you open rows yourself with `edit()`.
    */
   readonly button?: boolean;
 };
 
 /**
- * Your own CSS classes for the table and its buttons, like Bootstrap's or
- * Tailwind's.
- *
- * They are added next to the `tdb-` classes, never instead of them, so CSS
- * that targets `tdb-` classes keeps working.
+ * Extra CSS classes for the table and its buttons. They're added next to the
+ * `tdb-` classes, not instead of them.
  *
  * @example
  * // Bootstrap 5
@@ -50,86 +36,59 @@ export type EditingOptions = {
  * }
  */
 export type TableClassNames = {
-  /** Added to the `<table>`. */
+  /** On the `<table>`. */
   readonly table?: string;
-  /** Added to the Edit, Save and Cancel buttons. */
+  /** All three buttons. */
   readonly button?: string;
-  /** Added to the Edit button only. */
+  /** Edit button only. */
   readonly edit?: string;
-  /** Added to the Save button only. */
+  /** Save button only. */
   readonly save?: string;
-  /** Added to the Cancel button only. */
+  /** Cancel button only. */
   readonly cancel?: string;
 };
 
 /**
- * DataTables' own settings, like `paging`, `pageLength`, `order` or
- * `language`, passed to DataTables as they are. Settings from DataTables
- * extensions, like Buttons, work too.
- *
- * All of DataTables' settings are allowed except these, which Tadabut needs
- * to control itself:
- * - `data` and `columns`: Tadabut makes them from its own `data` and
- *   `columns`.
- * - `columnDefs`: it would change columns behind Tadabut's back. Use the
- *   column options instead (`width`, `visible`, …).
- * - `ajax` and `serverSide`: DataTables would load and replace the rows by
- *   itself, without Tadabut knowing.
- *
- * See {@link https://datatables.net/reference/option/ | DataTables' options}.
+ * Any {@link https://datatables.net/reference/option/ | DataTables option},
+ * extensions included, except the ones Tadabut has to own: `data`,
+ * `columns`, `columnDefs` (use the column options), and `ajax`/`serverSide`
+ * (load rows yourself and call `setData`).
  *
  * @example
- * {
- *   order: [[1, 'asc']],
- *   pageLength: 20,
- *   language: { search: 'Rechercher :' },
- * }
+ * { order: [[1, 'asc']], pageLength: 20, language: { search: 'Rechercher :' } }
  */
 export type DataTablesSettings = Omit<
   Config,
   'data' | 'columns' | 'columnDefs' | 'ajax' | 'serverSide'
 >;
 
-/**
- * Options for creating a Tadabut table.
- *
- * @typeParam Row - The shape of one row. Usually worked out from `data`.
- */
+/** Options for `new Tadabut()`. */
 export type TadabutOptions<Row extends object> = {
-  /** The rows to show. One object per row. */
+  /** The rows. The array is copied, never changed. */
   readonly data: readonly Row[];
-  /** The columns to show, in order. */
+  /** The columns, in order. */
   readonly columns: readonly Column<Row>[];
   /**
-   * Name of the row property that identifies each row, like `'id'`.
-   * Its values must be unique strings or numbers.
-   *
-   * Required when a column has an `editor`: editing uses it to find rows.
+   * The field that identifies a row, like `'id'`. Values must be unique.
+   * Required as soon as a column has an `editor`.
    */
   readonly rowId?: keyof Row & string;
-  /** How rows are edited. Only used when a column has an `editor`. */
+  /** How rows are edited. */
   readonly editing?: EditingOptions;
-  /** Your CSS classes for the table and the buttons, like Bootstrap's. */
+  /** Your classes for the table and buttons. */
   readonly classNames?: TableClassNames;
-  /**
-   * DataTables' own settings, passed as they are. Tadabut's own options win
-   * when both set the same thing.
-   */
+  /** DataTables' own options, passed through. */
   readonly dataTables?: DataTablesSettings;
   /**
-   * Called when a row is saved, after every field passed validation.
-   * It can be async.
+   * Called with the edited row once it passes validation. May be async.
    *
-   * - Return nothing to keep the edited row, or return a row to use that
-   *   one instead (for fields the server fills in, like `updatedAt`).
-   * - Throw to say saving failed. The row stays open with what the user
-   *   typed, and the error's message shows under it.
-   *
-   * Without `onSave`, saving just updates the table.
+   * Return a row to replace the edited one (useful for fields the server
+   * sets, like `updatedAt`), or nothing to keep it. Throw to reject the
+   * save: the row stays open and the error message is shown under it.
    */
   readonly onSave?: (
     row: Row,
     context: SaveContext<Row>,
-    // biome-ignore lint/suspicious/noConfusingVoidType: a callback that returns nothing has the type void, so void must be allowed here.
+    // biome-ignore lint/suspicious/noConfusingVoidType: callbacks that return nothing are typed void.
   ) => Row | void | Promise<Row | void>;
 };

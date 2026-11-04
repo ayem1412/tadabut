@@ -158,7 +158,7 @@ A select's values must have the same type as the column. `countryId` is a number
 | `number`   | `number`           | `null`      | `min`, `max`, `step`                |
 | `date`     | `string`           | `null`      | `min`, `max`                        |
 | `checkbox` | `boolean`          | never empty | none                                |
-| `select`   | same as the column | `null`      | `options`, `dependsOn`              |
+| `select`   | same as the column | `null`      | `options`, `dependsOn`, `labelProp` |
 
 Every editor also takes `className`, for your own CSS classes.
 
@@ -171,22 +171,19 @@ A few things to know:
 
 ### What cells show
 
-When a row isn't being edited, a cell shows its value as text. Two things change that:
+When a row isn't being edited, a cell shows its value as text. Three things change that:
 
 - A select with a fixed list shows the option's label. A `countryId` of `1` shows "Morocco", with nothing to write.
+- A select with `labelProp` shows that field of the row, like `cityName`. See [Chained selects](#chained-selects).
 - `render` sets the text yourself, on any column:
 
 ```ts
 { prop: 'salary', title: 'Salary', render: (value) => `${value} MAD` }
-
-// A select whose options come from a function: Tadabut can't know the
-// label, but the row usually has it.
-{ prop: 'cityId', title: 'City', render: (value, row) => row.cityName, editor: { … } }
 ```
 
 A few things to know:
 
-- `render` wins over a select's label.
+- The order is: `render`, then `labelProp`, then the fixed list's label, then the value itself.
 - What `render` returns is shown as plain text, never as HTML. `<b>` shows as `<b>`, so text from a server can't break the page or run code.
 - Searching uses the text. Sorting uses the raw value, so `200 MAD` comes before `1000 MAD`. A city column sorts by id, not by name.
 - An empty value (`null` or `undefined`) shows an empty cell. On a nullable column, `render` gets `null` too.
@@ -525,11 +522,13 @@ const columns: Column<Employee>[] = [
       type: 'select',
       required: true,
       dependsOn: 'countryId',
+      labelProp: 'cityName',
       options: async (row, { signal }) => {
         if (row.countryId === null) return [];
 
         const res = await fetch(`/api/cities?country=${row.countryId}`, { signal });
-        return res.json(); // [{ value, label }, …]
+        const cities: { id: number; name: string }[] = await res.json();
+        return cities.map((city) => ({ value: city.id, label: city.name }));
       },
     },
   },
@@ -549,7 +548,18 @@ If `options` throws, the select stays empty and "Could not load the options." sh
 
 `dependsOn` only works with a function. With a fixed list, it's a type error. It must be another field of the row, so a typo is a type error too.
 
-Outside edit mode, the city cell needs a `render` to show a name instead of an id. See [What cells show](#what-cells-show).
+#### Saving the label too: `labelProp`
+
+The city's value is an id, like `12`, but people need to see "Casablanca". With options from a function, Tadabut only knows the names while the row is open, so it can't show them in the cell by itself. That's what `labelProp` is for: a field of the row where the picked option's label is saved.
+
+With `labelProp: 'cityName'`:
+
+- The cell shows `row.cityName`. No `render` needed.
+- When the user picks Casablanca and saves, the row gets `cityId: 12` **and** `cityName: 'Casablanca'`. `onSave` gets both, and the cell shows the new name.
+- Nothing picked saves `null` in both. `required` still stops the save.
+- While the options are still loading, `cityName` keeps its old value, which is still right: the id didn't change either.
+
+`labelProp` works with a fixed list too. It must be a text field of the row (`string`, nullable or optional ones too), so `labelProp: 'age'` is a type error. It can't be the column's own `prop`: saving would write the label over the id, so Tadabut throws an error.
 
 ### Saving
 
@@ -727,10 +737,10 @@ Done:
 - [x] Your own classes on the table and buttons (`classNames`), and a Bootstrap 5 recipe
 - [x] API reference site
 - [x] Pass DataTables settings through (paging, page sizes, default order, language, extensions like Buttons), and column `width`, `visible`, `orderable`, `searchable` and `className`
+- [x] Selects that also save their label in the row (`labelProp`), so the cell shows the new label after a save
 
 Next, roughly in this order:
 
-- [ ] Selects that also save their label in the row (`labelProp`), so the cell shows the new label after a save
 - [ ] Translations for Tadabut's own texts (buttons and error messages), French first
 - [ ] Adding new rows, and deleting rows, with a confirmation step
 - [ ] Checkboxes with your own values, like `'O'` and `'N'` instead of `true` and `false`
