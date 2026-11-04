@@ -1,5 +1,5 @@
 /**
- * React adapter for Tadabut.
+ * The React component.
  *
  * @packageDocumentation
  * @module tadabut/react
@@ -16,47 +16,23 @@ import { type ReactElement, type Ref, useEffect, useImperativeHandle, useRef } f
 
 import { Tadabut as Core, type TadabutOptions } from '../index';
 
-/**
- * What a `ref` on the `Tadabut` component gets: the core's editing methods.
- * They work the same way, with the same return values.
- *
- * There is no `setData`: in React, the rows come from the `data` prop.
- *
- * @typeParam Row - The shape of one row.
- */
+/** What the `ref` gets. No `setData`: change the `data` prop instead. */
 export type TadabutHandle<Row extends object> = Pick<
   Core<Row>,
   'edit' | 'save' | 'cancel' | 'isEditing'
 >;
 
-/**
- * Props of the React `Tadabut` component: the core options, plus `ref`.
- *
- * @typeParam Row - The shape of one row. Usually worked out from `data`.
- */
+/** The core options, plus `ref`. */
 export type TadabutProps<Row extends object> = TadabutOptions<Row> & {
-  /** Gets the editing methods, to call them from your own buttons or code. */
+  /** Gives you `edit`, `save`, `cancel` and `isEditing`. */
   readonly ref?: Ref<TadabutHandle<Row>>;
 };
 
 /**
- * A Tadabut table as a React component.
- *
- * React only renders an empty `<div>`. The table inside it is created and
- * owned by the core, so React never touches it.
- *
- * - New `data` updates the table in place: sorting, search and the current
- *   page are kept.
- * - New `columns`, `rowId`, `dataTables`, `editing.mode`, `editing.button`
- *   or `classNames` values rebuild the table, and any row being edited is
- *   lost. Define `columns` and `dataTables` outside the component, or with
- *   `useMemo`: a new object on every render would rebuild it every time.
- * - `editing` and `classNames` can be new objects on every render: only a
- *   change in their values rebuilds the table.
- * - `onSave` can be a new function on every render. The table always calls
- *   the latest one, without being rebuilt.
- *
- * @typeParam Row - The shape of one row. Usually worked out from `data`.
+ * New `data` updates the table in place. Changing `columns`, `rowId`,
+ * `dataTables` or `texts` rebuilds it (and closes open rows), so keep those
+ * stable with a constant or `useMemo`. `editing`, `classNames` and `onSave` can be
+ * inline: they're compared by value or read through a ref.
  */
 export function Tadabut<Row extends object>({
   data,
@@ -65,34 +41,20 @@ export function Tadabut<Row extends object>({
   editing,
   classNames,
   dataTables,
+  texts,
   onSave,
   ref,
 }: TadabutProps<Row>): ReactElement {
-  /** The empty `<div>` React renders. The core builds the table inside it. */
+  /** The `<div>` the core builds the table in. */
   const containerRef = useRef<HTMLDivElement>(null);
-
-  /**
-   * The live core table, for `setData` and the ref's methods.
-   * `null` before the first build and after unmount.
-   */
+  /** The core table. `null` before the first build and after unmount. */
   const tableRef = useRef<Core<Row>>(null);
-
-  /**
-   * The latest `data`. When the table is rebuilt, it starts from the current
-   * rows instead of the ones from the first render. Kept in a ref so `data`
-   * stays out of the build effect's dependencies.
-   */
+  /** The latest rows, so a rebuild doesn't go back to the first ones. */
   const dataRef = useRef(data);
-
-  /**
-   * The latest `onSave`. The core gets a function that never changes and
-   * calls this one, so a new `onSave` doesn't rebuild the table.
-   */
+  /** The latest `onSave`, so a new one doesn't rebuild the table. */
   const onSaveRef = useRef(onSave);
 
-  // Strings and booleans compare by value. A new `editing` or `classNames`
-  // object with the same values on every render doesn't rebuild the table,
-  // a real change does.
+  // Pulled out so inline objects don't trigger a rebuild every render.
   const mode = editing?.mode;
   const button = editing?.button;
   const tableClass = classNames?.table;
@@ -114,6 +76,7 @@ export function Tadabut<Row extends object>({
       rowId,
       editing: { mode, button },
       dataTables,
+      texts,
       classNames: {
         table: tableClass,
         button: buttonClass,
@@ -132,9 +95,8 @@ export function Tadabut<Row extends object>({
   }, [
     columns,
     rowId,
-    // As an object, like `columns`: it's too big and nested to compare by
-    // value. Users keep it stable with `useMemo` or a constant.
     dataTables,
+    texts,
     mode,
     button,
     tableClass,
@@ -149,13 +111,10 @@ export function Tadabut<Row extends object>({
     tableRef.current?.setData(data);
   }, [data]);
 
-  // No dependencies: runs after every render, so the ref is never behind.
   useEffect(() => {
     onSaveRef.current = onSave;
   });
 
-  // The methods read tableRef when they're called, so they keep working
-  // after a rebuild. With no table, they do nothing and return false.
   useImperativeHandle(
     ref,
     () => ({

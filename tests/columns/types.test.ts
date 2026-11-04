@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import type { Column, EditorInstance, TadabutOptions } from '../../src/index';
+import { type Column, type EditorInstance, fr, type TadabutOptions } from '../../src/index';
 
 type Row = {
   id: number;
@@ -492,5 +492,31 @@ describe('labelProp types', () => {
     };
 
     expect(column.prop).toBe('cityName');
+  });
+});
+
+describe('texts types', () => {
+  it('accepts a language, or a part of one', () => {
+    const whole: TadabutOptions<Row> = { data: [], columns: [], texts: fr };
+    const part: TadabutOptions<Row> = { data: [], columns: [], texts: { save: 'Valider' } };
+
+    expect([whole, part]).toHaveLength(2);
+  });
+
+  it('rejects unknown keys and wrong types', () => {
+    const typo: TadabutOptions<Row> = {
+      data: [],
+      columns: [],
+      // @ts-expect-error 'sve' is not a text
+      texts: { sve: 'x' },
+    };
+    const notAFunction: TadabutOptions<Row> = {
+      data: [],
+      columns: [],
+      // @ts-expect-error tooSmall takes the number and returns the message
+      texts: { tooSmall: 'x' },
+    };
+
+    expect([typo, notAFunction]).toHaveLength(2);
   });
 });

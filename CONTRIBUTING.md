@@ -43,6 +43,7 @@ src/
   columns/      the Column type, and how columns are passed to DataTables
   editors/      one file per editor, the editor contract, and createEditor
   validation/   validation rules and the code that checks them
+  texts/        Tadabut's own texts: the `Texts` type, English and French
   editing/      editing a row: turning cells into editors and back
   react/        the React adapter
 tests/          same folders as src/
@@ -83,6 +84,10 @@ Editors:
 - Every editor takes an `EditorContext` and returns an `EditorInstance`.
 - Call `onChange` only when the user changes the value. `setValue` never calls it.
 - `destroy` removes everything the editor created.
+
+Texts:
+
+- Don't hard-code text users can see. Add a key to `Texts` in `src/texts/texts.ts`, then to every language in `src/texts/`. TypeScript tells you if one is missing.
 
 Styling:
 

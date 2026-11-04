@@ -1,3 +1,5 @@
+import { en } from '../texts/en';
+import type { Texts } from '../texts/texts';
 import type { BaseEditor } from './base';
 import { addClasses } from './classes';
 import type { EditorContext, EditorInstance } from './instance';
@@ -91,6 +93,7 @@ export type SelectInstance<Value, Row> = EditorInstance<Value | null> & {
 export function createSelectEditor<Value, Row>(
   config: SelectEditor<Value, Row>,
   context: EditorContext<Value | null>,
+  texts: Texts = en,
 ): SelectInstance<Value, Row> {
   const select = document.createElement('select');
   addClasses(select, ['tdb-input', 'tdb-input-select'], context.className);
@@ -155,7 +158,7 @@ export function createSelectEditor<Value, Row>(
         return 'loaded';
       }
 
-      showOnly('Loading…');
+      showOnly(texts.loading);
       const list = await result;
 
       // Ignore late answers even if the loader didn't use the signal.

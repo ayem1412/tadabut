@@ -1,7 +1,7 @@
 import 'datatables.net-dt';
 import 'datatables.net-dt/css';
 
-import { type EditingOptions, Tadabut } from '../src/index';
+import { type EditingOptions, fr, Tadabut } from '../src/index';
 import { columns, fakeSave, french, type Row, rows, settings } from './data';
 
 const container = document.querySelector<HTMLElement>('#container');
@@ -41,6 +41,7 @@ const createTable = (): Tadabut<Row> => {
     onSave: fakeSave,
     editing,
     dataTables: frenchCheckbox.checked ? { ...settings, language: french } : settings,
+    texts: frenchCheckbox.checked ? fr : undefined,
   });
 };
 

@@ -1,47 +1,37 @@
 import type { AnyEditor } from '../editors/editor';
+import { en } from '../texts/en';
+import type { Texts } from '../texts/texts';
 import type { ValidationOptions } from './rules';
 
 /** An editor config with its rules, type erased. */
 export type AnyValidatedEditor = AnyEditor & ValidationOptions<unknown, unknown>;
-
-/** The error messages. English only until translations land. */
-export const messages = {
-  required: 'This field is required.',
-  loadFailed: 'Could not load the options.',
-  tooShort: (min: number) => `Must be at least ${min} characters.`,
-  tooLong: (max: number) => `Must be at most ${max} characters.`,
-  patternMismatch: 'Wrong format.',
-  tooSmall: (min: number) => `Must be ${min} or more.`,
-  tooLarge: (max: number) => `Must be ${max} or less.`,
-  tooEarly: (min: string) => `Must be on or after ${min}.`,
-  tooLate: (max: string) => `Must be on or before ${max}.`,
-};
 
 /** Returns the first error message, or `undefined`. */
 export function validateValue(
   config: AnyValidatedEditor,
   value: unknown,
   row: unknown,
+  texts: Texts = en,
 ): string | undefined {
   if (value === null || value === undefined || value === '') {
-    return config.required ? messages.required : undefined;
+    return config.required ? texts.required : undefined;
   }
 
-  return builtInError(config, value) ?? config.validate?.(value, row);
+  return builtInError(config, value, texts) ?? config.validate?.(value, row);
 }
 
 /** The rules each built-in editor brings. */
-function builtInError(config: AnyEditor, value: unknown): string | undefined {
+function builtInError(config: AnyEditor, value: unknown, texts: Texts): string | undefined {
   switch (config.type) {
     case 'text':
-      return typeof value === 'string' ? textError(config, value) : undefined;
+      return typeof value === 'string' ? textError(config, value, texts) : undefined;
 
     case 'number':
-      return typeof value === 'number' ? rangeError(config, value) : undefined;
+      return typeof value === 'number' ? rangeError(config, value, texts) : undefined;
 
     case 'date':
       // 'YYYY-MM-DD' strings compare correctly as text.
-      return typeof value === 'string' ? dateError(config, value) : undefined;
+      return typeof value === 'string' ? dateError(config, value, texts) : undefined;
 
     case 'checkbox':
     case 'select':
@@ -59,17 +49,18 @@ function builtInError(config: AnyEditor, value: unknown): string | undefined {
 function textError(
   config: Extract<AnyEditor, { type: 'text' }>,
   value: string,
+  texts: Texts,
 ): string | undefined {
   if (config.minLength !== undefined && value.length < config.minLength) {
-    return messages.tooShort(config.minLength);
+    return texts.tooShort(config.minLength);
   }
 
   if (config.maxLength !== undefined && value.length > config.maxLength) {
-    return messages.tooLong(config.maxLength);
+    return texts.tooLong(config.maxLength);
   }
 
   if (config.pattern !== undefined && !matchesWhole(config.pattern, value)) {
-    return messages.patternMismatch;
+    return texts.patternMismatch;
   }
 
   return undefined;
@@ -79,13 +70,14 @@ function textError(
 function rangeError(
   config: Extract<AnyEditor, { type: 'number' }>,
   value: number,
+  texts: Texts,
 ): string | undefined {
   if (config.min !== undefined && value < config.min) {
-    return messages.tooSmall(config.min);
+    return texts.tooSmall(config.min);
   }
 
   if (config.max !== undefined && value > config.max) {
-    return messages.tooLarge(config.max);
+    return texts.tooLarge(config.max);
   }
 
   return undefined;
@@ -95,13 +87,14 @@ function rangeError(
 function dateError(
   config: Extract<AnyEditor, { type: 'date' }>,
   value: string,
+  texts: Texts,
 ): string | undefined {
   if (config.min !== undefined && value < config.min) {
-    return messages.tooEarly(config.min);
+    return texts.tooEarly(config.min);
   }
 
   if (config.max !== undefined && value > config.max) {
-    return messages.tooLate(config.max);
+    return texts.tooLate(config.max);
   }
 
   return undefined;
