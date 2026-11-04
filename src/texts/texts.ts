@@ -12,6 +12,16 @@ export type Texts = {
   readonly save: string;
   /** The Cancel button. */
   readonly cancel: string;
+  /** The Delete button. */
+  readonly delete: string;
+  /** Asked in the row before deleting it. */
+  readonly deleteQuestion: string;
+  /** The button that confirms a delete. */
+  readonly confirm: string;
+  /** The button that keeps the row instead. */
+  readonly keep: string;
+  /** Under a row when `onDelete` throws something that isn't an `Error`. */
+  readonly deleteFailed: string;
   /** Shown in a select while its options load. */
   readonly loading: string;
   /** Under a row when `onSave` throws something that isn't an `Error`. */

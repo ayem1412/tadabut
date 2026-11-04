@@ -17,7 +17,8 @@ export type EditingOptions = {
   readonly mode?: 'single' | 'multiple';
   /**
    * Adds an Edit/Save/Cancel column at the end. Defaults to `true`. Turn it
-   * off if you open rows yourself with `edit()`.
+   * off if you open rows yourself with `edit()`. The Delete button still
+   * shows if `onDelete` is set.
    */
   readonly button?: boolean;
 };
@@ -34,12 +35,15 @@ export type EditingOptions = {
  *   edit: 'btn-outline-primary',
  *   save: 'btn-primary',
  *   cancel: 'btn-outline-secondary',
+ *   delete: 'btn-outline-danger',
+ *   confirm: 'btn-danger',
+ *   keep: 'btn-outline-secondary',
  * }
  */
 export type TableClassNames = {
   /** On the `<table>`. */
   readonly table?: string;
-  /** All three buttons. */
+  /** Every button. */
   readonly button?: string;
   /** Edit button only. */
   readonly edit?: string;
@@ -47,6 +51,12 @@ export type TableClassNames = {
   readonly save?: string;
   /** Cancel button only. */
   readonly cancel?: string;
+  /** Delete button only. */
+  readonly delete?: string;
+  /** The button that confirms a delete. */
+  readonly confirm?: string;
+  /** The button that keeps the row instead. */
+  readonly keep?: string;
 };
 
 /**
@@ -99,4 +109,23 @@ export type TadabutOptions<Row extends object> = {
     context: SaveContext<Row>,
     // biome-ignore lint/suspicious/noConfusingVoidType: callbacks that return nothing are typed void.
   ) => Row | void | Promise<Row | void>;
+  /**
+   * Called when a row is deleted. May be async. Throw to stop the delete:
+   * the row stays and the error message is shown under it.
+   *
+   * The Delete button only shows when this is set.
+   */
+  readonly onDelete?: (row: Row) => void | Promise<void>;
+  /**
+   * What happens before a row is deleted with the Delete button. By default
+   * the row asks "Delete this row?" with two buttons. `false` deletes right
+   * away. A function replaces the question with yours: return `true` to
+   * delete. May be async, for a modal.
+   *
+   * `delete()` from code never asks.
+   *
+   * @example
+   * confirmDelete: (row) => window.confirm(`Delete ${row.name}?`)
+   */
+  readonly confirmDelete?: false | ((row: Row) => boolean | Promise<boolean>);
 };

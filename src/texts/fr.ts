@@ -5,6 +5,12 @@ export const fr: Texts = {
   edit: 'Modifier',
   save: 'Enregistrer',
   cancel: 'Annuler',
+  delete: 'Supprimer',
+  // A space that can't break, so the "?" never wraps alone.
+  deleteQuestion: 'Supprimer cette ligne\u00a0?',
+  confirm: 'Oui, supprimer',
+  keep: 'Non',
+  deleteFailed: 'Impossible de supprimer.',
   loading: 'Chargement…',
   saveFailed: "Impossible d'enregistrer.",
   loadFailed: 'Impossible de charger les options.',

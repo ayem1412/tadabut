@@ -32,7 +32,7 @@ function setup(onSave?: TadabutOptions<Row>['onSave']) {
   const cellTexts = () => [...firstRow().querySelectorAll('td')].map((td) => td.textContent);
   const nameInput = () =>
     firstRow().querySelector<HTMLInputElement>('td:nth-child(2) input') as HTMLInputElement;
-  const saveError = () => container.querySelector('.tdb-save-error');
+  const saveError = () => container.querySelector('.tdb-row-error');
 
   return { container, table, firstRow, cellTexts, nameInput, saveError };
 }

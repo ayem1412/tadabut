@@ -3,7 +3,7 @@ import 'datatables.net-bs5';
 import 'datatables.net-bs5/css';
 
 import { type Column, type TableClassNames, Tadabut } from '../src/index';
-import { countries, fakeSave, fetchCities, type Row, rows } from './data';
+import { countries, fakeDelete, fakeSave, fetchCities, type Row, rows } from './data';
 
 const container = document.querySelector<HTMLElement>('#container');
 
@@ -17,6 +17,9 @@ const classNames: TableClassNames = {
   edit: 'btn-outline-primary',
   save: 'btn-primary',
   cancel: 'btn-outline-secondary',
+  delete: 'btn-outline-danger',
+  confirm: 'btn-danger',
+  keep: 'btn-outline-secondary',
 };
 
 // Same columns as data.ts, plus Bootstrap classes on the inputs.
@@ -60,4 +63,11 @@ const columns: Column<Row>[] = [
   },
 ];
 
-new Tadabut(container, { data: rows, columns, rowId: 'id', onSave: fakeSave, classNames });
+new Tadabut(container, {
+  data: rows,
+  columns,
+  rowId: 'id',
+  onSave: fakeSave,
+  onDelete: fakeDelete,
+  classNames,
+});

@@ -5,7 +5,7 @@ import { StrictMode, useRef, useState } from 'react';
 import { createRoot } from 'react-dom/client';
 
 import { Tadabut, type TadabutHandle } from '../src/react/index';
-import { columns, fakeSave, type Row, rows, settings } from './data';
+import { columns, fakeDelete, fakeSave, type Row, rows, settings } from './data';
 
 function App() {
   const [data, setData] = useState(rows);
@@ -29,6 +29,15 @@ function App() {
         >
           Edit row 1 from outside
         </button>
+        <button
+          type='button'
+          onClick={async () => {
+            const deleted = (await tableRef.current?.delete(2)) ?? false;
+            setStatus(deleted ? 'Deleted row 2' : "Can't delete row 2 right now");
+          }}
+        >
+          Delete row 2 from outside
+        </button>
         <span className='status'>{status}</span>
       </div>
 
@@ -42,6 +51,12 @@ function App() {
         onSave={async (row) => {
           await fakeSave(row);
           setStatus(`Saved ${row.name}`);
+        }}
+        onDelete={async (row) => {
+          await fakeDelete(row);
+          // Keep the state in sync, or the row comes back on the next data change.
+          setData((current) => current.filter((r) => r.id !== row.id));
+          setStatus(`Deleted ${row.name}`);
         }}
       />
     </>

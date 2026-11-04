@@ -180,6 +180,7 @@ describe('React Tadabut editing', () => {
     expect(handle.edit(1)).toBe(false);
     expect(handle.isEditing(1)).toBe(false);
     expect(await handle.save(1)).toBe(false);
+    expect(await handle.delete(1)).toBe(false);
     expect(() => handle.cancel(1)).not.toThrow();
   });
 
@@ -305,5 +306,117 @@ describe('React Tadabut editing', () => {
     await renderWith({ texts: fr });
 
     expect(container.querySelector('[data-tdb-action="edit"]')?.textContent).toBe('Modifier');
+  });
+});
+
+/** Clicks an action button in the first row. */
+function clickAction(action: string): void {
+  act(() => {
+    container
+      .querySelector<HTMLElement>(`tbody tr:first-child [data-tdb-action="${action}"]`)
+      ?.click();
+  });
+}
+
+describe('React Tadabut deleting', () => {
+  beforeEach(() => {
+    container = document.createElement('div');
+    document.body.appendChild(container);
+    root = createRoot(container);
+  });
+
+  afterEach(async () => {
+    await act(async () => {
+      root.unmount();
+    });
+    document.body.innerHTML = '';
+  });
+
+  it('shows the Delete button with onDelete, and deletes on Yes', async () => {
+    const onDelete = vi.fn();
+    await renderWith({ onDelete });
+
+    clickAction('delete');
+    await act(async () => {
+      clickAction('confirm');
+    });
+
+    expect(onDelete).toHaveBeenCalledWith(rows[0]);
+    expect(namesShown()).toEqual(['Youness', 'Salma']);
+  });
+
+  it('adds the Delete button when onDelete is added later', async () => {
+    await renderWith({});
+    expect(container.querySelector('[data-tdb-action="delete"]')).toBeNull();
+
+    await renderWith({ onDelete: () => {} });
+
+    expect(container.querySelector('[data-tdb-action="delete"]')).not.toBeNull();
+  });
+
+  it('keeps the question open when onDelete is a new function', async () => {
+    await renderWith({ onDelete: () => {} });
+    const table = container.querySelector('table');
+    clickAction('delete');
+
+    await renderWith({ onDelete: () => {} });
+
+    expect(container.querySelector('table')).toBe(table);
+    expect(container.querySelector('.tdb-delete-question')).not.toBeNull();
+  });
+
+  it('calls the latest onDelete and confirmDelete', async () => {
+    const first = vi.fn();
+    const second = vi.fn();
+    await renderWith({ onDelete: first, confirmDelete: () => false });
+    await renderWith({ onDelete: second, confirmDelete: () => true });
+
+    await act(async () => {
+      clickAction('delete');
+    });
+
+    expect(first).not.toHaveBeenCalled();
+    expect(second).toHaveBeenCalledWith(rows[0]);
+  });
+
+  it('deletes right away with confirmDelete: false', async () => {
+    await renderWith({ onDelete: () => {}, confirmDelete: false });
+
+    await act(async () => {
+      clickAction('delete');
+    });
+
+    expect(namesShown()).toEqual(['Youness', 'Salma']);
+  });
+
+  it('deletes through the ref', async () => {
+    const ref = createRef<TadabutHandle<Row>>();
+    await renderWith({ ref });
+
+    let deleted = false;
+    await act(async () => {
+      deleted = (await ref.current?.delete(2)) ?? false;
+    });
+
+    expect(deleted).toBe(true);
+    expect(namesShown()).toEqual(['Amina', 'Salma']);
+  });
+
+  it('passes the delete classes to the table', async () => {
+    await renderWith({
+      onDelete: () => {},
+      classNames: { delete: 'btn-outline-danger', confirm: 'btn-danger', keep: 'btn-light' },
+    });
+
+    expect(
+      container.querySelector('.tdb-button-delete')?.classList.contains('btn-outline-danger'),
+    ).toBe(true);
+
+    clickAction('delete');
+
+    expect(container.querySelector('.tdb-button-confirm')?.classList.contains('btn-danger')).toBe(
+      true,
+    );
+    expect(container.querySelector('.tdb-button-keep')?.classList.contains('btn-light')).toBe(true);
   });
 });

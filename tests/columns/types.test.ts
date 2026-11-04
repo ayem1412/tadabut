@@ -495,6 +495,39 @@ describe('labelProp types', () => {
   });
 });
 
+describe('delete types', () => {
+  it('gives onDelete and confirmDelete the row type', () => {
+    const options: TadabutOptions<Row> = {
+      data: [],
+      columns: [],
+      rowId: 'id',
+      onDelete: async (row) => {
+        row.name.toUpperCase();
+      },
+      confirmDelete: (row) => window.confirm(row.name),
+    };
+
+    expect(options).toBeDefined();
+  });
+
+  it('accepts false or an async confirmDelete, but not true', () => {
+    const never: TadabutOptions<Row> = { data: [], columns: [], confirmDelete: false };
+    const modal: TadabutOptions<Row> = {
+      data: [],
+      columns: [],
+      confirmDelete: async () => true,
+    };
+    const always: TadabutOptions<Row> = {
+      data: [],
+      columns: [],
+      // @ts-expect-error leave confirmDelete out to ask inline
+      confirmDelete: true,
+    };
+
+    expect([never, modal, always]).toHaveLength(3);
+  });
+});
+
 describe('texts types', () => {
   it('accepts a language, or a part of one', () => {
     const whole: TadabutOptions<Row> = { data: [], columns: [], texts: fr };

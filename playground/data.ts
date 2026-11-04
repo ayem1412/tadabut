@@ -131,6 +131,15 @@ export async function fakeSave(row: Row): Promise<void> {
   }
 }
 
+// Karim (id 4) can't be deleted, to see a failed delete.
+export async function fakeDelete(row: Row): Promise<void> {
+  await new Promise((resolve) => setTimeout(resolve, 800));
+
+  if (row.id === 4) {
+    throw new Error('The server keeps this row');
+  }
+}
+
 export const settings: DataTablesSettings = {
   order: [[1, 'asc']],
   lengthMenu: [5, 10, 20, -1],
