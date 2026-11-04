@@ -1,3 +1,5 @@
+import { en } from '../texts/en';
+import type { Texts } from '../texts/texts';
 import { createCheckboxEditor } from './checkbox';
 import { createDateEditor } from './date';
 import type { AnyEditor } from './editor';
@@ -21,6 +23,7 @@ export type AnyEditorInstance = EditorInstance<unknown> & {
 export function createEditor(
   config: AnyEditor,
   context: EditorContext<unknown>,
+  texts: Texts = en,
 ): AnyEditorInstance {
   const fullContext = { ...context, className: config.className };
 
@@ -38,7 +41,7 @@ export function createEditor(
       return loosen(createCheckboxEditor(config, tighten(fullContext)));
 
     case 'select':
-      return createSelectEditor(config, fullContext);
+      return createSelectEditor(config, fullContext, texts);
 
     case 'custom':
       return config.create(fullContext);

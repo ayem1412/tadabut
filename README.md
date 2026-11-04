@@ -248,9 +248,53 @@ Five settings aren't allowed, because Tadabut controls them:
 
 These are type errors, and Tadabut's own values win even in plain JavaScript.
 
-`language` only changes DataTables' texts. Tadabut's own texts (the Edit, Save and Cancel buttons, and error messages) are still in English for now.
+`language` only changes DataTables' texts. For Tadabut's own texts, see [Texts and translations](#texts-and-translations).
 
 In React, keep `dataTables` outside your component or in a `useMemo`, like `columns`. A new object on every render rebuilds the table.
+
+### Texts and translations
+
+Tadabut's own texts (the Edit, Save and Cancel buttons, "Loading…", and the error messages) are in English by default. French comes built in:
+
+```ts
+import { Tadabut, fr } from 'tadabut';
+
+const table = new Tadabut(container, { data, columns, rowId: 'id', texts: fr });
+```
+
+Change only some of them, or write your own language. Whatever you leave out stays in English:
+
+```ts
+texts: { ...fr, save: 'Valider' }
+
+texts: { edit: 'Bearbeiten', save: 'Speichern', cancel: 'Abbrechen' }
+```
+
+| Key                      | English                         |
+| ------------------------ | ------------------------------- |
+| `edit`, `save`, `cancel` | Edit, Save, Cancel              |
+| `loading`                | Loading…                        |
+| `saveFailed`             | Could not save.                 |
+| `loadFailed`             | Could not load the options.     |
+| `required`               | This field is required.         |
+| `patternMismatch`        | Wrong format.                   |
+| `tooShort`, `tooLong`    | Must be at least 2 characters.  |
+| `tooSmall`, `tooLarge`   | Must be 18 or more.             |
+| `tooEarly`, `tooLate`    | Must be on or after 2020-01-01. |
+
+The messages with a number or a date are functions, so you can put the value where your language needs it:
+
+```ts
+texts: {
+  tooSmall: (min) => `Mindestens ${min}.`;
+}
+```
+
+`saveFailed` only shows when `onSave` throws something that isn't an `Error`. When it throws an `Error`, its own message is shown.
+
+DataTables' own texts (search, paging, "Showing 1 to 10") are set separately, with `dataTables.language`. See [DataTables settings](#datatables-settings).
+
+In React, `texts={fr}` is fine. A new object on every render (like `texts={{ ...fr, save: 'Valider' }}` written inline) rebuilds the table each time, so put it in a constant or a `useMemo`.
 
 ### Styling
 
@@ -496,7 +540,7 @@ The checks run in this order, and the first error wins:
 
 `pattern` has to match the whole value, like the HTML attribute. A checkbox is never empty, so `required` does nothing on it.
 
-Errors show under their input when the user saves, and a row can't be saved until every field is valid. Messages are in English for now. You'll be able to change them when translations are added.
+Errors show under their input when the user saves, and a row can't be saved until every field is valid. To change the messages, see [Texts and translations](#texts-and-translations).
 
 ### Chained selects
 
@@ -604,7 +648,7 @@ The table's data only changes when saving works, so there's nothing to undo when
 
 ### Editing options
 
-When at least one column has an `editor`, the table gets one more column at the end, with an Edit button in each row. While a row is being edited, its Edit button is replaced by Save and Cancel. The labels are in English for now.
+When at least one column has an `editor`, the table gets one more column at the end, with an Edit button in each row. While a row is being edited, its Edit button is replaced by Save and Cancel. The labels can be changed with `texts`.
 
 `editing` changes how that works:
 
@@ -738,10 +782,10 @@ Done:
 - [x] API reference site
 - [x] Pass DataTables settings through (paging, page sizes, default order, language, extensions like Buttons), and column `width`, `visible`, `orderable`, `searchable` and `className`
 - [x] Selects that also save their label in the row (`labelProp`), so the cell shows the new label after a save
+- [x] Translations for Tadabut's own texts (buttons and error messages), French built in
 
 Next, roughly in this order:
 
-- [ ] Translations for Tadabut's own texts (buttons and error messages), French first
 - [ ] Adding new rows, and deleting rows, with a confirmation step
 - [ ] Checkboxes with your own values, like `'O'` and `'N'` instead of `true` and `false`
 - [ ] Money inputs, formatted while typing (`12 500.00`)

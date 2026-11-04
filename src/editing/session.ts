@@ -1,6 +1,8 @@
 import type { Column } from '../columns/column';
 import { type AnyEditorInstance, createEditor } from '../editors/create';
-import { type AnyValidatedEditor, messages, validateValue } from '../validation/validate';
+import { en } from '../texts/en';
+import type { Texts } from '../texts/texts';
+import { type AnyValidatedEditor, validateValue } from '../validation/validate';
 
 /** A column with an editor, and its cell in the open row. */
 export type EditableCell<Row extends object> = {
@@ -38,10 +40,13 @@ export class EditSession<Row extends object> {
   private readonly loadErrors: Set<keyof Row & string> = new Set();
   /** Set by `Tadabut` while `onSave` runs. */
   public saving = false;
+  /** Error messages and the "Loading…" text. */
+  private readonly texts: Texts;
 
   /** Puts an editor in each cell and starts loading select options. */
-  public constructor(row: Row, cells: readonly EditableCell<Row>[]) {
+  public constructor(row: Row, cells: readonly EditableCell<Row>[], texts: Texts = en) {
     this.originalData = { ...row };
+    this.texts = texts;
 
     for (const { column, cell } of cells) {
       if (column.editor === undefined) {
@@ -56,10 +61,11 @@ export class EditSession<Row extends object> {
         this.dependents.set(config.dependsOn, list);
       }
 
-      const editor = createEditor(config, {
-        value: this.originalData[column.prop],
-        onChange: () => this.changed(column.prop),
-      });
+      const editor = createEditor(
+        config,
+        { value: this.originalData[column.prop], onChange: () => this.changed(column.prop) },
+        texts,
+      );
 
       cell.replaceChildren(editor.element);
       this.fields.set(column.prop, { editor, config });
@@ -103,8 +109,8 @@ export class EditSession<Row extends object> {
     for (const [prop, { editor, config }] of this.fields) {
       // If the options didn't load, there was nothing to pick from.
       const message = this.loadErrors.has(prop)
-        ? messages.loadFailed
-        : validateValue(config, editor.getValue(), row);
+        ? this.texts.loadFailed
+        : validateValue(config, editor.getValue(), row, this.texts);
 
       if (message !== undefined) {
         errors.set(prop, message);
@@ -234,7 +240,7 @@ export class EditSession<Row extends object> {
 
     if (result === 'failed') {
       this.loadErrors.add(prop);
-      this.showError(prop, messages.loadFailed);
+      this.showError(prop, this.texts.loadFailed);
       return;
     }
 

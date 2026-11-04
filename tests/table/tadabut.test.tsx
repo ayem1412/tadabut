@@ -2,7 +2,7 @@ import { act, createRef, StrictMode } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import type { Column } from '../../src/index';
+import { type Column, fr } from '../../src/index';
 import { Tadabut, type TadabutHandle, type TadabutProps } from '../../src/react/index';
 
 type Row = { id: number; name: string; city: string };
@@ -299,5 +299,11 @@ describe('React Tadabut editing', () => {
     await renderWith({ dataTables: { pageLength: 2 } });
 
     expect(container.querySelector('table')).not.toBe(table);
+  });
+
+  it('passes texts to the table', async () => {
+    await renderWith({ texts: fr });
+
+    expect(container.querySelector('[data-tdb-action="edit"]')?.textContent).toBe('Modifier');
   });
 });

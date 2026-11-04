@@ -3,11 +3,12 @@ import type { ColumnOptions } from 'datatables.net';
 import { splitClasses } from '../editors/classes';
 import type { AnyEditor } from '../editors/editor';
 import type { TableClassNames } from '../table/options';
+import type { Texts } from '../texts/texts';
 import type { Column } from './column';
 import { escapeHtml } from './escape';
 
 /** The Edit button column. Save and Cancel replace the button while a row is open. */
-function actionsColumn(classNames: TableClassNames): ColumnOptions {
+function actionsColumn(classNames: TableClassNames, label: string): ColumnOptions {
   const classes = [
     'tdb-button',
     'tdb-button-edit',
@@ -20,8 +21,8 @@ function actionsColumn(classNames: TableClassNames): ColumnOptions {
     className: 'tdb-actions',
     orderable: false,
     searchable: false,
-    // defaultContent is HTML, so the user's classes are escaped.
-    defaultContent: `<button type="button" class="${escapeHtml(classes)}" data-tdb-action="edit">Edit</button>`,
+    // defaultContent is HTML, so the classes and the label are escaped.
+    defaultContent: `<button type="button" class="${escapeHtml(classes)}" data-tdb-action="edit">${escapeHtml(label)}</button>`,
   };
 }
 
@@ -41,6 +42,7 @@ export function toDataTables<Row extends object>(
   columns: readonly Column<Row>[],
   withActions: boolean,
   classNames: TableClassNames,
+  texts: Texts,
 ): ColumnOptions[] {
   const converted = columns.map((column): ColumnOptions => {
     const label = labelOf(column as LooseColumn<Row>);
@@ -72,7 +74,7 @@ export function toDataTables<Row extends object>(
     };
   });
 
-  return withActions ? [...converted, actionsColumn(classNames)] : converted;
+  return withActions ? [...converted, actionsColumn(classNames, texts.edit)] : converted;
 }
 
 /** `render`, then `labelProp`, then a fixed list's label, then the value. */

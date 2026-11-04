@@ -1,5 +1,6 @@
 import type { Config } from 'datatables.net';
 import type { Column } from '../columns/column';
+import type { Texts } from '../texts/texts';
 
 /** The second argument of `onSave`. */
 export type SaveContext<Row extends object> = {
@@ -79,6 +80,13 @@ export type TadabutOptions<Row extends object> = {
   readonly classNames?: TableClassNames;
   /** DataTables' own options, passed through. */
   readonly dataTables?: DataTablesSettings;
+  /**
+   * Tadabut's own texts, like `fr`. Whatever you leave out stays in English.
+   *
+   * @example
+   * texts: { ...fr, save: 'Valider' }
+   */
+  readonly texts?: Partial<Texts>;
   /**
    * Called with the edited row once it passes validation. May be async.
    *

@@ -3,6 +3,8 @@ import type { Column } from '../columns/column';
 import { toDataTables } from '../columns/to-datatables';
 import { type EditableCell, EditSession } from '../editing/session';
 import { addClasses, splitClasses } from '../editors/classes';
+import { en } from '../texts/en';
+import type { Texts } from '../texts/texts';
 import type { EditingOptions, TableClassNames, TadabutOptions } from './options';
 
 /**
@@ -33,6 +35,8 @@ export class Tadabut<Row extends object> {
   private readonly editing: Required<EditingOptions>;
   /** The user's classes, or `{}`. */
   private readonly classNames: TableClassNames;
+  /** The user's texts over English. */
+  private readonly texts: Texts;
   /** The user's save callback. */
   private readonly onSave: TadabutOptions<Row>['onSave'];
   /** Whether the Edit/Save/Cancel column exists. */
@@ -86,6 +90,7 @@ export class Tadabut<Row extends object> {
     this.hasActions = this.hasEditor && this.editing.button;
     this.onSave = options.onSave;
     this.classNames = options.classNames ?? {};
+    this.texts = { ...en, ...options.texts };
 
     this.tableEl = document.createElement('table');
     addClasses(this.tableEl, [], this.classNames.table);
@@ -95,7 +100,7 @@ export class Tadabut<Row extends object> {
       // Spread first so `data` and `columns` can't be overridden from JS.
       ...options.dataTables,
       data: [...options.data],
-      columns: toDataTables(options.columns, this.hasActions, this.classNames),
+      columns: toDataTables(options.columns, this.hasActions, this.classNames, this.texts),
     });
 
     if (this.hasActions) {
@@ -155,7 +160,7 @@ export class Tadabut<Row extends object> {
       }
     });
 
-    this.sessions.set(id, new EditSession(row.data(), cells));
+    this.sessions.set(id, new EditSession(row.data(), cells, this.texts));
     row.node()?.classList.add('tdb-row-editing');
 
     // Redrawing the row on save/cancel brings the Edit button back.
@@ -164,10 +169,14 @@ export class Tadabut<Row extends object> {
         .cell(rowIndex, this.columns.length)
         .node()
         .replaceChildren(
-          actionButton('save', 'Save', splitClasses(this.classNames.button, this.classNames.save)),
+          actionButton(
+            'save',
+            this.texts.save,
+            splitClasses(this.classNames.button, this.classNames.save),
+          ),
           actionButton(
             'cancel',
-            'Cancel',
+            this.texts.cancel,
             splitClasses(this.classNames.button, this.classNames.cancel),
           ),
         );
@@ -253,7 +262,7 @@ export class Tadabut<Row extends object> {
       }
 
       this.setSaving(id, false);
-      this.showSaveError(id, error instanceof Error ? error.message : 'Could not save.');
+      this.showSaveError(id, error instanceof Error ? error.message : this.texts.saveFailed);
       return false;
     }
 

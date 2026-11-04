@@ -27,4 +27,7 @@ export type {
   TadabutOptions,
 } from './table/options';
 export { Tadabut } from './table/tadabut';
+export { en } from './texts/en';
+export { fr } from './texts/fr';
+export type { Texts } from './texts/texts';
 export type { ValidationOptions } from './validation/rules';
