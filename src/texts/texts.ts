@@ -26,6 +26,8 @@ export type Texts = {
   readonly loading: string;
   /** Under a row when `onSave` throws something that isn't an `Error`. */
   readonly saveFailed: string;
+  /** Under a new row when `onAdd` throws something that isn’t an `Error`. */
+  readonly addFailed: string;
   /** Under a select whose options failed to load. */
   readonly loadFailed: string;
   /** An empty field with `required`. */

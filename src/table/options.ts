@@ -110,6 +110,25 @@ export type TadabutOptions<Row extends object> = {
     // biome-ignore lint/suspicious/noConfusingVoidType: callbacks that return nothing are typed void.
   ) => Row | void | Promise<Row | void>;
   /**
+   * Called with a new row once it passes validation. May be async.
+   *
+   * Return the saved row, usually with its id from the server, or nothing
+   * to keep the row as typed. Either way it must have its `rowId` field, or
+   * Tadabut throws an error. Throw to reject the add: the row stays open and
+   * the error message is shown under it.
+   *
+   * The row is partial because it isn't saved yet: the id, and columns
+   * without an editor, are only there if you passed them to `add()`.
+   *
+   * @example
+   * onAdd: async (row) => {
+   *   const res = await fetch('/api/employees', { method: 'POST', body: JSON.stringify(row) });
+   *   return res.json();
+   * }
+   */
+  // biome-ignore lint/suspicious/noConfusingVoidType: callbacks that return nothing are typed void.
+  readonly onAdd?: (row: Partial<Row>) => Row | void | Promise<Row | void>;
+  /**
    * Called when a row is deleted. May be async. Throw to stop the delete:
    * the row stays and the error message is shown under it.
    *

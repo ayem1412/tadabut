@@ -39,7 +39,7 @@ Formatting is done by [Biome](https://biomejs.dev). Set your editor to use it. P
 ```
 src/
   index.ts      everything public is exported here
-  table/        the Tadabut class and its options
+  table/        the Tadabut class, its options, the new row, and the buttons it adds
   columns/      the Column type, and how columns are passed to DataTables
   editors/      one file per editor, the editor contract, and createEditor
   validation/   validation rules and the code that checks them

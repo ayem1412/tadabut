@@ -2,13 +2,11 @@ import type { ColumnOptions } from 'datatables.net';
 
 import { splitClasses } from '../editors/classes';
 import type { AnyEditor } from '../editors/editor';
+import { type Action, buttonHtml } from '../table/elements';
 import type { TableClassNames } from '../table/options';
 import type { Texts } from '../texts/texts';
 import type { Column } from './column';
 import { escapeHtml } from './escape';
-
-/** A button the actions column can show. */
-export type Action = 'edit' | 'delete';
 
 /**
  * The column with the Edit and Delete buttons. While a row is open, Save and
@@ -119,11 +117,4 @@ function defined<T extends object>(values: T): Partial<T> {
   const kept = Object.entries(values).filter(([, value]) => value !== undefined);
 
   return Object.fromEntries(kept) as Partial<T>;
-}
-
-/** One action button as HTML, for `defaultContent`, so everything in it is escaped. */
-function buttonHtml(action: Action, label: string, extra: readonly string[]): string {
-  const classes = ['tdb-button', `tdb-button-${action}`, ...extra].join(' ');
-
-  return `<button type="button" class="${escapeHtml(classes)}" data-tdb-action="${action}">${escapeHtml(label)}</button>`;
 }

@@ -13,6 +13,7 @@ export const fr: Texts = {
   deleteFailed: 'Impossible de supprimer.',
   loading: 'Chargement…',
   saveFailed: "Impossible d'enregistrer.",
+  addFailed: "Impossible d'ajouter.",
   loadFailed: 'Impossible de charger les options.',
   required: 'Ce champ est obligatoire.',
   patternMismatch: 'Format incorrect.',

@@ -13,6 +13,7 @@ export const en: Texts = {
   loading: 'Loading…',
   saveFailed: 'Could not save.',
   loadFailed: 'Could not load the options.',
+  addFailed: 'Could not add.',
   required: 'This field is required.',
   patternMismatch: 'Wrong format.',
   tooShort: (min) => `Must be at least ${min} characters.`,
