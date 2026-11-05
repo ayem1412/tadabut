@@ -17,7 +17,13 @@ const columns: Column<Row>[] = [
 function setup(classNames?: TableClassNames) {
   const container = document.createElement('div');
   document.body.appendChild(container);
-  const table = new Tadabut(container, { data: rows, rowId: 'id', columns, classNames });
+  const table = new Tadabut(container, {
+    data: rows,
+    rowId: 'id',
+    columns,
+    classNames,
+    onDelete: () => {},
+  });
   const tableEl = container.querySelector('table') as HTMLTableElement;
 
   return { container, table, tableEl };
@@ -60,6 +66,9 @@ describe('classNames', () => {
     edit: 'btn-outline-primary',
     save: 'btn-primary',
     cancel: 'btn-outline-secondary',
+    delete: 'btn-outline-danger',
+    confirm: 'btn-danger',
+    keep: 'btn-outline-secondary',
   };
 
   const button = (container: HTMLElement, action: string) =>
@@ -86,6 +95,28 @@ describe('classNames', () => {
     );
   });
 
+  it('adds button and delete to the Delete button', () => {
+    const { container } = setup(bootstrap);
+
+    expect(button(container, 'delete').className).toBe(
+      'tdb-button tdb-button-delete btn btn-sm btn-outline-danger',
+    );
+  });
+
+  it('adds button and confirm or keep to the buttons of the delete question', () => {
+    const { container } = setup(bootstrap);
+
+    button(container, 'delete').click();
+
+    expect(button(container, 'confirm').className).toBe(
+      'tdb-button tdb-button-confirm btn btn-sm btn-danger',
+    );
+    expect(button(container, 'keep').className).toBe(
+      'tdb-button tdb-button-keep btn btn-sm btn-outline-secondary',
+    );
+    expect(container.querySelector('.tdb-delete-question')?.textContent).toBe('Delete this row?');
+  });
+
   it('keeps the buttons as they were without classNames', () => {
     const { container, table } = setup();
     expect(button(container, 'edit').className).toBe('tdb-button tdb-button-edit');
@@ -109,7 +140,7 @@ describe('classNames', () => {
     const { container } = setup({ button: 'a"b x" onclick="alert(1)' });
     const edit = button(container, 'edit');
 
-    expect(container.querySelectorAll('tbody tr:first-child button')).toHaveLength(1);
+    expect(container.querySelectorAll('tbody tr:first-child button')).toHaveLength(2);
     expect(edit.hasAttribute('onclick')).toBe(false);
     expect(edit.classList.contains('a"b')).toBe(true);
   });
@@ -142,7 +173,7 @@ describe('styling hooks', () => {
     expect(firstRow(container).classList.contains('tdb-row-editing')).toBe(false);
   });
 
-  it('puts tdb-save-error-message on the save error message itself', async () => {
+  it('puts tdb-row-error-message on the save error message itself', async () => {
     const container = document.createElement('div');
     document.body.appendChild(container);
     const table = new Tadabut(container, {
@@ -157,7 +188,7 @@ describe('styling hooks', () => {
 
     await table.save(1);
 
-    const message = container.querySelector('tr.tdb-save-error .tdb-save-error-message');
+    const message = container.querySelector('tr.tdb-row-error .tdb-row-error-message');
     expect(message?.textContent).toBe('Refused');
   });
 });

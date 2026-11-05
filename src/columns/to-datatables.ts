@@ -7,13 +7,21 @@ import type { Texts } from '../texts/texts';
 import type { Column } from './column';
 import { escapeHtml } from './escape';
 
-/** The Edit button column. Save and Cancel replace the button while a row is open. */
-function actionsColumn(classNames: TableClassNames, label: string): ColumnOptions {
-  const classes = [
-    'tdb-button',
-    'tdb-button-edit',
-    ...splitClasses(classNames.button, classNames.edit),
-  ].join(' ');
+/** A button the actions column can show. */
+export type Action = 'edit' | 'delete';
+
+/**
+ * The column with the Edit and Delete buttons. While a row is open, Save and
+ * Cancel replace them.
+ */
+function actionsColumn(
+  actions: readonly Action[],
+  classNames: TableClassNames,
+  texts: Texts,
+): ColumnOptions {
+  const buttons = actions.map((action) =>
+    buttonHtml(action, texts[action], splitClasses(classNames.button, classNames[action])),
+  );
 
   return {
     title: '',
@@ -21,8 +29,7 @@ function actionsColumn(classNames: TableClassNames, label: string): ColumnOption
     className: 'tdb-actions',
     orderable: false,
     searchable: false,
-    // defaultContent is HTML, so the classes and the label are escaped.
-    defaultContent: `<button type="button" class="${escapeHtml(classes)}" data-tdb-action="edit">${escapeHtml(label)}</button>`,
+    defaultContent: buttons.join(''),
   };
 }
 
@@ -36,11 +43,11 @@ type LooseColumn<Row> = {
 
 /**
  * The actions column is always appended last, because the rest of Tadabut
- * finds cells by the user's column index.
+ * finds cells by the user's column index. No `actions` means no column.
  */
 export function toDataTables<Row extends object>(
   columns: readonly Column<Row>[],
-  withActions: boolean,
+  actions: readonly Action[],
   classNames: TableClassNames,
   texts: Texts,
 ): ColumnOptions[] {
@@ -74,7 +81,7 @@ export function toDataTables<Row extends object>(
     };
   });
 
-  return withActions ? [...converted, actionsColumn(classNames, texts.edit)] : converted;
+  return actions.length > 0 ? [...converted, actionsColumn(actions, classNames, texts)] : converted;
 }
 
 /** `render`, then `labelProp`, then a fixed list's label, then the value. */
@@ -112,4 +119,11 @@ function defined<T extends object>(values: T): Partial<T> {
   const kept = Object.entries(values).filter(([, value]) => value !== undefined);
 
   return Object.fromEntries(kept) as Partial<T>;
+}
+
+/** One action button as HTML, for `defaultContent`, so everything in it is escaped. */
+function buttonHtml(action: Action, label: string, extra: readonly string[]): string {
+  const classes = ['tdb-button', `tdb-button-${action}`, ...extra].join(' ');
+
+  return `<button type="button" class="${escapeHtml(classes)}" data-tdb-action="${action}">${escapeHtml(label)}</button>`;
 }

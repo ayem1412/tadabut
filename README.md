@@ -21,6 +21,7 @@ Tadabut wraps [DataTables](https://datatables.net) and adds what it doesn't give
 DataTables is great for showing data. Editing that data inside the table is a different story: you either buy the Editor extension or write a lot of code yourself. Tadabut is that code, written once.
 
 - Edit a row in place, then save or cancel. Saving can be async. If it fails, the row stays open with what the user typed, so nothing is lost.
+- Delete a row, with a question first, or your own popup.
 - Text, number, date, checkbox and select inputs, with validation.
 - Selects that depend on another field, like country and city. Old requests get cancelled when the user changes their mind.
 - Fully typed. The table knows what your rows look like, so a typo in a column name is a type error.
@@ -254,7 +255,7 @@ In React, keep `dataTables` outside your component or in a `useMemo`, like `colu
 
 ### Texts and translations
 
-Tadabut's own texts (the Edit, Save and Cancel buttons, "Loading…", and the error messages) are in English by default. French comes built in:
+Tadabut's own texts (the Edit, Save, Cancel and Delete buttons, the delete question, "Loading…", and the error messages) are in English by default. French comes built in:
 
 ```ts
 import { Tadabut, fr } from 'tadabut';
@@ -273,8 +274,12 @@ texts: { edit: 'Bearbeiten', save: 'Speichern', cancel: 'Abbrechen' }
 | Key                      | English                         |
 | ------------------------ | ------------------------------- |
 | `edit`, `save`, `cancel` | Edit, Save, Cancel              |
+| `delete`                 | Delete                          |
+| `deleteQuestion`         | Delete this row?                |
+| `confirm`, `keep`        | Yes, delete / No                |
 | `loading`                | Loading…                        |
 | `saveFailed`             | Could not save.                 |
+| `deleteFailed`           | Could not delete.               |
 | `loadFailed`             | Could not load the options.     |
 | `required`               | This field is required.         |
 | `patternMismatch`        | Wrong format.                   |
@@ -290,7 +295,7 @@ texts: {
 }
 ```
 
-`saveFailed` only shows when `onSave` throws something that isn't an `Error`. When it throws an `Error`, its own message is shown.
+`saveFailed` and `deleteFailed` only show when `onSave` or `onDelete` throws something that isn't an `Error`. When it throws an `Error`, its own message is shown.
 
 DataTables' own texts (search, paging, "Showing 1 to 10") are set separately, with `dataTables.language`. See [DataTables settings](#datatables-settings).
 
@@ -300,24 +305,28 @@ In React, `texts={fr}` is fine. A new object on every render (like `texts={{ ...
 
 Tadabut doesn't ship any CSS. Everything it creates gets these classes, so you can style it however you want:
 
-| Class                    | Used on                                           |
-| ------------------------ | ------------------------------------------------- |
-| `tdb-input`              | every input                                       |
-| `tdb-input-text`         | text inputs                                       |
-| `tdb-input-number`       | number inputs                                     |
-| `tdb-input-date`         | date inputs                                       |
-| `tdb-input-checkbox`     | checkboxes                                        |
-| `tdb-input-select`       | selects                                           |
-| `tdb-error`              | a field's error message, under its input          |
-| `tdb-save-error`         | the line (`<tr>`) under a row that failed to save |
-| `tdb-save-error-message` | the message inside that line                      |
-| `tdb-row-editing`        | a row while it's being edited                     |
-| `tdb-row-saving`         | a row while it's being saved                      |
-| `tdb-actions`            | the column with the buttons, header too           |
-| `tdb-button`             | every button                                      |
-| `tdb-button-edit`        | the Edit button                                   |
-| `tdb-button-save`        | the Save button                                   |
-| `tdb-button-cancel`      | the Cancel button                                 |
+| Class                   | Used on                                                     |
+| ----------------------- | ----------------------------------------------------------- |
+| `tdb-input`             | every input                                                 |
+| `tdb-input-text`        | text inputs                                                 |
+| `tdb-input-number`      | number inputs                                               |
+| `tdb-input-date`        | date inputs                                                 |
+| `tdb-input-checkbox`    | checkboxes                                                  |
+| `tdb-input-select`      | selects                                                     |
+| `tdb-error`             | a field's error message, under its input                    |
+| `tdb-row-error`         | the line (`<tr>`) under a row that failed to save or delete |
+| `tdb-row-error-message` | the message inside that line                                |
+| `tdb-row-editing`       | a row while it's being edited                               |
+| `tdb-row-saving`        | a row while it's being saved or deleted                     |
+| `tdb-actions`           | the column with the buttons, header too                     |
+| `tdb-button`            | every button                                                |
+| `tdb-button-edit`       | the Edit button                                             |
+| `tdb-button-save`       | the Save button                                             |
+| `tdb-button-cancel`     | the Cancel button                                           |
+| `tdb-button-delete`     | the Delete button                                           |
+| `tdb-delete-question`   | the "Delete this row?" text                                 |
+| `tdb-button-confirm`    | the "Yes, delete" button                                    |
+| `tdb-button-keep`       | the "No" button                                             |
 
 To use Bootstrap, Tailwind or anything else, add your own classes. They always go next to the `tdb-` ones, never instead of them. There are two places:
 
@@ -344,13 +353,16 @@ const table = new Tadabut(container, {
 });
 ```
 
-| `classNames` key | Added to                          |
-| ---------------- | --------------------------------- |
-| `table`          | the `<table>`                     |
-| `button`         | the Edit, Save and Cancel buttons |
-| `edit`           | the Edit button only              |
-| `save`           | the Save button only              |
-| `cancel`         | the Cancel button only            |
+| `classNames` key | Added to                      |
+| ---------------- | ----------------------------- |
+| `table`          | the `<table>`                 |
+| `button`         | every button                  |
+| `edit`           | the Edit button only          |
+| `save`           | the Save button only          |
+| `cancel`         | the Cancel button only        |
+| `delete`         | the Delete button only        |
+| `confirm`        | the "Yes, delete" button only |
+| `keep`           | the "No" button only          |
 
 All of them are optional. Tadabut doesn't know any CSS framework: it adds the classes you give it, and nothing else. If you use Tailwind: it only keeps classes it finds in your own files. Classes in your column config count, so they work.
 
@@ -407,6 +419,9 @@ const table = new Tadabut(container, {
     edit: 'btn-outline-primary',
     save: 'btn-primary',
     cancel: 'btn-outline-secondary',
+    delete: 'btn-outline-danger',
+    confirm: 'btn-danger',
+    keep: 'btn-outline-secondary',
   },
 });
 ```
@@ -417,7 +432,7 @@ Error messages and the rows being edited need a few lines of your own CSS:
 /* Errors in Bootstrap's red. Use the message's class, not the row's:
    Bootstrap sets a color on every table cell. */
 .tdb-error,
-.tdb-save-error-message {
+.tdb-row-error-message {
   color: var(--bs-form-invalid-color);
   font-size: 0.875em;
 }
@@ -430,6 +445,15 @@ Error messages and the rows being edited need a few lines of your own CSS:
 
 .tdb-row-saving {
   opacity: 0.5;
+}
+
+/* Space between the buttons, and after "Delete this row?". */
+.tdb-button + .tdb-button {
+  margin-left: 0.25rem;
+}
+
+.tdb-delete-question {
+  margin-right: 0.5rem;
 }
 ```
 
@@ -646,6 +670,52 @@ The table's data only changes when saving works, so there's nothing to undo when
 
 `onSave` is optional. Without it, saving just updates the table.
 
+### Deleting
+
+Give the table an `onDelete`, and each row gets a Delete button next to Edit. It can be async, like `onSave`.
+
+```ts
+async function deleteEmployee(row: Employee) {
+  const res = await fetch(`/api/employees/${row.id}`, { method: 'DELETE' });
+
+  if (!res.ok) throw new Error('Could not delete the employee');
+}
+
+const table = new Tadabut(container, {
+  data: employees,
+  rowId: 'id',
+  columns,
+  onSave: saveEmployee,
+  onDelete: deleteEmployee,
+});
+```
+
+What happens when you click Delete:
+
+1. The buttons are replaced by "Delete this row? [Yes, delete] [No]". The cursor goes to No, so pressing <kbd>Enter</kbd> by reflex doesn't delete anything.
+2. No puts Edit and Delete back.
+3. Yes calls `onDelete` with the row. The row is locked while it runs, and gets the `tdb-row-saving` class.
+4. If `onDelete` works, the row is removed. You stay on the same page.
+5. If `onDelete` throws, the row stays, and your error message shows under it.
+
+A row that's being edited has Save and Cancel instead, so it can't be deleted halfway through an edit. `onDelete` needs a `rowId`, and Tadabut throws an error without one.
+
+#### Your own question: `confirmDelete`
+
+```ts
+confirmDelete: false, // delete right away, no question
+
+confirmDelete: (row) => window.confirm(`Delete ${row.name}?`), // the browser's popup
+
+// any modal, as long as it returns true to delete
+confirmDelete: async (row) => {
+  const result = await Swal.fire({ title: `Delete ${row.name}?`, showCancelButton: true });
+  return result.isConfirmed;
+},
+```
+
+Leave it out for the question in the row. To only change its words, use `texts` (`deleteQuestion`, `confirm`, `keep`). To style it, use `classNames` (`delete`, `confirm`, `keep`).
+
 ### Editing options
 
 When at least one column has an `editor`, the table gets one more column at the end, with an Edit button in each row. While a row is being edited, its Edit button is replaced by Save and Cancel. The labels can be changed with `texts`.
@@ -667,7 +737,7 @@ const table = new Tadabut(container, {
 
 - `'single'` mode: one row at a time. You can't start a new edit while another row is open.
 - `'multiple'` mode: several rows can be open. Each one saves on its own, so `onSave` runs once per row.
-- `button: false`: no buttons column. Start edits from your own code. <kbd>Enter</kbd> and <kbd>Escape</kbd> still work.
+- `button: false`: no Edit button. Start edits from your own code. <kbd>Enter</kbd> and <kbd>Escape</kbd> still work. With `onDelete`, the column stays, with only the Delete button.
 
 ### Controlling it from code
 
@@ -676,6 +746,7 @@ table.edit(5); // start editing the row with id 5
 await table.save(5); // validate and save it
 table.cancel(5); // cancel and restore its old values
 table.isEditing(5); // true while row 5 is open
+await table.delete(5); // call onDelete, then remove the row
 
 table.setData(newEmployees); // replace all rows, keeps sorting and search
 table.destroy(); // remove everything Tadabut created
@@ -686,6 +757,8 @@ table.destroy(); // remove everything Tadabut created
 `save` returns a promise of `true` if the row was saved and closed, `false` if it wasn't: a field is invalid, `onSave` failed, the row isn't being edited, or it's already saving.
 
 `cancel` does nothing if the row isn't being edited, or while it's saving.
+
+`delete` never asks first: only the Delete button does. It returns a promise of `true` once the row is removed, `false` if it wasn't: the row doesn't exist, it's being edited, it's already being deleted, or `onDelete` failed. Without `onDelete`, it just removes the row.
 
 `setData` and `destroy` cancel any row being edited first. Unsaved changes are lost.
 
@@ -733,8 +806,14 @@ async function saveEmployee(row: Employee): Promise<void> {
   if (!res.ok) throw new Error('Could not save the employee');
 }
 
+async function deleteEmployee(row: Employee): Promise<void> {
+  const res = await fetch(`/api/employees/${row.id}`, { method: 'DELETE' });
+
+  if (!res.ok) throw new Error('Could not delete the employee');
+}
+
 export default function Employees() {
-  const [employees] = useState<Employee[]>([
+  const [employees, setEmployees] = useState<Employee[]>([
     { id: 1, name: 'Amina', countryId: 1 },
     { id: 2, name: 'Paul', countryId: 2 },
   ]);
@@ -753,6 +832,10 @@ export default function Employees() {
         columns={columns}
         editing={{ mode: 'multiple' }}
         onSave={(row) => saveEmployee(row)}
+        onDelete={async (row) => {
+          await deleteEmployee(row);
+          setEmployees((current) => current.filter((e) => e.id !== row.id));
+        }}
       />
     </>
   );
@@ -760,9 +843,10 @@ export default function Employees() {
 ```
 
 - When `employees` changes, the table updates in place. It doesn't get rebuilt.
-- `onSave` can be a new function on every render. The table always calls the latest one.
+- `onSave`, `onDelete` and `confirmDelete` can be new functions on every render. The table always calls the latest ones.
+- In `onDelete`, remove the row from your state too, like above. Otherwise it comes back the next time `data` changes.
 - `editing` can be a new object on every render too. The table is only rebuilt when `mode` or `button` really change. Changing `columns`, `rowId` or `editing` closes any row being edited.
-- The ref has `edit`, `save`, `cancel` and `isEditing`, the same as the core. Before the table is built, or after it's gone, `edit` and `save` give `false` and `cancel` does nothing.
+- The ref has `edit`, `save`, `cancel`, `delete` and `isEditing`, the same as the core. Before the table is built, or after it's gone, `edit`, `save` and `delete` give `false` and `cancel` does nothing.
 - There is no `setData` on the ref. To change the rows, change `data`.
 
 ## Roadmap
@@ -783,10 +867,11 @@ Done:
 - [x] Pass DataTables settings through (paging, page sizes, default order, language, extensions like Buttons), and column `width`, `visible`, `orderable`, `searchable` and `className`
 - [x] Selects that also save their label in the row (`labelProp`), so the cell shows the new label after a save
 - [x] Translations for Tadabut's own texts (buttons and error messages), French built in
+- [x] Deleting rows, with a question first that you can replace (`confirmDelete`)
 
 Next, roughly in this order:
 
-- [ ] Adding new rows, and deleting rows, with a confirmation step
+- [ ] Adding new rows
 - [ ] Checkboxes with your own values, like `'O'` and `'N'` instead of `true` and `false`
 - [ ] Money inputs, formatted while typing (`12 500.00`)
 - [ ] Dates as `dd/mm/yyyy`, in the input and when sorting

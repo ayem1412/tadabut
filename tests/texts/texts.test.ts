@@ -95,7 +95,7 @@ describe('texts', () => {
 
     await table.save(1);
 
-    expect(container.querySelector('.tdb-save-error-message')?.textContent).toBe(
+    expect(container.querySelector('.tdb-row-error-message')?.textContent).toBe(
       "Impossible d'enregistrer.",
     );
   });

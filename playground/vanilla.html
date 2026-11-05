@@ -22,7 +22,7 @@
         font-size: 0.9rem;
       }
       .tdb-error,
-      .tdb-save-error-message {
+      .tdb-row-error-message {
         color: #c62828;
         font-size: 0.85rem;
       }
@@ -38,6 +38,9 @@
       }
       .tdb-button + .tdb-button {
         margin-left: 0.25rem;
+      }
+      .tdb-delete-question {
+        margin-right: 0.5rem;
       }
     </style>
   </head>
@@ -66,6 +69,14 @@
         <input id="french" type="checkbox" />
         French
       </label>
+      <label>
+        Before deleting
+        <select id="confirm">
+          <option value="inline">ask in the row</option>
+          <option value="popup">browser popup</option>
+          <option value="never">don't ask</option>
+        </select>
+      </label>
     </div>
 
     <p id="status"></p>
@@ -73,7 +84,7 @@
     <p>
       Try: Edit, Save, Cancel, Enter and Escape in an input, a name of "error" to see a failed save,
       and sorting before editing. Change the country quickly to see the cities reload, and pick
-      Atlantis to see a failed load.
+      Atlantis to see a failed load. Delete Karim to see a failed delete.
     </p>
 
     <div id="container"></div>
