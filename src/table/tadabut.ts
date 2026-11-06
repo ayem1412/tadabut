@@ -1,10 +1,19 @@
 import DataTable, { type Api, type ApiRowMethods } from 'datatables.net';
 import type { Column } from '../columns/column';
-import { type Action, toDataTables } from '../columns/to-datatables';
+import { toDataTables } from '../columns/to-datatables';
 import { type EditableCell, EditSession } from '../editing/session';
-import { addClasses, splitClasses } from '../editors/classes';
+import { addClasses } from '../editors/classes';
 import { en } from '../texts/en';
 import type { Texts } from '../texts/texts';
+import { checkOptions } from './check-options';
+import {
+  type Action,
+  deleteQuestion,
+  isButtonAction,
+  rowErrorMessage,
+  saveCancelButtons,
+} from './elements';
+import { NewRow } from './new-row';
 import type { EditingOptions, TableClassNames, TadabutOptions } from './options';
 
 /**
@@ -39,6 +48,8 @@ export class Tadabut<Row extends object> {
   private readonly texts: Texts;
   /** The user's save callback. */
   private readonly onSave: TadabutOptions<Row>['onSave'];
+  /** The user's add callback. */
+  private readonly onAdd: TadabutOptions<Row>['onAdd'];
   /** The user's delete callback. */
   private readonly onDelete: TadabutOptions<Row>['onDelete'];
   /** What the Delete button does before deleting. */
@@ -51,6 +62,8 @@ export class Tadabut<Row extends object> {
   private readonly sessions: Map<string | number, EditSession<Row>> = new Map();
   /** Rows waiting for `onDelete`, by row id. */
   private readonly deleting: Set<string | number> = new Set();
+  /** The row `add()` opened, if any. */
+  private newRow: NewRow<Row> | undefined;
 
   /**
    * Builds the table inside `container`, which should be empty.
@@ -61,39 +74,9 @@ export class Tadabut<Row extends object> {
    * @throws If a select's `labelProp` is its own column.
    */
   public constructor(container: HTMLElement, options: TadabutOptions<Row>) {
+    checkOptions(options);
+
     this.hasEditor = options.columns.some((column) => column.editor !== undefined);
-
-    if (options.rowId === undefined) {
-      if (this.hasEditor) {
-        throw new Error('Tadabut: rowId is required when a column has an editor.');
-      }
-
-      if (options.onDelete !== undefined) {
-        throw new Error('Tadabut: rowId is required with onDelete.');
-      }
-    }
-
-    // Not `!column.visible`: undefined means visible.
-    const hiddenEditable = options.columns.find(
-      (column) => column.editor !== undefined && column.visible === false,
-    );
-
-    if (hiddenEditable !== undefined) {
-      throw new Error(
-        `Tadabut: the "${hiddenEditable.prop}" column can't have both an editor and visible: false.`,
-      );
-    }
-
-    const selfLabeled = options.columns.find(
-      (column) => column.editor?.type === 'select' && column.editor.labelProp === column.prop,
-    );
-
-    if (selfLabeled !== undefined) {
-      throw new Error(
-        `Tadabut: the "${selfLabeled.prop}" column's labelProp can't be "${selfLabeled.prop}" itself.`,
-      );
-    }
-
     this.rowId = options.rowId;
     this.columns = options.columns;
     this.editing = {
@@ -113,6 +96,7 @@ export class Tadabut<Row extends object> {
 
     this.hasActions = actions.length > 0;
     this.onSave = options.onSave;
+    this.onAdd = options.onAdd;
     this.onDelete = options.onDelete;
     this.confirmDelete = options.confirmDelete;
     this.classNames = options.classNames ?? {};
@@ -141,7 +125,8 @@ export class Tadabut<Row extends object> {
   /**
    * Replaces all rows. Sorting, search and the page are kept.
    *
-   * Open rows are closed first, and their unsaved changes are lost.
+   * Open rows, and the new row, are closed first, and their unsaved changes
+   * are lost.
    */
   public setData(rows: readonly Row[]): void {
     this.destroySessions();
@@ -158,14 +143,14 @@ export class Tadabut<Row extends object> {
    *
    * @param id The value of the row's `rowId` field.
    * @returns `false` if the row doesn't exist, is already open, another row
-   *   is open in `'single'` mode, nothing is editable, the row is being
-   *   deleted, or it's on a page that hasn't been displayed yet.
+   *   or the new row is open in `'single'` mode, nothing is editable, the row
+   *   is being deleted, or it's on a page that hasn't been displayed yet.
    */
   public edit(id: string | number): boolean {
     if (
       !this.hasEditor ||
       this.sessions.has(id) ||
-      (this.editing.mode === 'single' && this.sessions.size > 0) ||
+      (this.editing.mode === 'single' && (this.sessions.size > 0 || this.newRow !== undefined)) ||
       this.deleting.has(id)
     ) {
       return false;
@@ -193,18 +178,143 @@ export class Tadabut<Row extends object> {
 
     // Redrawing the row on save/cancel brings Edit and Delete back.
     if (this.hasActions) {
-      this.actionsCell(row).replaceChildren(
-        actionButton(
-          'save',
-          this.texts.save,
-          splitClasses(this.classNames.button, this.classNames.save),
-        ),
-        actionButton(
-          'cancel',
-          this.texts.cancel,
-          splitClasses(this.classNames.button, this.classNames.cancel),
-        ),
+      this.actionsCell(row).replaceChildren(...saveCancelButtons(this.texts, this.classNames));
+    }
+
+    return true;
+  }
+
+  /**
+   * Opens an empty row at the top of the table, for a new row. `defaults` are
+   * its starting values. The row is only added once Save works.
+   *
+   * @returns `false` if no column has an editor, a new row is already open,
+   *   or a row is being edited in `'single'` mode.
+   *
+   * @example
+   * table.add({ country: 'MA' });
+   */
+  public add(defaults: Partial<Row> = {}): boolean {
+    if (
+      !this.hasEditor ||
+      this.newRow !== undefined ||
+      (this.editing.mode === 'single' && this.sessions.size > 0)
+    ) {
+      return false;
+    }
+
+    const newRow = new NewRow(defaults, {
+      columns: this.columns,
+      isVisible: (index) => this.dataTable.column(index).visible(),
+      withButtons: this.hasActions,
+      texts: this.texts,
+      classNames: this.classNames,
+    });
+
+    this.tableEl.insertBefore(newRow.body, this.dataTable.table().body());
+    newRow.focus();
+    this.newRow = newRow;
+
+    return true;
+  }
+
+  /** Whether a new row is open. */
+  public isAdding(): boolean {
+    return this.newRow !== undefined;
+  }
+
+  /**
+   * Closes the new row and throws it away. Does nothing if there's none, or
+   * while it's saving.
+   */
+  public cancelNew(): void {
+    const newRow = this.newRow;
+
+    if (newRow === undefined || newRow.saving) {
+      return;
+    }
+
+    newRow.destroy();
+    this.newRow = undefined;
+  }
+
+  /**
+   * Validates the new row, then calls `onAdd`. On success the row joins the
+   * table, and the table shows the page it landed on.
+   *
+   * While `onAdd` runs the row is locked. If it throws, the row stays open
+   * and the error message is shown under it.
+   *
+   * @returns `true` once the row is added. `false` if there's no new row, a
+   *   field is invalid, it's already saving, or `onAdd` threw.
+   * @throws If the saved row has no `rowId` value.
+   */
+  public async saveNew(): Promise<boolean> {
+    const newRow = this.newRow;
+
+    if (newRow === undefined || newRow.saving) {
+      return false;
+    }
+
+    if (!newRow.validate()) {
+      return false;
+    }
+
+    const row = newRow.getRow();
+    newRow.setSaving(true);
+
+    let saved = row;
+
+    try {
+      const result = await this.onAdd?.(row);
+
+      if (result !== undefined) {
+        saved = result;
+      }
+    } catch (error) {
+      if (this.newRow !== newRow) {
+        return false;
+      }
+
+      newRow.setSaving(false);
+      newRow.showError(error instanceof Error ? error.message : this.texts.addFailed);
+      return false;
+    }
+
+    // setData or destroy may have run while we were waiting.
+    if (this.newRow !== newRow) {
+      return false;
+    }
+
+    const id = this.rowId === undefined ? undefined : saved[this.rowId];
+
+    // The developer's mistake, not the user's, so it goes to the console.
+    if (typeof id !== 'string' && typeof id !== 'number') {
+      newRow.setSaving(false);
+
+      throw new Error(
+        `Tadabut: the added row has no "${String(this.rowId)}". Return it from onAdd.`,
       );
+    }
+
+    newRow.destroy();
+    this.newRow = undefined;
+
+    const added = this.dataTable.row.add({ ...saved });
+    this.dataTable.draw(false);
+
+    // Its place among the rows as shown (sorted and searched) gives its page.
+    const position = this.dataTable
+      .rows({ order: 'applied', search: 'applied' })
+      .indexes()
+      .toArray()
+      .indexOf(added.index());
+
+    const length = this.dataTable.page.len();
+
+    // -1: hidden by the search, or "Show all".
+    if (position >= 0 && length > 0) {
+      this.dataTable.page(Math.floor(position / length)).draw(false);
     }
 
     return true;
@@ -380,13 +490,18 @@ export class Tadabut<Row extends object> {
     return row.any() ? row : undefined;
   }
 
-  /** Only for when the rows are about to go away: cells aren't restored. */
+  /**
+   * Closes every open row, the new one too. Only for when the rows are about
+   * to go away: cells aren't restored.
+   */
   private destroySessions(): void {
     for (const session of this.sessions.values()) {
       session.destroy();
     }
 
     this.sessions.clear();
+    this.newRow?.destroy();
+    this.newRow = undefined;
   }
 
   /** Also works after the session is gone, so a row can always be unlocked. */
@@ -405,17 +520,9 @@ export class Tadabut<Row extends object> {
     }
   }
 
-  /**
-   * Shows a save or delete error in a child row under the row. The message gets its own
-   * class because Bootstrap colors every cell, which hides a color on the
-   * `<tr>`. Set as text: it often comes from a server.
-   */
+  /** Shows a save or delete error in a child row under the row. */
   private showRowError(id: string | number, message: string): void {
-    const error = document.createElement('div');
-    error.className = 'tdb-row-error-message';
-    error.textContent = message;
-
-    this.findRow(id)?.child(error, 'tdb-row-error').show();
+    this.findRow(id)?.child(rowErrorMessage(message), 'tdb-row-error').show();
   }
 
   /** Removes the save or delete error under a row, if any. */
@@ -452,25 +559,8 @@ export class Tadabut<Row extends object> {
       return;
     }
 
-    const question = document.createElement('span');
-    question.className = 'tdb-delete-question';
-    question.textContent = this.texts.deleteQuestion;
-
-    const keep = actionButton(
-      'keep',
-      this.texts.keep,
-      splitClasses(this.classNames.button, this.classNames.keep),
-    );
-
-    this.actionsCell(row).replaceChildren(
-      question,
-      actionButton(
-        'confirm',
-        this.texts.confirm,
-        splitClasses(this.classNames.button, this.classNames.confirm),
-      ),
-      keep,
-    );
+    const { parts, keep } = deleteQuestion(this.texts, this.classNames);
+    this.actionsCell(row).replaceChildren(...parts);
 
     // Focus was on the Delete button, which is gone. No is the safe default.
     keep.focus();
@@ -479,6 +569,11 @@ export class Tadabut<Row extends object> {
   /** Puts Edit and Delete back after No. */
   private keepRow(id: string | number): void {
     this.findRow(id)?.invalidate('data').draw(false);
+  }
+
+  /** Whether an element is inside the new row, or its error. */
+  private isInNewRow(element: Element): boolean {
+    return this.newRow?.contains(element) ?? false;
   }
 
   /**
@@ -498,9 +593,9 @@ export class Tadabut<Row extends object> {
   }
 
   /**
-   * Handles the action buttons. One listener on the table, because
-   * DataTables keeps replacing rows. An arrow function, so `this` stays
-   * bound and `destroy` can remove it.
+   * Handles the action buttons, the new row's too. One listener on the
+   * table, because DataTables keeps replacing rows. An arrow function, so
+   * `this` stays bound and `destroy` can remove it.
    */
   private readonly onClick = (event: MouseEvent): void => {
     if (!(event.target instanceof Element)) {
@@ -508,13 +603,35 @@ export class Tadabut<Row extends object> {
     }
 
     const button = event.target.closest<HTMLElement>('[data-tdb-action]');
-    const id = button ? this.rowIdOf(button) : undefined;
 
-    if (!button || id === undefined) {
+    if (button === null) {
       return;
     }
 
-    switch (button.dataset.tdbAction) {
+    const action = button.dataset.tdbAction;
+
+    if (!isButtonAction(action)) {
+      return;
+    }
+
+    // DataTables doesn't know the new row, so rowIdOf can't find it.
+    if (this.isInNewRow(button)) {
+      if (action === 'save') {
+        void this.saveNew();
+      } else if (action === 'cancel') {
+        this.cancelNew();
+      }
+
+      return;
+    }
+
+    const id = this.rowIdOf(button);
+
+    if (id === undefined) {
+      return;
+    }
+
+    switch (action) {
       case 'edit':
         this.edit(id);
         break;
@@ -536,7 +653,7 @@ export class Tadabut<Row extends object> {
     }
   };
 
-  /** Enter saves, Escape cancels. */
+  /** Enter saves, Escape cancels, in edited rows and the new row. */
   private readonly onKeyDown = (event: KeyboardEvent): void => {
     // e.g. Select2 using Enter to pick an option
     if (event.defaultPrevented) {
@@ -545,6 +662,19 @@ export class Tadabut<Row extends object> {
 
     // Enter on a button already clicks it (and Cancel must not save).
     if (!(event.target instanceof Element) || event.target.closest('button')) {
+      return;
+    }
+
+    if (this.isInNewRow(event.target)) {
+      if (event.key === 'Enter') {
+        // Don't submit a surrounding <form>.
+        event.preventDefault();
+        void this.saveNew();
+      } else if (event.key === 'Escape') {
+        event.preventDefault();
+        this.cancelNew();
+      }
+
       return;
     }
 
@@ -566,19 +696,4 @@ export class Tadabut<Row extends object> {
         break;
     }
   };
-}
-
-/** Builds a button that replaces Edit and Delete for a while. */
-function actionButton(
-  action: 'save' | 'cancel' | 'confirm' | 'keep',
-  label: string,
-  extra: readonly string[],
-): HTMLButtonElement {
-  const button = document.createElement('button');
-  button.type = 'button';
-  button.classList.add('tdb-button', `tdb-button-${action}`, ...extra);
-  button.dataset.tdbAction = action;
-  button.textContent = label;
-
-  return button;
 }

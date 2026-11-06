@@ -3,12 +3,13 @@ import 'datatables.net-bs5';
 import 'datatables.net-bs5/css';
 
 import { type Column, type TableClassNames, Tadabut } from '../src/index';
-import { countries, fakeDelete, fakeSave, fetchCities, type Row, rows } from './data';
+import { countries, fakeAdd, fakeDelete, fakeSave, fetchCities, type Row, rows } from './data';
 
 const container = document.querySelector<HTMLElement>('#container');
+const addBtn = document.querySelector<HTMLButtonElement>('#add');
 
-if (!container) {
-  throw new Error('Playground: missing #container in bootstrap.html');
+if (!container || !addBtn) {
+  throw new Error('Playground: missing elements in bootstrap.html');
 }
 
 const classNames: TableClassNames = {
@@ -63,11 +64,16 @@ const columns: Column<Row>[] = [
   },
 ];
 
-new Tadabut(container, {
+const table = new Tadabut(container, {
   data: rows,
   columns,
   rowId: 'id',
   onSave: fakeSave,
+  onAdd: fakeAdd,
   onDelete: fakeDelete,
   classNames,
+});
+
+addBtn.addEventListener('click', () => {
+  table.add({ country: 'MA' });
 });

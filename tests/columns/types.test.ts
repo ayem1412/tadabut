@@ -1,6 +1,12 @@
 import { describe, expect, it } from 'vitest';
 
-import { type Column, type EditorInstance, fr, type TadabutOptions } from '../../src/index';
+import {
+  type Column,
+  type EditorInstance,
+  fr,
+  type Tadabut,
+  type TadabutOptions,
+} from '../../src/index';
 
 type Row = {
   id: number;
@@ -492,6 +498,56 @@ describe('labelProp types', () => {
     };
 
     expect(column.prop).toBe('cityName');
+  });
+});
+
+describe('add types', () => {
+  type Person = { id: number; name: string };
+
+  it('gives onAdd a partial row, so the id has to be checked', () => {
+    const options: TadabutOptions<Person> = {
+      data: [],
+      columns: [],
+      rowId: 'id',
+      onAdd: (row) => {
+        // @ts-expect-error the id doesn't exist yet
+        row.id.toFixed();
+
+        return { id: 1, name: row.name ?? '' };
+      },
+    };
+
+    expect(options).toBeDefined();
+  });
+
+  it('lets onAdd return a full row, nothing, or a promise of either', () => {
+    const nothing: TadabutOptions<Person> = { data: [], columns: [], onAdd: () => {} };
+    const later: TadabutOptions<Person> = {
+      data: [],
+      columns: [],
+      onAdd: async () => ({ id: 1, name: 'Amina' }),
+    };
+    const partial: TadabutOptions<Person> = {
+      data: [],
+      columns: [],
+      // @ts-expect-error the saved row must be a full row
+      onAdd: () => ({ name: 'Amina' }),
+    };
+
+    expect([nothing, later, partial]).toHaveLength(3);
+  });
+
+  it('checks the defaults given to add()', () => {
+    const table = {} as Tadabut<Person>;
+    const check = () => {
+      table.add({ name: 'Amina' });
+      // @ts-expect-error not a field of the row
+      table.add({ nam: 'Amina' });
+      // @ts-expect-error wrong type
+      table.add({ id: 'one' });
+    };
+
+    expect(check).toBeDefined();
   });
 });
 

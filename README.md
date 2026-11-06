@@ -21,6 +21,7 @@ Tadabut wraps [DataTables](https://datatables.net) and adds what it doesn't give
 DataTables is great for showing data. Editing that data inside the table is a different story: you either buy the Editor extension or write a lot of code yourself. Tadabut is that code, written once.
 
 - Edit a row in place, then save or cancel. Saving can be async. If it fails, the row stays open with what the user typed, so nothing is lost.
+- Add a row from your own button: it opens at the top of the table, with the same inputs and validation.
 - Delete a row, with a question first, or your own popup.
 - Text, number, date, checkbox and select inputs, with validation.
 - Selects that depend on another field, like country and city. Old requests get cancelled when the user changes their mind.
@@ -279,6 +280,7 @@ texts: { edit: 'Bearbeiten', save: 'Speichern', cancel: 'Abbrechen' }
 | `confirm`, `keep`        | Yes, delete / No                |
 | `loading`                | Loading…                        |
 | `saveFailed`             | Could not save.                 |
+| `addFailed`              | Could not add.                  |
 | `deleteFailed`           | Could not delete.               |
 | `loadFailed`             | Could not load the options.     |
 | `required`               | This field is required.         |
@@ -295,7 +297,7 @@ texts: {
 }
 ```
 
-`saveFailed` and `deleteFailed` only show when `onSave` or `onDelete` throws something that isn't an `Error`. When it throws an `Error`, its own message is shown.
+`saveFailed`, `addFailed` and `deleteFailed` only show when `onSave`, `onAdd` or `onDelete` throws something that isn't an `Error`. When it throws an `Error`, its own message is shown.
 
 DataTables' own texts (search, paging, "Showing 1 to 10") are set separately, with `dataTables.language`. See [DataTables settings](#datatables-settings).
 
@@ -316,8 +318,10 @@ Tadabut doesn't ship any CSS. Everything it creates gets these classes, so you c
 | `tdb-error`             | a field's error message, under its input                    |
 | `tdb-row-error`         | the line (`<tr>`) under a row that failed to save or delete |
 | `tdb-row-error-message` | the message inside that line                                |
-| `tdb-row-editing`       | a row while it's being edited                               |
-| `tdb-row-saving`        | a row while it's being saved or deleted                     |
+| `tdb-row-editing`       | a row while it's being edited, and the new row              |
+| `tdb-row-saving`        | a row while it's being saved, added or deleted              |
+| `tdb-row-new`           | the new row `add()` opens                                   |
+| `tdb-new-rows`          | the `<tbody>` it lives in, above the others                 |
 | `tdb-actions`           | the column with the buttons, header too                     |
 | `tdb-button`            | every button                                                |
 | `tdb-button-edit`       | the Edit button                                             |
@@ -611,6 +615,7 @@ How it works:
 - A cleared field is `null`, and the functions below it still run. That's why the example checks `row.countryId === null`. Returning `[]` right away costs nothing.
 - If the user changes the country again before the cities come back, the old request is cancelled through `signal`. Pass it to `fetch` so the request really stops. Even if you don't, a late answer is thrown away.
 - Cancelling or saving the row, `setData` and `destroy` cancel every request still running.
+- In a new row (see [Adding](#adding)), nothing is picked yet, so the functions first run with an empty parent. Another reason to return `[]` for `null`.
 
 If `options` throws, the select stays empty and "Could not load the options." shows under it. The row can't be saved while that message is there. Changing the field it depends on tries again, or the user can cancel the row.
 
@@ -669,6 +674,57 @@ What happens when you save:
 The table's data only changes when saving works, so there's nothing to undo when it fails.
 
 `onSave` is optional. Without it, saving just updates the table.
+
+### Adding
+
+Call `add()` from your own button. An empty row opens at the top of the table, with the same inputs, validation and Save/Cancel as an edited row. Save calls `onAdd`.
+
+```ts
+async function createEmployee(row: Partial<Employee>): Promise<Employee> {
+  const res = await fetch('/api/employees', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(row),
+  });
+
+  if (!res.ok) throw new Error('Could not add the employee');
+
+  return res.json(); // the row with its new id
+}
+
+const table = new Tadabut(container, {
+  data: employees,
+  rowId: 'id',
+  columns,
+  onSave: saveEmployee,
+  onAdd: createEmployee,
+});
+
+addButton.addEventListener('click', () => table.add());
+```
+
+What happens:
+
+1. `add()` opens the row at the top, with the cursor in the first input. Sorting, search and paging never move it: it lives in its own `<tbody>`, above the table's rows.
+2. Save, or <kbd>Enter</kbd>, validates the fields. Cancel, or <kbd>Escape</kbd>, throws the row away.
+3. `onAdd` gets the typed row. The row is locked while it runs.
+4. If `onAdd` works, the row joins the table, and the table shows the page it landed on. If the search box hides it, the table stays where it is.
+5. If `onAdd` throws, the row stays open with what the user typed, and your error message shows under it.
+
+**What `onAdd` gets and returns:**
+
+- It gets a `Partial` row, because the row isn't saved yet: the id, and columns without an editor, are only there if you gave them to `add()`. TypeScript makes you check them.
+- Return the saved row, usually with the id the server made, or nothing to keep the row as typed.
+- Either way, the row must have its `rowId`. If it doesn't, Tadabut throws `Tadabut: the added row has no "id". Return it from onAdd.` That's a mistake in your code, so it goes to the console, and the row stays open.
+- Without `onAdd`, the row is added as typed. That's fine for a table that only lives in the page, as long as the id comes from an input or from `add({ id })`.
+
+**Starting values:** `table.add({ country: 'MA', active: true })`. Inputs start with them, and columns without an editor show them as text. Those cells don't use the column's `render`.
+
+**Rules:**
+
+- One new row at a time. `add()` returns `false` if one is already open.
+- In `'single'` mode, the new row counts as the open row: you can't add while a row is edited, and you can't edit while the new row is open. In `'multiple'` mode, both work together.
+- `setData` and `destroy` throw the new row away, like any open row.
 
 ### Deleting
 
@@ -748,6 +804,11 @@ table.cancel(5); // cancel and restore its old values
 table.isEditing(5); // true while row 5 is open
 await table.delete(5); // call onDelete, then remove the row
 
+table.add({ country: 'MA' }); // open a new row at the top
+await table.saveNew(); // validate it and call onAdd
+table.cancelNew(); // throw the new row away
+table.isAdding(); // true while the new row is open
+
 table.setData(newEmployees); // replace all rows, keeps sorting and search
 table.destroy(); // remove everything Tadabut created
 ```
@@ -760,7 +821,9 @@ table.destroy(); // remove everything Tadabut created
 
 `delete` never asks first: only the Delete button does. It returns a promise of `true` once the row is removed, `false` if it wasn't: the row doesn't exist, it's being edited, it's already being deleted, or `onDelete` failed. Without `onDelete`, it just removes the row.
 
-`setData` and `destroy` cancel any row being edited first. Unsaved changes are lost.
+`add` returns `true` if the new row opened, `false` if one is already open, no column has an editor, or a row is being edited in `'single'` mode. `saveNew` works like `save`, and throws if the saved row has no id. `cancelNew` does nothing while `onAdd` runs.
+
+`setData` and `destroy` cancel any row being edited, and the new row, first. Unsaved changes are lost.
 
 <kbd>Enter</kbd> saves the row you're in. <kbd>Escape</kbd> cancels it. If something else already used the key, like Select2 picking an option with <kbd>Enter</kbd>, Tadabut leaves it alone.
 
@@ -806,6 +869,18 @@ async function saveEmployee(row: Employee): Promise<void> {
   if (!res.ok) throw new Error('Could not save the employee');
 }
 
+async function createEmployee(row: Partial<Employee>): Promise<Employee> {
+  const res = await fetch('/api/employees', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(row),
+  });
+
+  if (!res.ok) throw new Error('Could not add the employee');
+
+  return res.json();
+}
+
 async function deleteEmployee(row: Employee): Promise<void> {
   const res = await fetch(`/api/employees/${row.id}`, { method: 'DELETE' });
 
@@ -824,6 +899,9 @@ export default function Employees() {
       <button type="button" onClick={() => tableRef.current?.edit(1)}>
         Edit Amina
       </button>
+      <button type="button" onClick={() => tableRef.current?.add()}>
+        Add an employee
+      </button>
 
       <Tadabut
         ref={tableRef}
@@ -832,6 +910,11 @@ export default function Employees() {
         columns={columns}
         editing={{ mode: 'multiple' }}
         onSave={(row) => saveEmployee(row)}
+        onAdd={async (row) => {
+          const saved = await createEmployee(row);
+          setEmployees((current) => [...current, saved]);
+          return saved;
+        }}
         onDelete={async (row) => {
           await deleteEmployee(row);
           setEmployees((current) => current.filter((e) => e.id !== row.id));
@@ -843,10 +926,10 @@ export default function Employees() {
 ```
 
 - When `employees` changes, the table updates in place. It doesn't get rebuilt.
-- `onSave`, `onDelete` and `confirmDelete` can be new functions on every render. The table always calls the latest ones.
-- In `onDelete`, remove the row from your state too, like above. Otherwise it comes back the next time `data` changes.
+- `onSave`, `onAdd`, `onDelete` and `confirmDelete` can be new functions on every render. The table always calls the latest ones.
+- In `onAdd` and `onDelete`, update your state too, like above. Otherwise the next time `data` changes, the new row disappears, or the deleted one comes back.
 - `editing` can be a new object on every render too. The table is only rebuilt when `mode` or `button` really change. Changing `columns`, `rowId` or `editing` closes any row being edited.
-- The ref has `edit`, `save`, `cancel`, `delete` and `isEditing`, the same as the core. Before the table is built, or after it's gone, `edit`, `save` and `delete` give `false` and `cancel` does nothing.
+- The ref has the same methods as the core: `edit`, `save`, `cancel`, `delete`, `isEditing`, `add`, `saveNew`, `cancelNew` and `isAdding`. Before the table is built, or after it's gone, they give `false` and `cancel` and `cancelNew` do nothing.
 - There is no `setData` on the ref. To change the rows, change `data`.
 
 ## Roadmap
@@ -868,10 +951,10 @@ Done:
 - [x] Selects that also save their label in the row (`labelProp`), so the cell shows the new label after a save
 - [x] Translations for Tadabut's own texts (buttons and error messages), French built in
 - [x] Deleting rows, with a question first that you can replace (`confirmDelete`)
+- [x] Adding new rows, at the top of the table (`add()` and `onAdd`)
 
 Next, roughly in this order:
 
-- [ ] Adding new rows
 - [ ] Checkboxes with your own values, like `'O'` and `'N'` instead of `true` and `false`
 - [ ] Money inputs, formatted while typing (`12 500.00`)
 - [ ] Dates as `dd/mm/yyyy`, in the input and when sorting
@@ -880,7 +963,7 @@ Next, roughly in this order:
 - [ ] More events: when editing starts, after saving, row click and double click
 - [ ] Detail rows that open under a row
 - [ ] Time and read-only inputs
-- [ ] Methods to read rows (`getData`, `getRow`), add and remove rows from code, and reach the DataTables API
+- [ ] Methods to read rows (`getData`, `getRow`), put a row in directly without opening it, and reach the DataTables API
 - [ ] Keyboard navigation and theming
 
 Later: popup editing, changing many rows in one go, server-side mode, Vue and jQuery adapters.

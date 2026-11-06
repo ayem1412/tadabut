@@ -2,12 +2,13 @@ import 'datatables.net-dt';
 import 'datatables.net-dt/css';
 
 import { type EditingOptions, fr, Tadabut, type TadabutOptions } from '../src/index';
-import { columns, fakeDelete, fakeSave, french, type Row, rows, settings } from './data';
+import { columns, fakeAdd, fakeDelete, fakeSave, french, type Row, rows, settings } from './data';
 
 const container = document.querySelector<HTMLElement>('#container');
 const createBtn = document.querySelector<HTMLButtonElement>('#create');
 const destroyBtn = document.querySelector<HTMLButtonElement>('#destroy');
 const randomDataBtn = document.querySelector<HTMLButtonElement>('#random-data');
+const addBtn = document.querySelector<HTMLButtonElement>('#add');
 const modeSelect = document.querySelector<HTMLSelectElement>('#mode');
 const buttonsCheckbox = document.querySelector<HTMLInputElement>('#buttons');
 const frenchCheckbox = document.querySelector<HTMLInputElement>('#french');
@@ -19,6 +20,7 @@ if (
   !createBtn ||
   !destroyBtn ||
   !randomDataBtn ||
+  !addBtn ||
   !modeSelect ||
   !buttonsCheckbox ||
   !frenchCheckbox ||
@@ -53,6 +55,7 @@ const createTable = (): Tadabut<Row> => {
     columns,
     rowId: 'id',
     onSave: fakeSave,
+    onAdd: fakeAdd,
     onDelete: fakeDelete,
     confirmDelete: confirmDelete(),
     editing,
@@ -65,6 +68,7 @@ const updateStatus = (): void => {
   createBtn.disabled = table !== null;
   destroyBtn.disabled = table === null;
   randomDataBtn.disabled = table === null;
+  addBtn.disabled = table === null;
   status.textContent = `Elements inside container: ${container.childElementCount}`;
 };
 
@@ -91,6 +95,11 @@ destroyBtn.addEventListener('click', () => {
 
 randomDataBtn.addEventListener('click', () => {
   table?.setData(rows.filter(() => Math.random() > 0.3));
+});
+
+// Starts in Morocco, so the cities load right away.
+addBtn.addEventListener('click', () => {
+  table?.add({ country: 'MA' });
 });
 
 modeSelect.addEventListener('change', recreate);

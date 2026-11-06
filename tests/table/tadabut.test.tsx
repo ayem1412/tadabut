@@ -181,6 +181,10 @@ describe('React Tadabut editing', () => {
     expect(handle.isEditing(1)).toBe(false);
     expect(await handle.save(1)).toBe(false);
     expect(await handle.delete(1)).toBe(false);
+    expect(handle.add()).toBe(false);
+    expect(handle.isAdding()).toBe(false);
+    expect(await handle.saveNew()).toBe(false);
+    handle.cancelNew();
     expect(() => handle.cancel(1)).not.toThrow();
   });
 
@@ -418,5 +422,92 @@ describe('React Tadabut deleting', () => {
       true,
     );
     expect(container.querySelector('.tdb-button-keep')?.classList.contains('btn-light')).toBe(true);
+  });
+});
+
+/** Types into the new row's Name input. */
+function typeNewName(value: string): void {
+  const input = container.querySelector('tr.tdb-row-new input') as HTMLInputElement;
+  input.value = value;
+  input.dispatchEvent(new Event('input', { bubbles: true }));
+}
+
+describe('React Tadabut adding', () => {
+  beforeEach(() => {
+    container = document.createElement('div');
+    document.body.appendChild(container);
+    root = createRoot(container);
+  });
+
+  afterEach(async () => {
+    await act(async () => {
+      root.unmount();
+    });
+    document.body.innerHTML = '';
+  });
+
+  it('adds a row through the ref', async () => {
+    const ref = createRef<TadabutHandle<Row>>();
+    const onAdd = vi.fn((row: Partial<Row>) => ({ ...row, id: 4, city: '' }) as Row);
+    await renderWith({ ref, onAdd });
+
+    act(() => {
+      ref.current?.add();
+    });
+    expect(ref.current?.isAdding()).toBe(true);
+    typeNewName('Nadia');
+
+    let added = false;
+    await act(async () => {
+      added = (await ref.current?.saveNew()) ?? false;
+    });
+
+    expect(added).toBe(true);
+    expect(onAdd).toHaveBeenCalledWith({ name: 'Nadia' });
+    expect(namesShown()).toContain('Nadia');
+    expect(ref.current?.isAdding()).toBe(false);
+  });
+
+  it('cancels the new row through the ref', async () => {
+    const ref = createRef<TadabutHandle<Row>>();
+    await renderWith({ ref });
+
+    act(() => {
+      ref.current?.add();
+      ref.current?.cancelNew();
+    });
+
+    expect(container.querySelector('.tdb-new-rows')).toBeNull();
+  });
+
+  it('keeps the new row open when onAdd is a new function', async () => {
+    const ref = createRef<TadabutHandle<Row>>();
+    await renderWith({ ref, onAdd: () => {} });
+    act(() => {
+      ref.current?.add();
+    });
+
+    await renderWith({ ref, onAdd: () => {} });
+
+    expect(ref.current?.isAdding()).toBe(true);
+  });
+
+  it('calls the latest onAdd', async () => {
+    const ref = createRef<TadabutHandle<Row>>();
+    const first = vi.fn();
+    const second = vi.fn((row: Partial<Row>) => ({ ...row, id: 4, city: '' }) as Row);
+    await renderWith({ ref, onAdd: first });
+    await renderWith({ ref, onAdd: second });
+
+    act(() => {
+      ref.current?.add();
+    });
+    typeNewName('Nadia');
+    await act(async () => {
+      await ref.current?.saveNew();
+    });
+
+    expect(first).not.toHaveBeenCalled();
+    expect(second).toHaveBeenCalled();
   });
 });

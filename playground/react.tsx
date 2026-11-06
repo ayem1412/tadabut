@@ -5,7 +5,7 @@ import { StrictMode, useRef, useState } from 'react';
 import { createRoot } from 'react-dom/client';
 
 import { Tadabut, type TadabutHandle } from '../src/react/index';
-import { columns, fakeDelete, fakeSave, type Row, rows, settings } from './data';
+import { columns, fakeAdd, fakeDelete, fakeSave, type Row, rows, settings } from './data';
 
 function App() {
   const [data, setData] = useState(rows);
@@ -38,6 +38,15 @@ function App() {
         >
           Delete row 2 from outside
         </button>
+        <button
+          type='button'
+          onClick={() => {
+            const opened = tableRef.current?.add({ country: 'MA' }) ?? false;
+            setStatus(opened ? 'Adding a row' : "Can't add a row right now");
+          }}
+        >
+          Add a row
+        </button>
         <span className='status'>{status}</span>
       </div>
 
@@ -51,6 +60,13 @@ function App() {
         onSave={async (row) => {
           await fakeSave(row);
           setStatus(`Saved ${row.name}`);
+        }}
+        onAdd={async (row) => {
+          const saved = await fakeAdd(row);
+          // Same as onDelete: keep the state in sync.
+          setData((current) => [...current, saved]);
+          setStatus(`Added ${saved.name}`);
+          return saved;
         }}
         onDelete={async (row) => {
           await fakeDelete(row);
