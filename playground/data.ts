@@ -131,6 +131,29 @@ export async function fakeSave(row: Row): Promise<void> {
   }
 }
 
+/** The next id the fake server hands out. */
+let nextId = 100;
+
+// Like the server would: gives the row an id. "error" fails, like fakeSave.
+export async function fakeAdd(row: Partial<Row>): Promise<Row> {
+  await new Promise((resolve) => setTimeout(resolve, 800));
+
+  if (row.name?.toLowerCase() === 'error') {
+    throw new Error('The server refused this name');
+  }
+
+  nextId += 1;
+
+  return {
+    id: nextId,
+    name: row.name ?? '',
+    country: row.country ?? '',
+    cityId: row.cityId ?? null,
+    cityName: row.cityName ?? null,
+    age: row.age ?? 0,
+  };
+}
+
 // Karim (id 4) can't be deleted, to see a failed delete.
 export async function fakeDelete(row: Row): Promise<void> {
   await new Promise((resolve) => setTimeout(resolve, 800));

@@ -48,6 +48,8 @@ export class Tadabut<Row extends object> {
   private readonly texts: Texts;
   /** The user's save callback. */
   private readonly onSave: TadabutOptions<Row>['onSave'];
+  /** The user's add callback. */
+  private readonly onAdd: TadabutOptions<Row>['onAdd'];
   /** The user's delete callback. */
   private readonly onDelete: TadabutOptions<Row>['onDelete'];
   /** What the Delete button does before deleting. */
@@ -94,6 +96,7 @@ export class Tadabut<Row extends object> {
 
     this.hasActions = actions.length > 0;
     this.onSave = options.onSave;
+    this.onAdd = options.onAdd;
     this.onDelete = options.onDelete;
     this.confirmDelete = options.confirmDelete;
     this.classNames = options.classNames ?? {};
@@ -122,7 +125,8 @@ export class Tadabut<Row extends object> {
   /**
    * Replaces all rows. Sorting, search and the page are kept.
    *
-   * Open rows are closed first, and their unsaved changes are lost.
+   * Open rows, and the new row, are closed first, and their unsaved changes
+   * are lost.
    */
   public setData(rows: readonly Row[]): void {
     this.destroySessions();
@@ -139,14 +143,14 @@ export class Tadabut<Row extends object> {
    *
    * @param id The value of the row's `rowId` field.
    * @returns `false` if the row doesn't exist, is already open, another row
-   *   is open in `'single'` mode, nothing is editable, the row is being
-   *   deleted, or it's on a page that hasn't been displayed yet.
+   *   or the new row is open in `'single'` mode, nothing is editable, the row
+   *   is being deleted, or it's on a page that hasn't been displayed yet.
    */
   public edit(id: string | number): boolean {
     if (
       !this.hasEditor ||
       this.sessions.has(id) ||
-      (this.editing.mode === 'single' && this.sessions.size > 0) ||
+      (this.editing.mode === 'single' && (this.sessions.size > 0 || this.newRow !== undefined)) ||
       this.deleting.has(id)
     ) {
       return false;
@@ -184,13 +188,18 @@ export class Tadabut<Row extends object> {
    * Opens an empty row at the top of the table, for a new row. `defaults` are
    * its starting values. The row is only added once Save works.
    *
-   * @returns `false` if no column has an editor, or a new row is already open.
+   * @returns `false` if no column has an editor, a new row is already open,
+   *   or a row is being edited in `'single'` mode.
    *
    * @example
    * table.add({ country: 'MA' });
    */
   public add(defaults: Partial<Row> = {}): boolean {
-    if (!this.hasEditor || this.newRow !== undefined) {
+    if (
+      !this.hasEditor ||
+      this.newRow !== undefined ||
+      (this.editing.mode === 'single' && this.sessions.size > 0)
+    ) {
       return false;
     }
 
@@ -227,6 +236,88 @@ export class Tadabut<Row extends object> {
 
     newRow.destroy();
     this.newRow = undefined;
+  }
+
+  /**
+   * Validates the new row, then calls `onAdd`. On success the row joins the
+   * table, and the table shows the page it landed on.
+   *
+   * While `onAdd` runs the row is locked. If it throws, the row stays open
+   * and the error message is shown under it.
+   *
+   * @returns `true` once the row is added. `false` if there's no new row, a
+   *   field is invalid, it's already saving, or `onAdd` threw.
+   * @throws If the saved row has no `rowId` value.
+   */
+  public async saveNew(): Promise<boolean> {
+    const newRow = this.newRow;
+
+    if (newRow === undefined || newRow.saving) {
+      return false;
+    }
+
+    if (!newRow.validate()) {
+      return false;
+    }
+
+    const row = newRow.getRow();
+    newRow.setSaving(true);
+
+    let saved = row;
+
+    try {
+      const result = await this.onAdd?.(row);
+
+      if (result !== undefined) {
+        saved = result;
+      }
+    } catch (error) {
+      if (this.newRow !== newRow) {
+        return false;
+      }
+
+      newRow.setSaving(false);
+      newRow.showError(error instanceof Error ? error.message : this.texts.addFailed);
+      return false;
+    }
+
+    // setData or destroy may have run while we were waiting.
+    if (this.newRow !== newRow) {
+      return false;
+    }
+
+    const id = this.rowId === undefined ? undefined : saved[this.rowId];
+
+    // The developer's mistake, not the user's, so it goes to the console.
+    if (typeof id !== 'string' && typeof id !== 'number') {
+      newRow.setSaving(false);
+
+      throw new Error(
+        `Tadabut: the added row has no "${String(this.rowId)}". Return it from onAdd.`,
+      );
+    }
+
+    newRow.destroy();
+    this.newRow = undefined;
+
+    const added = this.dataTable.row.add({ ...saved });
+    this.dataTable.draw(false);
+
+    // Its place among the rows as shown (sorted and searched) gives its page.
+    const position = this.dataTable
+      .rows({ order: 'applied', search: 'applied' })
+      .indexes()
+      .toArray()
+      .indexOf(added.index());
+
+    const length = this.dataTable.page.len();
+
+    // -1: hidden by the search, or "Show all".
+    if (position >= 0 && length > 0) {
+      this.dataTable.page(Math.floor(position / length)).draw(false);
+    }
+
+    return true;
   }
 
   /**
@@ -399,13 +490,18 @@ export class Tadabut<Row extends object> {
     return row.any() ? row : undefined;
   }
 
-  /** Only for when the rows are about to go away: cells aren't restored. */
+  /**
+   * Closes every open row, the new one too. Only for when the rows are about
+   * to go away: cells aren't restored.
+   */
   private destroySessions(): void {
     for (const session of this.sessions.values()) {
       session.destroy();
     }
 
     this.sessions.clear();
+    this.newRow?.destroy();
+    this.newRow = undefined;
   }
 
   /** Also works after the session is gone, so a row can always be unlocked. */
@@ -497,9 +593,9 @@ export class Tadabut<Row extends object> {
   }
 
   /**
-   * Handles the action buttons, the new row's too. One listener on the table, because
-   * DataTables keeps replacing rows. An arrow function, so `this` stays
-   * bound and `destroy` can remove it.
+   * Handles the action buttons, the new row's too. One listener on the
+   * table, because DataTables keeps replacing rows. An arrow function, so
+   * `this` stays bound and `destroy` can remove it.
    */
   private readonly onClick = (event: MouseEvent): void => {
     if (!(event.target instanceof Element)) {
@@ -520,7 +616,9 @@ export class Tadabut<Row extends object> {
 
     // DataTables doesn't know the new row, so rowIdOf can't find it.
     if (this.isInNewRow(button)) {
-      if (action === 'cancel') {
+      if (action === 'save') {
+        void this.saveNew();
+      } else if (action === 'cancel') {
         this.cancelNew();
       }
 
@@ -568,7 +666,11 @@ export class Tadabut<Row extends object> {
     }
 
     if (this.isInNewRow(event.target)) {
-      if (event.key === 'Escape') {
+      if (event.key === 'Enter') {
+        // Don't submit a surrounding <form>.
+        event.preventDefault();
+        void this.saveNew();
+      } else if (event.key === 'Escape') {
         event.preventDefault();
         this.cancelNew();
       }

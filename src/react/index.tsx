@@ -19,12 +19,15 @@ import { Tadabut as Core, type TadabutOptions } from '../index';
 /** What the `ref` gets. No `setData`: change the `data` prop instead. */
 export type TadabutHandle<Row extends object> = Pick<
   Core<Row>,
-  'edit' | 'save' | 'cancel' | 'delete' | 'isEditing'
+  'edit' | 'save' | 'cancel' | 'delete' | 'isEditing' | 'add' | 'isAdding' | 'saveNew' | 'cancelNew'
 >;
 
 /** The core options, plus `ref`. */
 export type TadabutProps<Row extends object> = TadabutOptions<Row> & {
-  /** Gives you `edit`, `save`, `cancel`, `delete` and `isEditing`. */
+  /**
+   * Gives you the same methods as the core table: `edit`, `save`, `cancel`,
+   * `delete`, `add`, `saveNew`, `cancelNew`, `isEditing` and `isAdding`.
+   */
   readonly ref?: Ref<TadabutHandle<Row>>;
 };
 
@@ -32,7 +35,7 @@ export type TadabutProps<Row extends object> = TadabutOptions<Row> & {
  * New `data` updates the table in place. Changing `columns`, `rowId`,
  * `dataTables` or `texts` rebuilds it (and closes open rows), so keep those
  * stable with a constant or `useMemo`. `editing`, `classNames`, `onSave`,
- * `onDelete` and `confirmDelete` can be inline: they're compared by value or
+ * `onAdd`, `onDelete` and `confirmDelete` can be inline: they're compared by value or
  * read through a ref.
  */
 export function Tadabut<Row extends object>({
@@ -44,6 +47,7 @@ export function Tadabut<Row extends object>({
   dataTables,
   texts,
   onSave,
+  onAdd,
   onDelete,
   confirmDelete,
   ref,
@@ -56,6 +60,8 @@ export function Tadabut<Row extends object>({
   const dataRef = useRef(data);
   /** The latest `onSave`, so a new one doesn't rebuild the table. */
   const onSaveRef = useRef(onSave);
+  /** The latest `onAdd`, so a new one doesn't rebuild the table. */
+  const onAddRef = useRef(onAdd);
   /** The latest `onDelete`, so a new one doesn't rebuild the table. */
   const onDeleteRef = useRef(onDelete);
   /** The latest `confirmDelete`, so a new one doesn't rebuild the table. */
@@ -115,6 +121,7 @@ export function Tadabut<Row extends object>({
         keep: keepClass,
       },
       onSave: (row, context) => onSaveRef.current?.(row, context),
+      onAdd: (row) => onAddRef.current?.(row),
       onDelete: hasDelete ? (row) => onDeleteRef.current?.(row) : undefined,
       confirmDelete: confirm,
     });
@@ -150,6 +157,7 @@ export function Tadabut<Row extends object>({
 
   useEffect(() => {
     onSaveRef.current = onSave;
+    onAddRef.current = onAdd;
     onDeleteRef.current = onDelete;
     confirmDeleteRef.current = confirmDelete;
   });
@@ -161,6 +169,10 @@ export function Tadabut<Row extends object>({
       save: (id) => tableRef.current?.save(id) ?? Promise.resolve(false),
       cancel: (id) => tableRef.current?.cancel(id),
       delete: (id) => tableRef.current?.delete(id) ?? Promise.resolve(false),
+      add: (defaults) => tableRef.current?.add(defaults) ?? false,
+      isAdding: () => tableRef.current?.isAdding() ?? false,
+      saveNew: () => tableRef.current?.saveNew() ?? Promise.resolve(false),
+      cancelNew: () => tableRef.current?.cancelNew(),
       isEditing: (id) => tableRef.current?.isEditing(id) ?? false,
     }),
     [],
