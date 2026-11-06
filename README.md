@@ -250,6 +250,53 @@ A few things to know:
 - An empty value (`null` or `undefined`) shows an empty cell. On a nullable column, `render` gets `null` too.
 - Editors always get the raw value. After saving or cancelling, the text is worked out again.
 
+### Totals
+
+Give a column a `total`, and the table gets a footer line with it:
+
+```ts
+const columns: Column<Employee>[] = [
+  { prop: 'name', title: 'Name' },
+  { prop: 'age', title: 'Age', render: (value) => `${value} years`, total: 'avg' },
+  { prop: 'salary', title: 'Salary', editor: { type: 'money' }, total: 'sum' },
+];
+```
+
+| Name  | Age        | Salary     |
+| ----- | ---------- | ---------- |
+| …     | …          | …          |
+| Total | 32.5 years | 176 651.50 |
+
+| `total`    | Shows               | Columns |
+| ---------- | ------------------- | ------- |
+| `'sum'`    | everything added up | numbers |
+| `'avg'`    | the average         | numbers |
+| `'min'`    | the smallest        | numbers |
+| `'max'`    | the biggest         | numbers |
+| `'count'`  | how many rows       | any     |
+| a function | what it returns     | any     |
+
+- The total looks like the cells: a `money` column shows `176 651.50`, and a `render` is used too (`32.5 years`). Numbers are rounded to 2 decimals. `count` is always a plain number.
+- `render` gets the total and an empty object as its row, since a total isn't a row. A `render` that reads other fields of the row should use the function form instead.
+- Empty values (`null`) are skipped. With no values, a sum is `0` and the others show nothing.
+- A function gets the counted rows and returns the text, shown as text, not HTML:
+
+  ```ts
+  { prop: 'active', title: 'Active', total: (rows) => `${rows.filter((row) => row.active).length} active` }
+  ```
+
+- `Total` goes in the first cell, unless that column has a total of its own. Change it with `texts: { total: 'Somme' }`.
+- The totals update by themselves after a search, a page change, a save, an add, a delete or `setData`.
+- TypeScript only allows `sum`, `avg`, `min` and `max` on number columns.
+
+**Which rows count,** with `totalRows`:
+
+| `totalRows`            | Counts                                           |
+| ---------------------- | ------------------------------------------------ |
+| `'searched'` (default) | every row that matches the search, on every page |
+| `'all'`                | every row, whatever the search                   |
+| `'page'`               | only the rows on the page shown                  |
+
 ### Column options
 
 A few more column settings, passed to DataTables:
@@ -341,6 +388,7 @@ texts: { edit: 'Bearbeiten', save: 'Speichern', cancel: 'Abbrechen' }
 | `saveFailed`             | Could not save.                 |
 | `addFailed`              | Could not add.                  |
 | `deleteFailed`           | Could not delete.               |
+| `total`                  | Total                           |
 | `loadFailed`             | Could not load the options.     |
 | `required`               | This field is required.         |
 | `patternMismatch`        | Wrong format.                   |
@@ -381,6 +429,7 @@ Tadabut doesn't ship any CSS. Everything it creates gets these classes, so you c
 | `tdb-row-editing`       | a row while it's being edited, and the new row              |
 | `tdb-row-saving`        | a row while it's being saved, added or deleted              |
 | `tdb-row-new`           | the new row `add()` opens                                   |
+| `tdb-totals`            | the footer with the totals                                  |
 | `tdb-new-rows`          | the `<tbody>` it lives in, above the others                 |
 | `tdb-actions`           | the column with the buttons, header too                     |
 | `tdb-button`            | every button                                                |
@@ -994,6 +1043,7 @@ export default function Employees() {
 - When `employees` changes, the table updates in place. It doesn't get rebuilt.
 - `onSave`, `onAdd`, `onDelete` and `confirmDelete` can be new functions on every render. The table always calls the latest ones.
 - In `onAdd` and `onDelete`, update your state too, like above. Otherwise the next time `data` changes, the new row disappears, or the deleted one comes back.
+- `totalRows` is a plain string, so writing it inline is fine. Changing it rebuilds the table, to count other rows.
 - `editing` can be a new object on every render too. The table is only rebuilt when `mode` or `button` really change. Changing `columns`, `rowId` or `editing` closes any row being edited.
 - The ref has the same methods as the core: `edit`, `save`, `cancel`, `delete`, `isEditing`, `add`, `saveNew`, `cancelNew` and `isAdding`. Before the table is built, or after it's gone, they give `false` and `cancel` and `cancelNew` do nothing.
 - There is no `setData` on the ref. To change the rows, change `data`.
@@ -1020,11 +1070,11 @@ Done:
 - [x] Adding new rows, at the top of the table (`add()` and `onAdd`)
 - [x] Checkboxes with your own values, like `'O'` and `'N'` instead of `true` and `false`
 - [x] Money inputs, formatted while typing (`12 500.00`)
+- [x] Totals in the footer: sum, average, min, max, count or your own
 
 Next, roughly in this order:
 
 - [ ] Dates as `dd/mm/yyyy`, in the input and when sorting
-- [ ] Totals in the footer
 - [ ] A checkbox column to select rows, with "check all"
 - [ ] More events: when editing starts, after saving, row click and double click
 - [ ] Detail rows that open under a row

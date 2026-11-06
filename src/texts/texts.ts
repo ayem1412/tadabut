@@ -22,11 +22,13 @@ export type Texts = {
   readonly keep: string;
   /** Under a row when `onDelete` throws something that isn't an `Error`. */
   readonly deleteFailed: string;
+  /** In the footer's first cell, when that column has no total of its own. */
+  readonly total: string;
   /** Shown in a select while its options load. */
   readonly loading: string;
   /** Under a row when `onSave` throws something that isn't an `Error`. */
   readonly saveFailed: string;
-  /** Under a new row when `onAdd` throws something that isn’t an `Error`. */
+  /** Under a new row when `onAdd` throws something that isn't an `Error`. */
   readonly addFailed: string;
   /** Under a select whose options failed to load. */
   readonly loadFailed: string;

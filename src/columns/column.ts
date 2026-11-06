@@ -1,5 +1,6 @@
 import type { EditorFor } from '../editors/editor';
 import type { ValidationOptions } from '../validation/rules';
+import type { TotalFor } from './total';
 
 /**
  * A table column. The `editor` has to fit the type of `prop`, so a number
@@ -25,12 +26,21 @@ type ColumnFor<Row extends object, Key extends keyof Row & string> = {
   readonly editor?: EditorFor<Row[Key], Row> & ValidationOptions<Row, Row[Key]>;
   /**
    * The cell's text when the row isn't open. It's shown as text, not HTML.
-   * Search uses it; sorting still uses the raw value.
+   * Search uses it and the raw value; sorting uses the raw value. Totals go
+   * through it too.
    *
    * @example
    * render: (value) => `${value} MAD`
    */
   readonly render?: (value: Row[Key], row: Row) => string;
+  /**
+   * Adds a footer line with this column's total. It's formatted like the
+   * cells: a money column shows `12 500.00`, and a `render` is used too.
+   *
+   * @example
+   * total: 'sum'
+   */
+  readonly total?: TotalFor<Row[Key], Row>;
   /** Like `'60px'` or `'20%'`. */
   readonly width?: string;
   /** Hidden columns still keep their value in the row, but can't be edited. */

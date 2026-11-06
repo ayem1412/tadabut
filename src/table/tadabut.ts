@@ -1,6 +1,7 @@
 import DataTable, { type Api, type ApiRowMethods } from 'datatables.net';
 import type { Column } from '../columns/column';
 import { toDataTables } from '../columns/to-datatables';
+import type { TotalRows } from '../columns/total';
 import { type EditableCell, EditSession } from '../editing/session';
 import { addClasses } from '../editors/classes';
 import { en } from '../texts/en';
@@ -15,6 +16,7 @@ import {
 } from './elements';
 import { NewRow } from './new-row';
 import type { EditingOptions, TableClassNames, TadabutOptions } from './options';
+import { footerFor, rowsFor, totalText } from './totals';
 
 /**
  * A DataTables table with row editing.
@@ -64,6 +66,10 @@ export class Tadabut<Row extends object> {
   private readonly deleting: Set<string | number> = new Set();
   /** The row `add()` opened, if any. */
   private newRow: NewRow<Row> | undefined;
+  /** Whether any column has a `total`, so the table has a footer. */
+  private readonly hasTotals: boolean;
+  /** Which rows the totals count, with its default filled in. */
+  private readonly totalRows: TotalRows;
 
   /**
    * Builds the table inside `container`, which should be empty.
@@ -102,10 +108,17 @@ export class Tadabut<Row extends object> {
     this.confirmDelete = options.confirmDelete;
     this.classNames = options.classNames ?? {};
     this.texts = { ...en, ...options.texts };
+    this.hasTotals = options.columns.some((column) => column.total !== undefined);
+    this.totalRows = options.totalRows ?? 'searched';
 
     this.tableEl = document.createElement('table');
     addClasses(this.tableEl, [], this.classNames.table);
     container.appendChild(this.tableEl);
+
+    // Before DataTables starts, or it won't manage the footer.
+    if (this.hasTotals) {
+      this.tableEl.append(footerFor(this.columns.length + (this.hasActions ? 1 : 0)));
+    }
 
     this.dataTable = new DataTable(this.tableEl, {
       // Spread first so `data` and `columns` can't be overridden from JS.
@@ -113,6 +126,12 @@ export class Tadabut<Row extends object> {
       data: [...options.data],
       columns: toDataTables(options.columns, actions, this.classNames, this.texts),
     });
+
+    // The first draw already happened inside `new DataTable`.
+    if (this.hasTotals) {
+      this.dataTable.on('draw', this.updateTotals);
+      this.updateTotals();
+    }
 
     if (this.hasActions) {
       this.tableEl.addEventListener('click', this.onClick);
@@ -696,5 +715,23 @@ export class Tadabut<Row extends object> {
         this.cancel(id);
         break;
     }
+  };
+
+  /**
+   * Writes every total. Runs after each redraw: search, paging, save, add,
+   * delete and `setData` all redraw.
+   */
+  private readonly updateTotals = (): void => {
+    const rows = this.dataTable.rows(rowsFor(this.totalRows)).data().toArray();
+
+    this.columns.forEach((column, index) => {
+      const cell = this.dataTable.column(index).footer();
+
+      if (column.total !== undefined) {
+        cell.textContent = totalText(column, rows);
+      } else if (index === 0) {
+        cell.textContent = this.texts.total;
+      }
+    });
   };
 }

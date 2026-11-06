@@ -591,6 +591,37 @@ describe('money types', () => {
   });
 });
 
+describe('total types', () => {
+  type Pay = { id: number; salary: number | null; label: string };
+
+  it('allows number totals on number columns, count and functions on any', () => {
+    const columns: Column<Pay>[] = [
+      { title: 'Salary', prop: 'salary', total: 'sum' },
+      { title: 'Salary', prop: 'salary', total: 'avg' },
+      { title: 'Label', prop: 'label', total: 'count' },
+      { title: 'Label', prop: 'label', total: (rows) => `${rows.length} labels` },
+    ];
+    const options: TadabutOptions<Pay> = { data: [], columns, totalRows: 'page' };
+
+    expect(options.columns).toHaveLength(4);
+  });
+
+  it('rejects number totals on text, and unknown kinds', () => {
+    const columns: Column<Pay>[] = [
+      // @ts-expect-error a text column can't be summed
+      { title: 'Label', prop: 'label', total: 'sum' },
+      // @ts-expect-error 'median' is not a total
+      { title: 'Salary', prop: 'salary', total: 'median' },
+      // @ts-expect-error the function returns text
+      { title: 'Salary', prop: 'salary', total: (rows) => rows.length },
+    ];
+    // @ts-expect-error 'everything' is not a totalRows
+    const options: TadabutOptions<Pay> = { data: [], columns: [], totalRows: 'everything' };
+
+    expect([columns, options]).toBeDefined();
+  });
+});
+
 describe('add types', () => {
   type Person = { id: number; name: string };
 
