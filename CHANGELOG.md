@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.4.0](https://github.com/ayem1412/tadabut/compare/v0.3.0...v0.4.0) (2026-11-06)
+
+
+### Features
+
+* add new rows with add() and onAdd ([#42](https://github.com/ayem1412/tadabut/issues/42)) ([1a17e5e](https://github.com/ayem1412/tadabut/commit/1a17e5e2627ce45d61cd78a1c8cfe6dac4691b09))
+* delete rows, with a question first ([#40](https://github.com/ayem1412/tadabut/issues/40)) ([97ad092](https://github.com/ayem1412/tadabut/commit/97ad092299eb02110e19920d5f1162e5389745d3))
+
 ## [0.3.0](https://github.com/ayem1412/tadabut/compare/v0.2.0...v0.3.0) (2026-11-04)
 
 
