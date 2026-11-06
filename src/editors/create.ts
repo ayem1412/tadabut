@@ -38,7 +38,7 @@ export function createEditor(
       return loosen(createDateEditor(config, tighten(fullContext)));
 
     case 'checkbox':
-      return loosen(createCheckboxEditor(config, tighten(fullContext)));
+      return createCheckboxEditor(config, fullContext);
 
     case 'select':
       return createSelectEditor(config, fullContext, texts);

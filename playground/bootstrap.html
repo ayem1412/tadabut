@@ -17,6 +17,10 @@
       .table > tbody > tr.tdb-row-editing > td:not(:has(.tdb-input, .tdb-button)) {
         padding-top: calc(0.5rem + 4px);
       }
+      /* a 1em box next to taller inputs: move it down to their middle */
+      .table > tbody > tr.tdb-row-editing .tdb-input-checkbox {
+        margin-top: 0.5rem;
+      }
       .tdb-row-saving {
         opacity: 0.5;
       }

@@ -154,22 +154,45 @@ const columns: Column<Employee>[] = [
 
 A select's values must have the same type as the column. `countryId` is a number, so `value: '1'` is a type error.
 
-| Type       | Value              | When empty  | Options                             |
-| ---------- | ------------------ | ----------- | ----------------------------------- |
-| `text`     | `string`           | `''`        | `minLength`, `maxLength`, `pattern` |
-| `number`   | `number`           | `null`      | `min`, `max`, `step`                |
-| `date`     | `string`           | `null`      | `min`, `max`                        |
-| `checkbox` | `boolean`          | never empty | none                                |
-| `select`   | same as the column | `null`      | `options`, `dependsOn`, `labelProp` |
+| Type       | Value                  | When empty  | Options                             |
+| ---------- | ---------------------- | ----------- | ----------------------------------- |
+| `text`     | `string`               | `''`        | `minLength`, `maxLength`, `pattern` |
+| `number`   | `number`               | `null`      | `min`, `max`, `step`                |
+| `date`     | `string`               | `null`      | `min`, `max`                        |
+| `checkbox` | `boolean`, or `values` | never empty | `values`                            |
+| `select`   | same as the column     | `null`      | `options`, `dependsOn`, `labelProp` |
 
 Every editor also takes `className`, for your own CSS classes.
 
 A few things to know:
 
 - An empty number or date gives `null`, not `0` or `NaN`. A select with nothing picked gives `null` too.
-- A checkbox is always `true` or `false`. A `null` value shows as unchecked.
+- A checkbox shows `null` as unchecked, but keeps it: an untouched `null` is still `null` after saving. It only becomes `true` or `false` once the user clicks it.
 - A `string | null` column gets the same editors as a `string` column. `null` shows as an empty input.
 - Date columns must hold `'YYYY-MM-DD'`. Something like `'2024-01-05T00:00:00'` shows as empty, and saving turns it into `null`. Convert your dates first.
+
+#### Checkboxes with your own values
+
+Many databases store yes/no as `'O'`/`'N'`, `'Y'`/`'N'` or `1`/`0`. Give the checkbox the two values to use:
+
+```ts
+type Employee = { id: number; active: 'O' | 'N' | null };
+
+const columns: Column<Employee>[] = [
+  {
+    prop: 'active',
+    title: 'Active',
+    className: 'dt-center', // centers the cell and the checkbox
+    editor: { type: 'checkbox', values: { checked: 'O', unchecked: 'N' } },
+    render: (value) => (value === 'O' ? 'Yes' : value === 'N' ? 'No' : ''),
+  },
+];
+```
+
+- The box is ticked only for the exact `checked` value. `'o'` isn't `'O'`, and `'1'` isn't `1`.
+- Clicking writes `checked` or `unchecked`. A value that's neither, like `null` or an old `'X'`, shows unchecked and is kept as it is until the user clicks.
+- `values` is required on `string` and `number` columns, and not allowed on `boolean` ones. Its values must fit the column, so `checked: 'Y'` on an `'O' | 'N'` column is a type error.
+- The cell shows the raw value (`O`), like any column. Use `render` for "Yes"/"No", a ✓, or anything else.
 
 ### What cells show
 
@@ -445,6 +468,11 @@ Error messages and the rows being edited need a few lines of your own CSS:
    input doesn't move the others. */
 .table > tbody > tr.tdb-row-editing > td {
   vertical-align: top;
+}
+
+/* A checkbox is smaller than the inputs: move it down to their middle. */
+.table > tbody > tr.tdb-row-editing .tdb-input-checkbox {
+  margin-top: 0.5rem;
 }
 
 .tdb-row-saving {
@@ -952,10 +980,10 @@ Done:
 - [x] Translations for Tadabut's own texts (buttons and error messages), French built in
 - [x] Deleting rows, with a question first that you can replace (`confirmDelete`)
 - [x] Adding new rows, at the top of the table (`add()` and `onAdd`)
+- [x] Checkboxes with your own values, like `'O'` and `'N'` instead of `true` and `false`
 
 Next, roughly in this order:
 
-- [ ] Checkboxes with your own values, like `'O'` and `'N'` instead of `true` and `false`
 - [ ] Money inputs, formatted while typing (`12 500.00`)
 - [ ] Dates as `dd/mm/yyyy`, in the input and when sorting
 - [ ] Totals in the footer

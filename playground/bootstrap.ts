@@ -62,6 +62,17 @@ const columns: Column<Row>[] = [
     editor: { type: 'number', min: 18, max: 99, className: 'form-control form-control-sm' },
     render: (value) => `${value} years`,
   },
+  {
+    title: 'Active',
+    prop: 'active',
+    className: 'dt-center',
+    editor: {
+      type: 'checkbox',
+      values: { checked: 'O', unchecked: 'N' },
+      className: 'form-check-input',
+    },
+    render: (value) => (value === 'O' ? 'Yes' : value === 'N' ? 'No' : '—'),
+  },
 ];
 
 const table = new Tadabut(container, {

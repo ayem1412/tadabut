@@ -501,6 +501,71 @@ describe('labelProp types', () => {
   });
 });
 
+describe('checkbox values types', () => {
+  type Flags = { id: number; active: 'O' | 'N' | null; code: string; level: number; done: boolean };
+
+  it('allows values on string and number columns', () => {
+    const columns: Column<Flags>[] = [
+      {
+        title: 'A',
+        prop: 'active',
+        editor: { type: 'checkbox', values: { checked: 'O', unchecked: 'N' } },
+      },
+      {
+        title: 'C',
+        prop: 'code',
+        editor: { type: 'checkbox', values: { checked: 'Y', unchecked: 'N' } },
+      },
+      {
+        title: 'L',
+        prop: 'level',
+        editor: { type: 'checkbox', values: { checked: 1, unchecked: 0 } },
+      },
+      { title: 'D', prop: 'done', editor: { type: 'checkbox' } },
+    ];
+
+    expect(columns).toHaveLength(4);
+  });
+
+  it('allows values when the rows are any', () => {
+    // biome-ignore lint/suspicious/noExplicitAny: rows coming from plain JavaScript
+    const columns: Column<any>[] = [
+      {
+        title: 'A',
+        prop: 'active',
+        editor: { type: 'checkbox', values: { checked: 'O', unchecked: 'N' } },
+      },
+    ];
+
+    expect(columns).toHaveLength(1);
+  });
+
+  it('checks the values against the column', () => {
+    // Kept short so the line never wraps: the boolean error lands on `values`.
+    const yesNo = { checked: true, unchecked: false };
+    const columns: Column<Flags>[] = [
+      // @ts-expect-error 'Y' is not 'O' | 'N'
+      {
+        title: 'A',
+        prop: 'active',
+        editor: { type: 'checkbox', values: { checked: 'Y', unchecked: 'N' } },
+      },
+      // @ts-expect-error a string column needs values
+      { title: 'C', prop: 'code', editor: { type: 'checkbox' } },
+      // @ts-expect-error a number column needs numbers
+      {
+        title: 'L',
+        prop: 'level',
+        editor: { type: 'checkbox', values: { checked: '1', unchecked: '0' } },
+      },
+      // @ts-expect-error a boolean column has no values
+      { title: 'D', prop: 'done', editor: { type: 'checkbox', values: yesNo } },
+    ];
+
+    expect(columns).toHaveLength(4);
+  });
+});
+
 describe('add types', () => {
   type Person = { id: number; name: string };
 
