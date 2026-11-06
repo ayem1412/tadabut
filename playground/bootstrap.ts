@@ -61,11 +61,13 @@ const columns: Column<Row>[] = [
     prop: 'age',
     editor: { type: 'number', min: 18, max: 99, className: 'form-control form-control-sm' },
     render: (value) => `${value} years`,
+    total: 'avg',
   },
   {
     title: 'Salary',
     prop: 'salary',
     className: 'dt-right',
+    total: 'sum',
     editor: { type: 'money', min: 3000, className: 'form-control form-control-sm text-end' },
   },
   {

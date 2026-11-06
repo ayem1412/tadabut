@@ -33,10 +33,10 @@ export type TadabutProps<Row extends object> = TadabutOptions<Row> & {
 
 /**
  * New `data` updates the table in place. Changing `columns`, `rowId`,
- * `dataTables` or `texts` rebuilds it (and closes open rows), so keep those
- * stable with a constant or `useMemo`. `editing`, `classNames`, `onSave`,
- * `onAdd`, `onDelete` and `confirmDelete` can be inline: they're compared by value or
- * read through a ref.
+ * `dataTables`, `texts` or `totalRows` rebuilds it (and closes open rows), so
+ * keep the objects stable with a constant or `useMemo`. `editing`,
+ * `classNames`, `onSave`, `onAdd`, `onDelete` and `confirmDelete` can be
+ * inline: they're compared by value or read through a ref.
  */
 export function Tadabut<Row extends object>({
   data,
@@ -46,6 +46,7 @@ export function Tadabut<Row extends object>({
   classNames,
   dataTables,
   texts,
+  totalRows,
   onSave,
   onAdd,
   onDelete,
@@ -110,6 +111,7 @@ export function Tadabut<Row extends object>({
       editing: { mode, button },
       dataTables,
       texts,
+      totalRows,
       classNames: {
         table: tableClass,
         button: buttonClass,
@@ -136,6 +138,7 @@ export function Tadabut<Row extends object>({
     rowId,
     dataTables,
     texts,
+    totalRows,
     mode,
     button,
     tableClass,

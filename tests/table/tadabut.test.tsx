@@ -311,6 +311,24 @@ describe('React Tadabut editing', () => {
 
     expect(container.querySelector('[data-tdb-action="edit"]')?.textContent).toBe('Modifier');
   });
+
+  it('shows totals, and counts other rows when totalRows changes', async () => {
+    const counted: Column<Row>[] = [
+      { title: 'Name', prop: 'name', total: 'count' },
+      { title: 'ID', prop: 'id', total: 'sum' },
+    ];
+    // The same object both times, so only totalRows changes.
+    const twoPerPage = { pageLength: 2 };
+    const footer = () =>
+      [...container.querySelectorAll('tfoot th')].map((th) => th.textContent).join(' | ');
+
+    await renderWith({ columns: counted, dataTables: twoPerPage });
+    expect(footer()).toBe('3 | 6');
+
+    // Sorted by name, so page 1 is Amina (1) and Salma (3).
+    await renderWith({ columns: counted, dataTables: twoPerPage, totalRows: 'page' });
+    expect(footer()).toBe('2 | 4');
+  });
 });
 
 /** Clicks an action button in the first row. */

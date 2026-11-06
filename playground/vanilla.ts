@@ -1,7 +1,13 @@
 import 'datatables.net-dt';
 import 'datatables.net-dt/css';
 
-import { type EditingOptions, fr, Tadabut, type TadabutOptions } from '../src/index';
+import {
+  type EditingOptions,
+  fr,
+  Tadabut,
+  type TadabutOptions,
+  type TotalRows,
+} from '../src/index';
 import { columns, fakeAdd, fakeDelete, fakeSave, french, type Row, rows, settings } from './data';
 
 const container = document.querySelector<HTMLElement>('#container');
@@ -13,6 +19,7 @@ const modeSelect = document.querySelector<HTMLSelectElement>('#mode');
 const buttonsCheckbox = document.querySelector<HTMLInputElement>('#buttons');
 const frenchCheckbox = document.querySelector<HTMLInputElement>('#french');
 const confirmSelect = document.querySelector<HTMLSelectElement>('#confirm');
+const totalRowsSelect = document.querySelector<HTMLSelectElement>('#total-rows');
 const status = document.querySelector<HTMLElement>('#status');
 
 if (
@@ -25,6 +32,7 @@ if (
   !buttonsCheckbox ||
   !frenchCheckbox ||
   !confirmSelect ||
+  !totalRowsSelect ||
   !status
 ) {
   throw new Error('Playground: missing elements in vanilla.html');
@@ -58,6 +66,7 @@ const createTable = (): Tadabut<Row> => {
     onAdd: fakeAdd,
     onDelete: fakeDelete,
     confirmDelete: confirmDelete(),
+    totalRows: totalRowsSelect.value as TotalRows,
     editing,
     dataTables: frenchCheckbox.checked ? { ...settings, language: french } : settings,
     texts: frenchCheckbox.checked ? fr : undefined,
@@ -106,6 +115,7 @@ modeSelect.addEventListener('change', recreate);
 buttonsCheckbox.addEventListener('change', recreate);
 frenchCheckbox.addEventListener('change', recreate);
 confirmSelect.addEventListener('change', recreate);
+totalRowsSelect.addEventListener('change', recreate);
 
 table = createTable();
 updateStatus();
