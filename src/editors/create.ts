@@ -4,6 +4,7 @@ import { createCheckboxEditor } from './checkbox';
 import { createDateEditor } from './date';
 import type { AnyEditor } from './editor';
 import type { EditorContext, EditorInstance } from './instance';
+import { createMoneyEditor } from './money';
 import { createNumberEditor } from './number';
 import { createSelectEditor, type LoadResult } from './select';
 import { createTextEditor } from './text';
@@ -45,6 +46,9 @@ export function createEditor(
 
     case 'custom':
       return config.create(fullContext);
+
+    case 'money':
+      return loosen(createMoneyEditor(config, tighten(fullContext)));
 
     default: {
       const missing: never = config;

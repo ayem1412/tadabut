@@ -63,6 +63,12 @@ const columns: Column<Row>[] = [
     render: (value) => `${value} years`,
   },
   {
+    title: 'Salary',
+    prop: 'salary',
+    className: 'dt-right',
+    editor: { type: 'money', min: 3000, className: 'form-control form-control-sm text-end' },
+  },
+  {
     title: 'Active',
     prop: 'active',
     className: 'dt-center',

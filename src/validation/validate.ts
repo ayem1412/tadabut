@@ -27,6 +27,7 @@ function builtInError(config: AnyEditor, value: unknown, texts: Texts): string |
       return typeof value === 'string' ? textError(config, value, texts) : undefined;
 
     case 'number':
+    case 'money':
       return typeof value === 'number' ? rangeError(config, value, texts) : undefined;
 
     case 'date':
@@ -68,7 +69,7 @@ function textError(
 
 /** `min` and `max` for numbers. */
 function rangeError(
-  config: Extract<AnyEditor, { type: 'number' }>,
+  config: Extract<AnyEditor, { type: 'number' | 'money' }>,
   value: number,
   texts: Texts,
 ): string | undefined {
