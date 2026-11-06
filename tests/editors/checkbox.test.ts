@@ -208,7 +208,7 @@ describe('checkbox with values in a table', () => {
     expect(onSave).toHaveBeenCalledWith({ id: 1, active: 'N' }, expect.anything());
   });
 
-  it('adds a new row with the unchecked value only once clicked', async () => {
+  it('adds a new row with null until the box is clicked', async () => {
     const onSave = vi.fn();
     const container = document.createElement('div');
     document.body.appendChild(container);
@@ -218,6 +218,6 @@ describe('checkbox with values in a table', () => {
     t.add();
     await t.saveNew();
 
-    expect(onAdd).toHaveBeenCalledWith({});
+    expect(onAdd).toHaveBeenCalledWith({ active: null });
   });
 });

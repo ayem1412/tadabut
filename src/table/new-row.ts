@@ -71,8 +71,15 @@ export class NewRow<Row extends object> {
 
     this.body.append(this.tr);
 
+    // Editors expect `null` for "empty", not a missing field.
+    const start: Record<string, unknown> = { ...defaults };
+
+    for (const { column } of cells) {
+      start[column.prop] ??= null;
+    }
+
     // The session only reads the fields it edits, so a partial row is enough.
-    this.session = new EditSession(defaults as Row, cells, options.texts);
+    this.session = new EditSession(start as Row, cells, options.texts);
     this.firstProp = cells[0]?.column.prop;
   }
 

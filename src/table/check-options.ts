@@ -1,3 +1,4 @@
+import { moneyFormat } from '../editors/money';
 import type { TadabutOptions } from './options';
 
 /**
@@ -7,6 +8,7 @@ import type { TadabutOptions } from './options';
  * @throws If `onDelete` is set and there's no `rowId`.
  * @throws If a hidden column (`visible: false`) has an `editor`.
  * @throws If a select's `labelProp` is its own column.
+ * @throws If a money editor's `separator` and `point` are the same.
  */
 export function checkOptions<Row extends object>(options: TadabutOptions<Row>): void {
   if (options.rowId === undefined) {
@@ -38,5 +40,20 @@ export function checkOptions<Row extends object>(options: TadabutOptions<Row>): 
     throw new Error(
       `Tadabut: the "${selfLabeled.prop}" column's labelProp can't be "${selfLabeled.prop}" itself.`,
     );
+  }
+
+  for (const column of options.columns) {
+    if (column.editor?.type !== 'money') {
+      continue;
+    }
+
+    // With the defaults filled in, so `point: ' '` alone is caught too.
+    const { separator, point } = moneyFormat(column.editor);
+
+    if (separator === point) {
+      throw new Error(
+        `Tadabut: the "${column.prop}" column's money separator and point can't both be "${point}".`,
+      );
+    }
   }
 }

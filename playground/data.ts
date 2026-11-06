@@ -8,6 +8,8 @@ export type Row = {
   cityId: number | null;
   cityName: string | null;
   age: number;
+  /** Monthly, in dirhams. */
+  salary: number | null;
   /** 'O' (oui) or 'N' (non), like an old database. `null` when nobody said. */
   active: 'O' | 'N' | null;
 };
@@ -20,6 +22,7 @@ export const rows: Row[] = [
     cityId: 8,
     cityName: 'Rabat',
     age: 29,
+    salary: 12500,
     active: 'O',
   },
   {
@@ -29,6 +32,7 @@ export const rows: Row[] = [
     cityId: 2,
     cityName: 'Casablanca',
     age: 34,
+    salary: 9800.5,
     active: 'N',
   },
   {
@@ -38,6 +42,7 @@ export const rows: Row[] = [
     cityId: 1,
     cityName: 'Agadir',
     age: 25,
+    salary: 15000,
     active: 'O',
   },
   {
@@ -47,6 +52,7 @@ export const rows: Row[] = [
     cityId: 3,
     cityName: 'Fès',
     age: 41,
+    salary: 22750,
     active: null,
   },
   {
@@ -56,6 +62,7 @@ export const rows: Row[] = [
     cityId: 9,
     cityName: 'Tanger',
     age: 37,
+    salary: 8400,
     active: 'O',
   },
   {
@@ -65,6 +72,7 @@ export const rows: Row[] = [
     cityId: 5,
     cityName: 'Marrakech',
     age: 22,
+    salary: 11200.75,
     active: 'N',
   },
   {
@@ -74,9 +82,19 @@ export const rows: Row[] = [
     cityId: 6,
     cityName: 'Meknès',
     age: 31,
+    salary: 30000,
     active: 'O',
   },
-  { id: 8, name: 'Omar Tazi', country: 'MA', cityId: 7, cityName: 'Oujda', age: 45, active: null },
+  {
+    id: 8,
+    name: 'Omar Tazi',
+    country: 'MA',
+    cityId: 7,
+    cityName: 'Oujda',
+    age: 45,
+    salary: 7600,
+    active: null,
+  },
   {
     id: 9,
     name: 'Ilham Zerouali',
@@ -84,6 +102,7 @@ export const rows: Row[] = [
     cityId: 10,
     cityName: 'Tétouan',
     age: 28,
+    salary: null,
     active: 'O',
   },
   {
@@ -93,6 +112,7 @@ export const rows: Row[] = [
     cityId: 4,
     cityName: 'Kénitra',
     age: 33,
+    salary: 18900,
     active: 'N',
   },
   {
@@ -102,6 +122,7 @@ export const rows: Row[] = [
     cityId: 13,
     cityName: 'Paris',
     age: 26,
+    salary: 26400.25,
     active: 'O',
   },
   {
@@ -111,6 +132,7 @@ export const rows: Row[] = [
     cityId: 16,
     cityName: 'Madrid',
     age: 39,
+    salary: 14100,
     active: null,
   },
 ];
@@ -211,6 +233,12 @@ export const columns: Column<Row>[] = [
     render: (value) => `${value} years`,
   },
   {
+    title: 'Salary',
+    prop: 'salary',
+    className: 'dt-right',
+    editor: { type: 'money', min: 3000 },
+  },
+  {
     title: 'Active',
     prop: 'active',
     className: 'dt-center',
@@ -249,6 +277,7 @@ export async function fakeAdd(row: Partial<Row>): Promise<Row> {
     cityId: row.cityId ?? null,
     cityName: row.cityName ?? null,
     age: row.age ?? 0,
+    salary: row.salary ?? null,
     active: row.active ?? null,
   };
 }

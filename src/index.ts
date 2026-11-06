@@ -11,6 +11,8 @@ export type { CustomEditor } from './editors/custom';
 export type { DateEditor } from './editors/date';
 export type { EditorFor } from './editors/editor';
 export type { EditorContext, EditorInstance } from './editors/instance';
+export type { MoneyEditor } from './editors/money';
+export { defaultMoneyFormat, formatMoney, type MoneyFormat } from './editors/money-format';
 export type { NumberEditor } from './editors/number';
 export type {
   OptionsContext,

@@ -2,6 +2,8 @@ import type { ColumnOptions } from 'datatables.net';
 
 import { splitClasses } from '../editors/classes';
 import type { AnyEditor } from '../editors/editor';
+import { moneyFormat } from '../editors/money';
+import { formatMoney } from '../editors/money-format';
 import { type Action, buttonHtml } from '../table/elements';
 import type { TableClassNames } from '../table/options';
 import type { Texts } from '../texts/texts';
@@ -69,7 +71,8 @@ export function toDataTables<Row extends object>(
             return escapeHtml(label(value, row));
 
           case 'filter':
-            return label(value, row);
+            // Both, so searching "12500" finds "12 500.00".
+            return `${label(value, row)} ${asText(value)}`;
 
           default:
             // sort and type: keep numbers as numbers
@@ -82,12 +85,19 @@ export function toDataTables<Row extends object>(
   return actions.length > 0 ? [...converted, actionsColumn(actions, classNames, texts)] : converted;
 }
 
-/** `render`, then `labelProp`, then a fixed list's label, then the value. */
+/** `render`, then a money format, then `labelProp`, then a fixed list's label, then the value. */
 function labelOf<Row>(column: LooseColumn<Row>): (value: unknown, row: Row) => string {
   const { render, editor } = column;
 
   if (render !== undefined) {
     return render;
+  }
+
+  if (editor?.type === 'money') {
+    // Once here, not for every cell.
+    const format = moneyFormat(editor);
+
+    return (value) => (typeof value === 'number' ? formatMoney(value, format) : asText(value));
   }
 
   if (editor?.type === 'select') {

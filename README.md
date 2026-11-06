@@ -23,7 +23,7 @@ DataTables is great for showing data. Editing that data inside the table is a di
 - Edit a row in place, then save or cancel. Saving can be async. If it fails, the row stays open with what the user typed, so nothing is lost.
 - Add a row from your own button: it opens at the top of the table, with the same inputs and validation.
 - Delete a row, with a question first, or your own popup.
-- Text, number, date, checkbox and select inputs, with validation.
+- Text, number, money, date, checkbox and select inputs, with validation.
 - Selects that depend on another field, like country and city. Old requests get cancelled when the user changes their mind.
 - Fully typed. The table knows what your rows look like, so a typo in a column name is a type error.
 - No jQuery. It's built on DataTables 3, which doesn't need it anymore.
@@ -51,9 +51,20 @@ The core has no framework in it. Each framework gets a small adapter on top.
 Install Tadabut with DataTables. `datatables.net-dt` is DataTables with its default look:
 
 ```sh
-pnpm add tadabut datatables.net-dt
-# or
+# npm
 npm install tadabut datatables.net-dt
+
+# pnpm
+pnpm add tadabut datatables.net-dt
+
+# Yarn
+yarn add tadabut datatables.net-dt
+
+# Bun
+bun add tadabut datatables.net-dt
+
+# Deno
+deno add npm:tadabut npm:datatables.net-dt
 ```
 
 For the React adapter, you also need React 19, which your app most likely has already.
@@ -154,13 +165,14 @@ const columns: Column<Employee>[] = [
 
 A select's values must have the same type as the column. `countryId` is a number, so `value: '1'` is a type error.
 
-| Type       | Value                  | When empty  | Options                             |
-| ---------- | ---------------------- | ----------- | ----------------------------------- |
-| `text`     | `string`               | `''`        | `minLength`, `maxLength`, `pattern` |
-| `number`   | `number`               | `null`      | `min`, `max`, `step`                |
-| `date`     | `string`               | `null`      | `min`, `max`                        |
-| `checkbox` | `boolean`, or `values` | never empty | `values`                            |
-| `select`   | same as the column     | `null`      | `options`, `dependsOn`, `labelProp` |
+| Type       | Value                  | When empty  | Options                                        |
+| ---------- | ---------------------- | ----------- | ---------------------------------------------- |
+| `text`     | `string`               | `''`        | `minLength`, `maxLength`, `pattern`            |
+| `number`   | `number`               | `null`      | `min`, `max`, `step`                           |
+| `money`    | `number`               | `null`      | `min`, `max`, `decimals`, `separator`, `point` |
+| `date`     | `string`               | `null`      | `min`, `max`                                   |
+| `checkbox` | `boolean`, or `values` | never empty | `values`                                       |
+| `select`   | same as the column     | `null`      | `options`, `dependsOn`, `labelProp`            |
 
 Every editor also takes `className`, for your own CSS classes.
 
@@ -194,12 +206,36 @@ const columns: Column<Employee>[] = [
 - `values` is required on `string` and `number` columns, and not allowed on `boolean` ones. Its values must fit the column, so `checked: 'Y'` on an `'O' | 'N'` column is a type error.
 - The cell shows the raw value (`O`), like any column. Use `render` for "Yes"/"No", a ✓, or anything else.
 
+#### Money
+
+`money` is for `number` columns that hold amounts. It shows `12 500.00`, while typing and in the cells, but the row keeps a plain number (`12500`).
+
+```ts
+{ prop: 'salary', title: 'Salary', className: 'dt-right', editor: { type: 'money', min: 0 } }
+```
+
+- While typing, the thousands are grouped as you go, and the cursor stays where you're typing. The decimals are filled in when you leave the field: `12500` becomes `12 500.00`.
+- Both `.` and `,` work as the decimal point. Letters are ignored, and a decimal too many is refused.
+- The saved number is rounded to `decimals`, so `12.345` saves as `12.35`, never `12.345000001`.
+- Empty gives `null`. `min`, `max` and `required` work like on `number`.
+- The format is yours: `decimals` (default `2`), `separator` (default a space) and `point` (default `.`). For `12.500,00`, use `{ separator: '.', point: ',' }`. The separator and the point can't be the same: Tadabut throws an error if they are.
+- The cells use the same format, without `render`. A `render` you write still wins, for a currency like `12 500.00 MAD`.
+
+`formatMoney` and `defaultMoneyFormat` are exported, to show the same format in other places:
+
+```ts
+import { defaultMoneyFormat, formatMoney } from 'tadabut';
+
+{ prop: 'bonus', title: 'Bonus', render: (value) => formatMoney(value, defaultMoneyFormat) }
+```
+
 ### What cells show
 
-When a row isn't being edited, a cell shows its value as text. Three things change that:
+When a row isn't being edited, a cell shows its value as text. These change that:
 
 - A select with a fixed list shows the option's label. A `countryId` of `1` shows "Morocco", with nothing to write.
 - A select with `labelProp` shows that field of the row, like `cityName`. See [Chained selects](#chained-selects).
+- A `money` editor shows its format, like `12 500.00`.
 - `render` sets the text yourself, on any column:
 
 ```ts
@@ -208,9 +244,9 @@ When a row isn't being edited, a cell shows its value as text. Three things chan
 
 A few things to know:
 
-- The order is: `render`, then `labelProp`, then the fixed list's label, then the value itself.
+- The order is: `render`, then the money format, then `labelProp`, then the fixed list's label, then the value itself.
 - What `render` returns is shown as plain text, never as HTML. `<b>` shows as `<b>`, so text from a server can't break the page or run code.
-- Searching uses the text. Sorting uses the raw value, so `200 MAD` comes before `1000 MAD`. A city column sorts by id, not by name.
+- Searching uses both the text and the raw value, so `12500` finds `12 500.00`, and a country's id finds "Morocco". Sorting uses the raw value, so `200 MAD` comes before `1000 MAD`. A city column sorts by id, not by name.
 - An empty value (`null` or `undefined`) shows an empty cell. On a nullable column, `render` gets `null` too.
 - Editors always get the raw value. After saving or cancelling, the text is worked out again.
 
@@ -335,6 +371,7 @@ Tadabut doesn't ship any CSS. Everything it creates gets these classes, so you c
 | `tdb-input`             | every input                                                 |
 | `tdb-input-text`        | text inputs                                                 |
 | `tdb-input-number`      | number inputs                                               |
+| `tdb-input-money`       | money inputs                                                |
 | `tdb-input-date`        | date inputs                                                 |
 | `tdb-input-checkbox`    | checkboxes                                                  |
 | `tdb-input-select`      | selects                                                     |
@@ -583,6 +620,7 @@ Built-in rules:
 | -------- | ----------------------------------- |
 | text     | `minLength`, `maxLength`, `pattern` |
 | number   | `min`, `max`                        |
+| money    | `min`, `max`                        |
 | date     | `min`, `max`                        |
 | checkbox | none                                |
 | select   | none                                |
@@ -981,10 +1019,10 @@ Done:
 - [x] Deleting rows, with a question first that you can replace (`confirmDelete`)
 - [x] Adding new rows, at the top of the table (`add()` and `onAdd`)
 - [x] Checkboxes with your own values, like `'O'` and `'N'` instead of `true` and `false`
+- [x] Money inputs, formatted while typing (`12 500.00`)
 
 Next, roughly in this order:
 
-- [ ] Money inputs, formatted while typing (`12 500.00`)
 - [ ] Dates as `dd/mm/yyyy`, in the input and when sorting
 - [ ] Totals in the footer
 - [ ] A checkbox column to select rows, with "check all"

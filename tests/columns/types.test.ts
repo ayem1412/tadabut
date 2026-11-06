@@ -566,6 +566,31 @@ describe('checkbox values types', () => {
   });
 });
 
+describe('money types', () => {
+  type Pay = { id: number; salary: number | null; label: string };
+
+  it('accepts money on a number column, with its options', () => {
+    const column: Column<Pay> = {
+      title: 'Salary',
+      prop: 'salary',
+      editor: { type: 'money', min: 0, decimals: 0, separator: '.', point: ',' },
+    };
+
+    expect(column.prop).toBe('salary');
+  });
+
+  it('rejects money on a string column, and unknown options', () => {
+    const columns: Column<Pay>[] = [
+      // @ts-expect-error money is for numbers
+      { title: 'Label', prop: 'label', editor: { type: 'money' } },
+      // @ts-expect-error step is a number editor option
+      { title: 'Salary', prop: 'salary', editor: { type: 'money', step: 1 } },
+    ];
+
+    expect(columns).toHaveLength(2);
+  });
+});
+
 describe('add types', () => {
   type Person = { id: number; name: string };
 

@@ -436,6 +436,66 @@ describe('the new row and edited rows', () => {
   });
 });
 
+describe('every editor in the new row', () => {
+  type All = {
+    id: number;
+    name: string;
+    age: number | null;
+    salary: number | null;
+    start: string | null;
+    active: boolean;
+    flag: 'O' | 'N' | null;
+    team: string | null;
+  };
+
+  it('opens empty, and gives null for what was left empty', async () => {
+    const onAdd = vi.fn((row: Partial<All>) => ({ ...row, id: 1 }) as All);
+    const container = document.createElement('div');
+    document.body.appendChild(container);
+    const table = new Tadabut<All>(container, {
+      data: [],
+      rowId: 'id',
+      onAdd,
+      columns: [
+        { title: 'Name', prop: 'name', editor: { type: 'text' } },
+        { title: 'Age', prop: 'age', editor: { type: 'number' } },
+        { title: 'Salary', prop: 'salary', editor: { type: 'money' } },
+        { title: 'Start', prop: 'start', editor: { type: 'date' } },
+        { title: 'Active', prop: 'active', editor: { type: 'checkbox' } },
+        {
+          title: 'Flag',
+          prop: 'flag',
+          editor: { type: 'checkbox', values: { checked: 'O', unchecked: 'N' } },
+        },
+        {
+          title: 'Team',
+          prop: 'team',
+          editor: { type: 'select', options: [{ value: 'A', label: 'Team A' }] },
+        },
+      ],
+    });
+
+    expect(table.add()).toBe(true);
+
+    const values = [...container.querySelectorAll<HTMLInputElement>('.tdb-row-new input')].map(
+      (input) => (input.type === 'checkbox' ? input.checked : input.value),
+    );
+    expect(values).toEqual(['', '', '', '', false, false]);
+
+    await table.saveNew();
+
+    expect(onAdd).toHaveBeenCalledWith({
+      name: '',
+      age: null,
+      salary: null,
+      start: null,
+      active: null,
+      flag: null,
+      team: null,
+    });
+  });
+});
+
 describe('chained selects in the new row', () => {
   type Place = { id: number; country: string | null; city: string | null };
 
