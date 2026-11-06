@@ -8,11 +8,11 @@ import type { TextEditor } from './text';
 /**
  * Which editors a column can have, from its value type:
  *
- * | Column value  | Built-in editors   |
- * | ------------- | ------------------ |
- * | `string`      | text, date, select |
- * | `number`      | number, select     |
- * | `boolean`     | checkbox, select   |
+ * | Column value  | Built-in editors                           |
+ * | ------------- | ------------------------------------------ |
+ * | `string`      | text, date, select, checkbox with `values` |
+ * | `number`      | number, select, checkbox with `values`     |
+ * | `boolean`     | checkbox, select                           |
  *
  * `custom` works on anything. Nullable columns get the same editors as
  * non-nullable ones.
@@ -22,9 +22,9 @@ export type EditorFor<Value, Row> = EditorForValue<NonNullable<Value>, Row> | Cu
 // Wrapped in [] so a union like 'a' | 'b' isn't distributed.
 /** The built-in editors for a non-null value type. */
 type EditorForValue<Value, Row> = [Value] extends [string]
-  ? TextEditor | DateEditor | SelectEditor<Value, Row>
+  ? TextEditor | DateEditor | SelectEditor<Value, Row> | CheckboxEditor<Value>
   : [Value] extends [number]
-    ? NumberEditor | SelectEditor<Value, Row>
+    ? NumberEditor | SelectEditor<Value, Row> | CheckboxEditor<Value>
     : [Value] extends [boolean]
       ? CheckboxEditor | SelectEditor<Value, Row>
       : never;
@@ -35,5 +35,6 @@ export type AnyEditor =
   | NumberEditor
   | DateEditor
   | CheckboxEditor
+  | CheckboxEditor<unknown>
   | SelectEditor<unknown, Record<string, unknown>>
   | CustomEditor<unknown>;

@@ -8,21 +8,111 @@ export type Row = {
   cityId: number | null;
   cityName: string | null;
   age: number;
+  /** 'O' (oui) or 'N' (non), like an old database. `null` when nobody said. */
+  active: 'O' | 'N' | null;
 };
 
 export const rows: Row[] = [
-  { id: 1, name: 'Amina Benali', country: 'MA', cityId: 8, cityName: 'Rabat', age: 29 },
-  { id: 2, name: 'Youness Idrissi', country: 'MA', cityId: 2, cityName: 'Casablanca', age: 34 },
-  { id: 3, name: 'Salma Ait Ouahmane', country: 'MA', cityId: 1, cityName: 'Agadir', age: 25 },
-  { id: 4, name: 'Karim El Fassi', country: 'MA', cityId: 3, cityName: 'Fès', age: 41 },
-  { id: 5, name: 'Nadia Amrani', country: 'MA', cityId: 9, cityName: 'Tanger', age: 37 },
-  { id: 6, name: 'Hamza Ouchen', country: 'MA', cityId: 5, cityName: 'Marrakech', age: 22 },
-  { id: 7, name: 'Leila Berrada', country: 'MA', cityId: 6, cityName: 'Meknès', age: 31 },
-  { id: 8, name: 'Omar Tazi', country: 'MA', cityId: 7, cityName: 'Oujda', age: 45 },
-  { id: 9, name: 'Ilham Zerouali', country: 'MA', cityId: 10, cityName: 'Tétouan', age: 28 },
-  { id: 10, name: 'Mehdi Alaoui', country: 'MA', cityId: 4, cityName: 'Kénitra', age: 33 },
-  { id: 11, name: 'Sara Lahlou', country: 'FR', cityId: 13, cityName: 'Paris', age: 26 },
-  { id: 12, name: 'Anass Bennani', country: 'ES', cityId: 16, cityName: 'Madrid', age: 39 },
+  {
+    id: 1,
+    name: 'Amina Benali',
+    country: 'MA',
+    cityId: 8,
+    cityName: 'Rabat',
+    age: 29,
+    active: 'O',
+  },
+  {
+    id: 2,
+    name: 'Youness Idrissi',
+    country: 'MA',
+    cityId: 2,
+    cityName: 'Casablanca',
+    age: 34,
+    active: 'N',
+  },
+  {
+    id: 3,
+    name: 'Salma Ait Ouahmane',
+    country: 'MA',
+    cityId: 1,
+    cityName: 'Agadir',
+    age: 25,
+    active: 'O',
+  },
+  {
+    id: 4,
+    name: 'Karim El Fassi',
+    country: 'MA',
+    cityId: 3,
+    cityName: 'Fès',
+    age: 41,
+    active: null,
+  },
+  {
+    id: 5,
+    name: 'Nadia Amrani',
+    country: 'MA',
+    cityId: 9,
+    cityName: 'Tanger',
+    age: 37,
+    active: 'O',
+  },
+  {
+    id: 6,
+    name: 'Hamza Ouchen',
+    country: 'MA',
+    cityId: 5,
+    cityName: 'Marrakech',
+    age: 22,
+    active: 'N',
+  },
+  {
+    id: 7,
+    name: 'Leila Berrada',
+    country: 'MA',
+    cityId: 6,
+    cityName: 'Meknès',
+    age: 31,
+    active: 'O',
+  },
+  { id: 8, name: 'Omar Tazi', country: 'MA', cityId: 7, cityName: 'Oujda', age: 45, active: null },
+  {
+    id: 9,
+    name: 'Ilham Zerouali',
+    country: 'MA',
+    cityId: 10,
+    cityName: 'Tétouan',
+    age: 28,
+    active: 'O',
+  },
+  {
+    id: 10,
+    name: 'Mehdi Alaoui',
+    country: 'MA',
+    cityId: 4,
+    cityName: 'Kénitra',
+    age: 33,
+    active: 'N',
+  },
+  {
+    id: 11,
+    name: 'Sara Lahlou',
+    country: 'FR',
+    cityId: 13,
+    cityName: 'Paris',
+    age: 26,
+    active: 'O',
+  },
+  {
+    id: 12,
+    name: 'Anass Bennani',
+    country: 'ES',
+    cityId: 16,
+    cityName: 'Madrid',
+    age: 39,
+    active: null,
+  },
 ];
 
 // Atlantis is there to show a failed load.
@@ -120,6 +210,14 @@ export const columns: Column<Row>[] = [
     editor: { type: 'number', min: 18, max: 99 },
     render: (value) => `${value} years`,
   },
+  {
+    title: 'Active',
+    prop: 'active',
+    className: 'dt-center',
+    editor: { type: 'checkbox', values: { checked: 'O', unchecked: 'N' } },
+    // An untouched null stays null, so it shows as "—".
+    render: (value) => (value === 'O' ? 'Yes' : value === 'N' ? 'No' : '—'),
+  },
 ];
 
 // Name a row "error" to see a failed save.
@@ -151,6 +249,7 @@ export async function fakeAdd(row: Partial<Row>): Promise<Row> {
     cityId: row.cityId ?? null,
     cityName: row.cityName ?? null,
     age: row.age ?? 0,
+    active: row.active ?? null,
   };
 }
 
