@@ -10,6 +10,7 @@ export const en: Texts = {
   confirm: 'Yes, delete',
   keep: 'No',
   deleteFailed: 'Could not delete.',
+  total: 'Total',
   loading: 'Loading…',
   saveFailed: 'Could not save.',
   loadFailed: 'Could not load the options.',

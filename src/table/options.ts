@@ -1,5 +1,6 @@
 import type { Config } from 'datatables.net';
 import type { Column } from '../columns/column';
+import type { TotalRows } from '../columns/total';
 import type { Texts } from '../texts/texts';
 
 /** The second argument of `onSave`. */
@@ -97,6 +98,14 @@ export type TadabutOptions<Row extends object> = {
    * texts: { ...fr, save: 'Valider' }
    */
   readonly texts?: Partial<Texts>;
+  /**
+   * Which rows the totals count: `'searched'` (default) is every row that
+   * matches the search, on every page. `'all'` ignores the search. `'page'`
+   * is only the rows shown.
+   *
+   * Does nothing unless a column has `total`.
+   */
+  readonly totalRows?: TotalRows;
   /**
    * Called with the edited row once it passes validation. May be async.
    *

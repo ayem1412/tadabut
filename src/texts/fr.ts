@@ -11,6 +11,7 @@ export const fr: Texts = {
   confirm: 'Oui, supprimer',
   keep: 'Non',
   deleteFailed: 'Impossible de supprimer.',
+  total: 'Total',
   loading: 'Chargement…',
   saveFailed: "Impossible d'enregistrer.",
   addFailed: "Impossible d'ajouter.",

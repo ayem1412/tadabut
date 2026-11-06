@@ -6,6 +6,7 @@
  */
 
 export type { Column } from './columns/column';
+export type { TotalFunction, TotalRows } from './columns/total';
 export type { CheckboxEditor } from './editors/checkbox';
 export type { CustomEditor } from './editors/custom';
 export type { DateEditor } from './editors/date';
@@ -28,8 +29,8 @@ export type {
   TableClassNames,
   TadabutOptions,
 } from './table/options';
-export { Tadabut } from './table/tadabut';
 export { en } from './texts/en';
 export { fr } from './texts/fr';
 export type { Texts } from './texts/texts';
 export type { ValidationOptions } from './validation/rules';
+export { Tadabut } from './table/tadabut';
