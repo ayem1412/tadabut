@@ -36,6 +36,10 @@ export type Texts = {
   readonly required: string;
   /** A text that doesn't match `pattern`. */
   readonly patternMismatch: string;
+  /** The label of each row’s checkbox, for screen readers. */
+  readonly selectRow: string;
+  /** The label of the header checkbox. */
+  readonly selectAll: string;
   /** A text shorter than `minLength`. */
   readonly tooShort: (min: number) => string;
   /** A text longer than `maxLength`. */

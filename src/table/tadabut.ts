@@ -1,7 +1,6 @@
 import DataTable, { type Api, type ApiRowMethods } from 'datatables.net';
 import type { Column } from '../columns/column';
 import { toDataTables } from '../columns/to-datatables';
-import type { TotalRows } from '../columns/total';
 import { type EditableCell, EditSession } from '../editing/session';
 import { addClasses } from '../editors/classes';
 import { en } from '../texts/en';
@@ -17,6 +16,7 @@ import {
 import { NewRow } from './new-row';
 import type { EditingOptions, TableClassNames, TadabutOptions } from './options';
 import { footerFor, rowsFor, totalText } from './totals';
+import type { RowScope } from './scope';
 
 /**
  * A DataTables table with row editing.
@@ -69,7 +69,7 @@ export class Tadabut<Row extends object> {
   /** Whether any column has a `total`, so the table has a footer. */
   private readonly hasTotals: boolean;
   /** Which rows the totals count, with its default filled in. */
-  private readonly totalRows: TotalRows;
+  private readonly totalRows: RowScope;
 
   /**
    * Builds the table inside `container`, which should be empty.

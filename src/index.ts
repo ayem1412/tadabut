@@ -6,7 +6,7 @@
  */
 
 export type { Column } from './columns/column';
-export type { TotalFunction, TotalRows } from './columns/total';
+export type { TotalFunction } from './columns/total';
 export type { CheckboxEditor } from './editors/checkbox';
 export type { CustomEditor } from './editors/custom';
 export type { DateEditor } from './editors/date';

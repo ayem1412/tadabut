@@ -1,7 +1,7 @@
 import type { Config } from 'datatables.net';
 import type { Column } from '../columns/column';
-import type { TotalRows } from '../columns/total';
 import type { Texts } from '../texts/texts';
+import type { RowScope } from './scope';
 
 /** The second argument of `onSave`. */
 export type SaveContext<Row extends object> = {
@@ -39,6 +39,7 @@ export type EditingOptions = {
  *   delete: 'btn-outline-danger',
  *   confirm: 'btn-danger',
  *   keep: 'btn-outline-secondary',
+ *   select: 'form-check-input'
  * }
  */
 export type TableClassNames = {
@@ -58,6 +59,8 @@ export type TableClassNames = {
   readonly confirm?: string;
   /** The button that keeps the row instead. */
   readonly keep?: string;
+  /** The selection checkboxes, header included. */
+  readonly select?: string;
 };
 
 /**
@@ -73,6 +76,12 @@ export type DataTablesSettings = Omit<
   Config,
   'data' | 'columns' | 'columnDefs' | 'ajax' | 'serverSide'
 >;
+
+/** Options for selection. */
+export type SelectionOptions = {
+  /** Which rows the header checkbox selects. Defaults to 'searched': every row that matches the search, on every page. */
+  readonly checkAll?: RowScope;
+};
 
 /** Options for `new Tadabut()`. */
 export type TadabutOptions<Row extends object> = {
@@ -105,7 +114,10 @@ export type TadabutOptions<Row extends object> = {
    *
    * Does nothing unless a column has `total`.
    */
-  readonly totalRows?: TotalRows;
+  readonly totalRows?: RowScope;
+  readonly selection?: boolean | SelectionOptions;
+  /** Called with the selected rows each time the selection changes, by a click or from code. */
+  readonly onSelect?: (rows: readonly Row[]) => void;
   /**
    * Called with the edited row once it passes validation. May be async.
    *

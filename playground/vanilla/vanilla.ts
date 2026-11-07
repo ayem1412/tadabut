@@ -3,13 +3,7 @@ import 'datatables.net-dt/css';
 import '../shared/tadabut.css';
 import '../shared/plain.css';
 
-import {
-  type EditingOptions,
-  fr,
-  Tadabut,
-  type TadabutOptions,
-  type TotalRows,
-} from '../../src/index';
+import { type EditingOptions, fr, Tadabut, type TadabutOptions } from '../../src/index';
 import {
   columns,
   fakeAdd,
@@ -20,6 +14,7 @@ import {
   rows,
   settings,
 } from '../shared/data';
+import type { RowScope } from '../../src/table/scope';
 
 const container = document.querySelector<HTMLElement>('#container');
 const createBtn = document.querySelector<HTMLButtonElement>('#create');
@@ -77,7 +72,7 @@ const createTable = (): Tadabut<Row> => {
     onAdd: fakeAdd,
     onDelete: fakeDelete,
     confirmDelete: confirmDelete(),
-    totalRows: totalRowsSelect.value as TotalRows,
+    totalRows: totalRowsSelect.value as RowScope,
     editing,
     dataTables: frenchCheckbox.checked ? { ...settings, language: french } : settings,
     texts: frenchCheckbox.checked ? fr : undefined,
