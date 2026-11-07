@@ -1,6 +1,7 @@
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 
 import { type Column, Tadabut, type TadabutOptions } from '../../src/index';
+import { mountPoint, search, type } from '../helpers';
 
 type Row = { id: number; name: string; salary: number | null };
 
@@ -17,8 +18,7 @@ const salary: Column<Row> = {
 };
 
 function setup(column: Column<Row> = salary, options: Partial<TadabutOptions<Row>> = {}) {
-  const container = document.createElement('div');
-  document.body.appendChild(container);
+  const container = mountPoint();
   const table = new Tadabut(container, {
     data: rows,
     rowId: 'id',
@@ -34,25 +34,21 @@ function setup(column: Column<Row> = salary, options: Partial<TadabutOptions<Row
     );
   const names = () =>
     [...container.querySelectorAll('tbody tr')].map((tr) => tr.querySelector('td')?.textContent);
-  const search = (text: string) => {
-    const input = container.querySelector<HTMLInputElement>('.dt-search input') as HTMLInputElement;
-    input.value = text;
-    input.dispatchEvent(new Event('input', { bubbles: true }));
-  };
-  const typeSalary = (text: string) => {
-    const input = container.querySelector<HTMLInputElement>(
-      'tbody .tdb-input-money',
-    ) as HTMLInputElement;
-    input.value = text;
-    input.dispatchEvent(new Event('input', { bubbles: true }));
-  };
+  const typeSalary = (text: string) =>
+    type(
+      container.querySelector<HTMLInputElement>('tbody .tdb-input-money') as HTMLInputElement,
+      text,
+    );
 
-  return { container, table, cells, names, search, typeSalary };
+  return {
+    container,
+    table,
+    cells,
+    names,
+    search: (text: string) => search(container, text),
+    typeSalary,
+  };
 }
-
-afterEach(() => {
-  document.body.innerHTML = '';
-});
 
 describe('money cells', () => {
   it('show the money format', () => {

@@ -1,0 +1,22 @@
+/* The Bootstrap page, on top of shared/tadabut.css. */
+
+.tdb-error,
+.tdb-row-error-message {
+  color: var(--bs-form-invalid-color);
+  font-size: 0.875em;
+}
+
+/* Bootstrap's own cell rule is stronger, so this one names the table too. */
+.table > tbody > tr.tdb-row-editing > td {
+  vertical-align: top;
+}
+
+/* Cells with plain text sit at the inputs' text height. */
+.table > tbody > tr.tdb-row-editing > td:not(:has(.tdb-input, .tdb-button)) {
+  padding-top: calc(0.5rem + 4px);
+}
+
+/* A 1em box next to taller inputs: move it down to their middle. */
+.table > tbody > tr.tdb-row-editing .tdb-input-checkbox {
+  margin-top: 0.5rem;
+}

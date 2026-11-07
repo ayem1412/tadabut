@@ -15,7 +15,21 @@ pnpm install
 pnpm dev
 ```
 
-`pnpm dev` opens the playground. It has two pages, one plain and one with React, and both use the code in `src/` directly. Use them to try your change.
+`pnpm dev` opens the playground. It has three pages, plain, Bootstrap and React, and all of them use the code in `src/` directly. Use them to try your change.
+
+```
+playground/
+  index.html      links to the three pages
+  shared/         used by every page
+    data.ts       the rows, and the columns (makeColumns)
+    tadabut.css   the CSS every page needs
+    plain.css     the look of the vanilla and React pages
+  vanilla/        index.html, vanilla.ts
+  bootstrap/      index.html, bootstrap.ts, bootstrap.css
+  react/          index.html, react.tsx
+```
+
+All three pages share the same rows and columns, from `makeColumns()` in `shared/data.ts`, so a new column is added once. The Bootstrap page passes its input classes to it.
 
 | Command          | What it does                           |
 | ---------------- | -------------------------------------- |
@@ -47,7 +61,7 @@ src/
   editing/      editing a row: turning cells into editors and back
   react/        the React adapter
 tests/          same folders as src/
-playground/     pages to try things by hand
+playground/     pages to try things by hand, one folder each
 typedoc.json    settings for the API docs
 ```
 
@@ -100,7 +114,8 @@ Every change needs tests. They run with [Vitest](https://vitest.dev) in jsdom, w
 
 - Tests go in `tests/`, in the same folder as the code. `src/editors/date.ts` is tested in `tests/editors/date.test.ts`.
 - Test the way a user would: type in the input, click the button, then check the result.
-- Clean up after each test with `document.body.innerHTML = ''`.
+- The page is emptied after every test by `tests/setup.ts`, so you don't need your own cleanup.
+- `tests/helpers.ts` has the small pieces most tests need: `mountPoint()` for a container, `type()`, `search()`, `goToPage()`, `settle()`, and `waiting()` for a callback that waits until the test says so. Use them instead of writing your own.
 - For type tests, put `// @ts-expect-error` above a line that should not compile. If the types get weaker, that line compiles, and `pnpm check` fails.
 - React tests render inside `StrictMode`, and wrap renders in `act(...)`.
 

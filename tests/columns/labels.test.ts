@@ -1,6 +1,7 @@
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 
 import { type Column, Tadabut } from '../../src/index';
+import { mountPoint, search } from '../helpers';
 
 type Row = { id: number; countryId: number | null; salary: number; note: string };
 
@@ -23,29 +24,18 @@ const country: Column<Row> = {
 };
 
 function setup(columns: Column<Row>[]) {
-  const container = document.createElement('div');
-  document.body.appendChild(container);
+  const container = mountPoint();
   const table = new Tadabut(container, { data: rows, rowId: 'id', columns });
 
   const column = (index: number) =>
     [...container.querySelectorAll(`tbody tr td:nth-child(${index})`)].map((td) => td.textContent);
 
-  const search = (text: string) => {
-    const input = container.querySelector('.dt-search input') as HTMLInputElement;
-    input.value = text;
-    input.dispatchEvent(new Event('input'));
-  };
-
-  return { table, container, column, search };
+  return { table, container, column, search: (text: string) => search(container, text) };
 }
 
 const flush = () => new Promise((resolve) => setTimeout(resolve, 0));
 
 describe('labels in cells', () => {
-  afterEach(() => {
-    document.body.innerHTML = '';
-  });
-
   it('shows the label of a fixed select list, and empty for null', () => {
     const { column } = setup([{ title: 'ID', prop: 'id' }, country]);
 
@@ -142,10 +132,6 @@ describe('labels in cells', () => {
 });
 
 describe('labelProp in cells', () => {
-  afterEach(() => {
-    document.body.innerHTML = '';
-  });
-
   type Place = { id: number; cityId: number | null; cityName: string | null };
 
   const cities = [
@@ -155,8 +141,7 @@ describe('labelProp in cells', () => {
 
   function setupPlace(options: 'fixed' | 'loaded') {
     const onSave = vi.fn((_row: Place) => {});
-    const container = document.createElement('div');
-    document.body.appendChild(container);
+    const container = mountPoint();
     const table = new Tadabut<Place>(container, {
       // Different from the list's 'Rabat', to tell which one is shown.
       data: [{ id: 1, cityId: 1, cityName: 'Rabat (from the row)' }],

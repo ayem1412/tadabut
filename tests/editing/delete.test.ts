@@ -1,6 +1,7 @@
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 
 import { type Column, fr, Tadabut, type TadabutOptions } from '../../src/index';
+import { mountPoint, settle, waiting } from '../helpers';
 
 type Row = { id: number; name: string };
 
@@ -23,8 +24,7 @@ function rows(): Row[] {
 }
 
 function setup(options: Partial<TadabutOptions<Row>> = {}) {
-  const container = document.createElement('div');
-  document.body.appendChild(container);
+  const container = mountPoint();
   const table = new Tadabut(container, {
     data: rows(),
     rowId: 'id',
@@ -49,28 +49,6 @@ function setup(options: Partial<TadabutOptions<Row>> = {}) {
 
   return { container, table, dataRows, firstRow, ids, actions, click, rowError };
 }
-
-/** An `onDelete` that waits until the test settles it. */
-function waitingDelete() {
-  let resolve!: () => void;
-  let reject!: (error: unknown) => void;
-  const onDelete = vi.fn(
-    () =>
-      new Promise<void>((res, rej) => {
-        resolve = res;
-        reject = rej;
-      }),
-  );
-
-  return { onDelete, resolve: () => resolve(), reject: (e: unknown) => reject(e) };
-}
-
-/** Lets the promises started by a click finish. */
-const settle = () => new Promise((resolve) => setTimeout(resolve));
-
-afterEach(() => {
-  document.body.innerHTML = '';
-});
 
 describe('the Delete button', () => {
   it('only shows with onDelete', () => {
@@ -253,7 +231,7 @@ describe('delete()', () => {
   });
 
   it('locks the row while onDelete runs', async () => {
-    const { onDelete, resolve } = waitingDelete();
+    const { fn: onDelete, resolve } = waiting<void>();
     const { table, firstRow } = setup({ onDelete });
 
     const done = table.delete(1);
@@ -266,7 +244,7 @@ describe('delete()', () => {
   });
 
   it('calls onDelete once when deleted twice', async () => {
-    const { onDelete, resolve } = waitingDelete();
+    const { fn: onDelete, resolve } = waiting<void>();
     const { table } = setup({ onDelete });
 
     const first = table.delete(1);
@@ -279,7 +257,7 @@ describe('delete()', () => {
   });
 
   it('cannot edit a row that is being deleted', async () => {
-    const { onDelete, resolve } = waitingDelete();
+    const { fn: onDelete, resolve } = waiting<void>();
     const { table } = setup({ onDelete });
 
     const done = table.delete(1);
@@ -361,7 +339,7 @@ describe('delete()', () => {
   });
 
   it('leaves new rows alone when setData runs while onDelete waits', async () => {
-    const { onDelete, resolve } = waitingDelete();
+    const { fn: onDelete, resolve } = waiting<void>();
     const { table, ids } = setup({ onDelete });
 
     const done = table.delete(1);
@@ -373,7 +351,7 @@ describe('delete()', () => {
   });
 
   it('does not throw when the table is destroyed while onDelete waits', async () => {
-    const { onDelete, reject } = waitingDelete();
+    const { fn: onDelete, reject } = waiting<void>();
     const { table } = setup({ onDelete });
 
     const done = table.delete(1);

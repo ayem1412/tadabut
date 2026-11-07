@@ -5,6 +5,6 @@ export default defineConfig({
   root: 'playground',
   plugins: [react()],
   server: {
-    open: '/react.html',
+    open: '/',
   },
 });
