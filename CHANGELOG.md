@@ -1,5 +1,19 @@
 # Changelog
 
+## [0.5.0](https://github.com/ayem1412/tadabut/compare/v0.4.0...v0.5.0) (2026-11-07)
+
+
+### Features
+
+* checkboxes with your own values, like 'O' and 'N' ([#43](https://github.com/ayem1412/tadabut/issues/43)) ([28486c6](https://github.com/ayem1412/tadabut/commit/28486c6197be6e730f5db85ac8d19bd6905e27c8))
+* money inputs, formatted while typing ([#45](https://github.com/ayem1412/tadabut/issues/45)) ([2e92489](https://github.com/ayem1412/tadabut/commit/2e9248993c3ed7284e8e11a625b772f2b383801d))
+* totals in the footer ([#46](https://github.com/ayem1412/tadabut/issues/46)) ([90e4d62](https://github.com/ayem1412/tadabut/commit/90e4d621331d0cb27b88c5a55e73deb89812beca))
+
+
+### Bug Fixes
+
+* show an empty cell for a missing field, not a DataTables alert ([#48](https://github.com/ayem1412/tadabut/issues/48)) ([dcce134](https://github.com/ayem1412/tadabut/commit/dcce134707819047e9d08086bdfc3406b3d412e3))
+
 ## [0.4.0](https://github.com/ayem1412/tadabut/compare/v0.3.0...v0.4.0) (2026-11-06)
 
 
