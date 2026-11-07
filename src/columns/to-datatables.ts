@@ -65,6 +65,9 @@ export function toDataTables<Row extends object>(
       }),
       title: column.title,
       data: column.prop,
+      // A row without this field (an added row, an optional field) is an empty
+      // cell. Without it, DataTables shows an alert() box.
+      defaultContent: '',
       render: (value: unknown, type: unknown, row: Row) => {
         switch (type) {
           case 'display':
