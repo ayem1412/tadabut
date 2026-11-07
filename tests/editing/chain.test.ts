@@ -1,7 +1,8 @@
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 
 import { EditSession } from '../../src/editing/session';
 import { type Column, type SelectOption, Tadabut } from '../../src/index';
+import { mountPoint } from '../helpers';
 
 type Row = { id: number; countryId: number | null; regionId: number | null; cityId: number | null };
 
@@ -71,10 +72,6 @@ function choose(select: HTMLSelectElement, index: number): void {
 }
 
 describe('chained selects', () => {
-  afterEach(() => {
-    document.body.innerHTML = '';
-  });
-
   it('loads every options function with the row when editing starts', async () => {
     const { session, regions, cities, region } = setup();
 
@@ -246,10 +243,6 @@ describe('chained selects', () => {
 });
 
 describe('chained selects in a table', () => {
-  afterEach(() => {
-    document.body.innerHTML = '';
-  });
-
   type Place = { id: number; country: string; city: string };
 
   const citiesOf: Record<string, string[]> = {
@@ -259,8 +252,7 @@ describe('chained selects in a table', () => {
 
   function setupTable() {
     const onSave = vi.fn((_row: Place) => {});
-    const container = document.createElement('div');
-    document.body.appendChild(container);
+    const container = mountPoint();
 
     const table = new Tadabut<Place>(container, {
       data: [{ id: 1, country: 'Morocco', city: 'Fès' }],
@@ -336,8 +328,7 @@ describe('chained selects in a table', () => {
 
   it('stops loading when the row is cancelled', async () => {
     let signal: AbortSignal | undefined;
-    const container = document.createElement('div');
-    document.body.appendChild(container);
+    const container = mountPoint();
     const table = new Tadabut<Place>(container, {
       data: [{ id: 1, country: 'Morocco', city: 'Fès' }],
       rowId: 'id',

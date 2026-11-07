@@ -1,6 +1,7 @@
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 
 import { type Column, type EditingOptions, type EditorInstance, Tadabut } from '../../src/index';
+import { mountPoint } from '../helpers';
 
 type Row = { id: number; name: string; age: number; city: string };
 
@@ -19,8 +20,7 @@ const columns: Column<Row>[] = [
 ];
 
 function setup(tableColumns: Column<Row>[] = columns, editing?: EditingOptions) {
-  const container = document.createElement('div');
-  document.body.appendChild(container);
+  const container = mountPoint();
   const table = new Tadabut(container, {
     data: rows,
     rowId: 'id',
@@ -71,10 +71,6 @@ function trackedEditor(): {
 }
 
 describe('editing a row', () => {
-  afterEach(() => {
-    document.body.innerHTML = '';
-  });
-
   it('puts editors with the row values in the editable cells', () => {
     const { container, table } = setup();
 
@@ -238,10 +234,6 @@ describe('editing a row', () => {
 });
 
 describe("editing in 'multiple' mode", () => {
-  afterEach(() => {
-    document.body.innerHTML = '';
-  });
-
   it('opens several rows at once', () => {
     const { container, table } = setup(columns, { mode: 'multiple' });
 

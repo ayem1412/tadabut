@@ -1,4 +1,4 @@
-import type { Column, DataTablesSettings } from '../src/index';
+import type { Column, DataTablesSettings } from '../../src/index';
 
 export type Row = {
   id: number;
@@ -197,58 +197,76 @@ export async function fetchCities(country: string, signal: AbortSignal): Promise
   return citiesByCountry[country] ?? [];
 }
 
-export const columns: Column<Row>[] = [
-  { title: 'ID', prop: 'id', width: '60px', className: 'dt-center' },
-  {
-    title: 'Name',
-    prop: 'name',
-    editor: { type: 'text', required: true, maxLength: 50 },
-  },
-  {
-    title: 'Country',
-    prop: 'country',
-    editor: {
-      type: 'select',
-      options: countries,
+/** Classes for the inputs, by kind. The Bootstrap page passes its own. */
+export type InputClasses = {
+  /** Text, number and money inputs. */
+  readonly input?: string;
+  /** Selects. */
+  readonly select?: string;
+  /** Checkboxes. */
+  readonly checkbox?: string;
+};
+
+/** The playground's columns, the same on every page. Only the input classes change. */
+export function makeColumns(classes: InputClasses = {}): Column<Row>[] {
+  return [
+    { title: 'ID', prop: 'id', width: '60px', className: 'dt-center' },
+    {
+      title: 'Name',
+      prop: 'name',
+      editor: { type: 'text', required: true, maxLength: 50, className: classes.input },
     },
-  },
-  {
-    title: 'City',
-    prop: 'cityId',
-    editor: {
-      type: 'select',
-      required: true,
-      dependsOn: 'country',
-      labelProp: 'cityName',
-      options: async (row, { signal }) => {
-        const cities = await fetchCities(row.country, signal);
-        return cities.map((city) => ({ value: city.id, label: city.name }));
+    {
+      title: 'Country',
+      prop: 'country',
+      editor: { type: 'select', options: countries, className: classes.select },
+    },
+    {
+      title: 'City',
+      prop: 'cityId',
+      editor: {
+        type: 'select',
+        required: true,
+        dependsOn: 'country',
+        labelProp: 'cityName',
+        className: classes.select,
+        options: async (row, { signal }) => {
+          const cities = await fetchCities(row.country, signal);
+          return cities.map((city) => ({ value: city.id, label: city.name }));
+        },
       },
     },
-  },
-  {
-    title: 'Age',
-    prop: 'age',
-    editor: { type: 'number', min: 18, max: 99 },
-    render: (value) => `${value} years`,
-    total: 'avg',
-  },
-  {
-    title: 'Salary',
-    prop: 'salary',
-    className: 'dt-right',
-    total: 'sum',
-    editor: { type: 'money', min: 3000 },
-  },
-  {
-    title: 'Active',
-    prop: 'active',
-    className: 'dt-center',
-    editor: { type: 'checkbox', values: { checked: 'O', unchecked: 'N' } },
-    // An untouched null stays null, so it shows as "—".
-    render: (value) => (value === 'O' ? 'Yes' : value === 'N' ? 'No' : '—'),
-  },
-];
+    {
+      title: 'Age',
+      prop: 'age',
+      editor: { type: 'number', min: 18, max: 99, className: classes.input },
+      render: (value) => `${value} years`,
+      total: 'avg',
+    },
+    {
+      title: 'Salary',
+      prop: 'salary',
+      className: 'dt-right',
+      total: 'sum',
+      editor: { type: 'money', min: 3000, className: classes.input },
+    },
+    {
+      title: 'Active',
+      prop: 'active',
+      className: 'dt-center',
+      editor: {
+        type: 'checkbox',
+        values: { checked: 'O', unchecked: 'N' },
+        className: classes.checkbox,
+      },
+      // An untouched null stays null, so it shows as "—".
+      render: (value) => (value === 'O' ? 'Yes' : value === 'N' ? 'No' : '—'),
+    },
+  ];
+}
+
+/** The columns with no input classes, for the plain pages. */
+export const columns: Column<Row>[] = makeColumns();
 
 // Name a row "error" to see a failed save.
 export async function fakeSave(row: Row): Promise<void> {

@@ -1,0 +1,26 @@
+/* What every playground page needs, whatever the look. */
+
+/* Keeps the inputs lined up when one shows an error under it. */
+tr.tdb-row-editing > td {
+  vertical-align: top;
+}
+
+.tdb-input-money {
+  text-align: right;
+}
+
+.tdb-row-saving {
+  opacity: 0.5;
+}
+
+.tdb-actions {
+  white-space: nowrap;
+}
+
+.tdb-button + .tdb-button {
+  margin-left: 0.25rem;
+}
+
+.tdb-delete-question {
+  margin-right: 0.5rem;
+}

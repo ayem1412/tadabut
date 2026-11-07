@@ -1,6 +1,7 @@
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 
 import { type Column, fr, Tadabut, type TadabutOptions } from '../../src/index';
+import { goToPage, mountPoint, search, settle, type, waiting } from '../helpers';
 
 type Row = { id: number; name: string; age: number | null; team: string; note: string };
 
@@ -24,8 +25,7 @@ function rows(): Row[] {
 }
 
 function setup(options: Partial<TadabutOptions<Row>> = {}) {
-  const container = document.createElement('div');
-  document.body.appendChild(container);
+  const container = mountPoint();
   const table = new Tadabut(container, {
     data: rows(),
     rowId: 'id',
@@ -38,10 +38,7 @@ function setup(options: Partial<TadabutOptions<Row>> = {}) {
   const input = (index: number) =>
     newTr()?.querySelectorAll<HTMLInputElement>('input')[index] as HTMLInputElement;
   /** Types into the new row's Name input. */
-  const typeName = (value: string) => {
-    input(0).value = value;
-    input(0).dispatchEvent(new Event('input', { bubbles: true }));
-  };
+  const typeName = (value: string) => type(input(0), value);
   const click = (action: string) =>
     container.querySelector<HTMLElement>(`tr.tdb-row-new [data-tdb-action="${action}"]`)?.click();
   const key = (name: string) =>
@@ -56,28 +53,6 @@ function setup(options: Partial<TadabutOptions<Row>> = {}) {
 
   return { container, table, newTr, input, typeName, click, key, info, shownNames, newError };
 }
-
-/** An `onAdd` that waits until the test settles it. */
-function waitingAdd() {
-  let resolve!: (row: Row) => void;
-  let reject!: (error: unknown) => void;
-  const onAdd = vi.fn(
-    () =>
-      new Promise<Row>((res, rej) => {
-        resolve = res;
-        reject = rej;
-      }),
-  );
-
-  return { onAdd, resolve: (row: Row) => resolve(row), reject: (e: unknown) => reject(e) };
-}
-
-/** Lets the promises started by a click or a key finish. */
-const settle = () => new Promise((resolve) => setTimeout(resolve));
-
-afterEach(() => {
-  document.body.innerHTML = '';
-});
 
 describe('add()', () => {
   it('opens a row in its own tbody, above the data', () => {
@@ -138,12 +113,8 @@ describe('add()', () => {
     const opened = newTr();
 
     container.querySelector<HTMLElement>('thead th:nth-child(3)')?.click();
-    container.querySelector<HTMLElement>('.dt-paging [data-dt-idx="1"]')?.click();
-    const search = container.querySelector<HTMLInputElement>(
-      '.dt-search input',
-    ) as HTMLInputElement;
-    search.value = 'N0';
-    search.dispatchEvent(new Event('input', { bubbles: true }));
+    goToPage(container, 1);
+    search(container, 'N0');
 
     expect(newTr()).toBe(opened);
     expect(container.querySelector('table > tbody')?.classList.contains('tdb-new-rows')).toBe(true);
@@ -195,7 +166,7 @@ describe('cancelNew()', () => {
   });
 
   it('does nothing while onAdd runs', async () => {
-    const { onAdd, resolve } = waitingAdd();
+    const { fn: onAdd, resolve } = waiting<Row>();
     const { table, typeName } = setup({ onAdd });
     table.add();
     typeName('Zed');
@@ -237,12 +208,8 @@ describe('saveNew()', () => {
 
   it('stays on the page when the search hides the new row', async () => {
     const { container, table, typeName, info } = setup();
-    const search = container.querySelector<HTMLInputElement>(
-      '.dt-search input',
-    ) as HTMLInputElement;
-    search.value = 'N';
-    search.dispatchEvent(new Event('input', { bubbles: true }));
-    container.querySelector<HTMLElement>('.dt-paging [data-dt-idx="1"]')?.click();
+    search(container, 'N');
+    goToPage(container, 1);
     table.add({ id: 99 });
     typeName('Zed');
 
@@ -273,7 +240,7 @@ describe('saveNew()', () => {
   });
 
   it('locks the row while onAdd runs', async () => {
-    const { onAdd, resolve } = waitingAdd();
+    const { fn: onAdd, resolve } = waiting<Row>();
     const { table, newTr, typeName } = setup({ onAdd });
     table.add();
     typeName('Zed');
@@ -374,7 +341,7 @@ describe('saveNew()', () => {
   });
 
   it('adds nothing when setData runs while onAdd waits', async () => {
-    const { onAdd, resolve } = waitingAdd();
+    const { fn: onAdd, resolve } = waiting<Row>();
     const { table, typeName, info } = setup({ onAdd });
     table.add();
     typeName('Zed');
@@ -389,7 +356,7 @@ describe('saveNew()', () => {
   });
 
   it('does not throw when the table is destroyed while onAdd waits', async () => {
-    const { onAdd, reject } = waitingAdd();
+    const { fn: onAdd, reject } = waiting<Row>();
     const { table, typeName } = setup({ onAdd });
     table.add();
     typeName('Zed');
@@ -450,8 +417,7 @@ describe('every editor in the new row', () => {
 
   it('opens empty, and gives null for what was left empty', async () => {
     const onAdd = vi.fn((row: Partial<All>) => ({ ...row, id: 1 }) as All);
-    const container = document.createElement('div');
-    document.body.appendChild(container);
+    const container = mountPoint();
     const table = new Tadabut<All>(container, {
       data: [],
       rowId: 'id',
@@ -503,8 +469,7 @@ describe('chained selects in the new row', () => {
     const loader = vi.fn((row: Place) =>
       row.country === 'MA' ? [{ value: 'RBA', label: 'Rabat' }] : [],
     );
-    const container = document.createElement('div');
-    document.body.appendChild(container);
+    const container = mountPoint();
     const table = new Tadabut<Place>(container, {
       data: [],
       rowId: 'id',

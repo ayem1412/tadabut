@@ -1,6 +1,7 @@
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 
 import { type Column, type SaveContext, Tadabut, type TadabutOptions } from '../../src/index';
+import { mountPoint, waiting } from '../helpers';
 
 type Row = { id: number; name: string; age: number };
 
@@ -18,8 +19,7 @@ function rows(): Row[] {
 }
 
 function setup(onSave?: TadabutOptions<Row>['onSave']) {
-  const container = document.createElement('div');
-  document.body.appendChild(container);
+  const container = mountPoint();
   const table = new Tadabut(container, {
     data: rows(),
     rowId: 'id',
@@ -37,25 +37,7 @@ function setup(onSave?: TadabutOptions<Row>['onSave']) {
   return { container, table, firstRow, cellTexts, nameInput, saveError };
 }
 
-function waitingSave() {
-  let resolve!: (row?: Row) => void;
-  let reject!: (error: unknown) => void;
-  const onSave = vi.fn(
-    () =>
-      new Promise<Row | undefined>((res, rej) => {
-        resolve = res;
-        reject = rej;
-      }),
-  );
-
-  return { onSave, resolve: (row?: Row) => resolve(row), reject: (e: unknown) => reject(e) };
-}
-
 describe('saving a row', () => {
-  afterEach(() => {
-    document.body.innerHTML = '';
-  });
-
   it('calls onSave with the edited row and the previous one', async () => {
     const onSave = vi.fn(async (_row: Row, _context: SaveContext<Row>) => {});
     const { table, cellTexts, nameInput } = setup(onSave);
@@ -155,7 +137,7 @@ describe('saving a row', () => {
   });
 
   it('locks the row while saving', async () => {
-    const { onSave, resolve } = waitingSave();
+    const { fn: onSave, resolve } = waiting<void>();
     const { table, firstRow } = setup(onSave);
     table.edit(1);
 
@@ -176,7 +158,7 @@ describe('saving a row', () => {
   });
 
   it('unlocks the row after a failed save, and cancel clears the error', async () => {
-    const { onSave, reject } = waitingSave();
+    const { fn: onSave, reject } = waiting<void>();
     const { table, firstRow, saveError } = setup(onSave);
     table.edit(1);
 
@@ -194,7 +176,7 @@ describe('saving a row', () => {
   });
 
   it('ignores a save that finishes after setData', async () => {
-    const { onSave, reject } = waitingSave();
+    const { fn: onSave, reject } = waiting<void>();
     const { table, saveError } = setup(onSave);
     table.edit(1);
 

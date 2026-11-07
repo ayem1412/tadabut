@@ -1,11 +1,13 @@
 import 'datatables.net-dt';
 import 'datatables.net-dt/css';
+import '../shared/tadabut.css';
+import '../shared/plain.css';
 
 import { StrictMode, useRef, useState } from 'react';
 import { createRoot } from 'react-dom/client';
 
-import { Tadabut, type TadabutHandle } from '../src/react/index';
-import { columns, fakeAdd, fakeDelete, fakeSave, type Row, rows, settings } from './data';
+import { Tadabut, type TadabutHandle } from '../../src/react/index';
+import { columns, fakeAdd, fakeDelete, fakeSave, type Row, rows, settings } from '../shared/data';
 
 function App() {
   const [data, setData] = useState(rows);
@@ -82,7 +84,7 @@ function App() {
 const root = document.querySelector('#root');
 
 if (!root) {
-  throw new Error('Playground: missing #root in react.html');
+  throw new Error('Playground: missing #root in react/index.html');
 }
 
 createRoot(root).render(

@@ -1,5 +1,7 @@
 import 'datatables.net-dt';
 import 'datatables.net-dt/css';
+import '../shared/tadabut.css';
+import '../shared/plain.css';
 
 import {
   type EditingOptions,
@@ -7,8 +9,17 @@ import {
   Tadabut,
   type TadabutOptions,
   type TotalRows,
-} from '../src/index';
-import { columns, fakeAdd, fakeDelete, fakeSave, french, type Row, rows, settings } from './data';
+} from '../../src/index';
+import {
+  columns,
+  fakeAdd,
+  fakeDelete,
+  fakeSave,
+  french,
+  type Row,
+  rows,
+  settings,
+} from '../shared/data';
 
 const container = document.querySelector<HTMLElement>('#container');
 const createBtn = document.querySelector<HTMLButtonElement>('#create');
@@ -35,7 +46,7 @@ if (
   !totalRowsSelect ||
   !status
 ) {
-  throw new Error('Playground: missing elements in vanilla.html');
+  throw new Error('Playground: missing elements in vanilla/index.html');
 }
 
 let table: Tadabut<Row> | null = null;
