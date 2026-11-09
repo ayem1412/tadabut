@@ -378,23 +378,24 @@ texts: { ...fr, save: 'Valider' }
 texts: { edit: 'Bearbeiten', save: 'Speichern', cancel: 'Abbrechen' }
 ```
 
-| Key                      | English                         |
-| ------------------------ | ------------------------------- |
-| `edit`, `save`, `cancel` | Edit, Save, Cancel              |
-| `delete`                 | Delete                          |
-| `deleteQuestion`         | Delete this row?                |
-| `confirm`, `keep`        | Yes, delete / No                |
-| `loading`                | Loading…                        |
-| `saveFailed`             | Could not save.                 |
-| `addFailed`              | Could not add.                  |
-| `deleteFailed`           | Could not delete.               |
-| `total`                  | Total                           |
-| `loadFailed`             | Could not load the options.     |
-| `required`               | This field is required.         |
-| `patternMismatch`        | Wrong format.                   |
-| `tooShort`, `tooLong`    | Must be at least 2 characters.  |
-| `tooSmall`, `tooLarge`   | Must be 18 or more.             |
-| `tooEarly`, `tooLate`    | Must be on or after 2020-01-01. |
+| Key                      | English                                                              |
+| ------------------------ | -------------------------------------------------------------------- |
+| `edit`, `save`, `cancel` | Edit, Save, Cancel                                                   |
+| `delete`                 | Delete                                                               |
+| `deleteQuestion`         | Delete this row?                                                     |
+| `confirm`, `keep`        | Yes, delete / No                                                     |
+| `loading`                | Loading…                                                             |
+| `saveFailed`             | Could not save.                                                      |
+| `addFailed`              | Could not add.                                                       |
+| `deleteFailed`           | Could not delete.                                                    |
+| `total`                  | Total                                                                |
+| `selectRow`, `selectAll` | Select row / Select all (the checkboxes' labels, for screen readers) |
+| `loadFailed`             | Could not load the options.                                          |
+| `required`               | This field is required.                                              |
+| `patternMismatch`        | Wrong format.                                                        |
+| `tooShort`, `tooLong`    | Must be at least 2 characters.                                       |
+| `tooSmall`, `tooLarge`   | Must be 18 or more.                                                  |
+| `tooEarly`, `tooLate`    | Must be on or after 2020-01-01.                                      |
 
 The messages with a number or a date are functions, so you can put the value where your language needs it:
 
@@ -440,6 +441,10 @@ Tadabut doesn't ship any CSS. Everything it creates gets these classes, so you c
 | `tdb-delete-question`   | the "Delete this row?" text                                 |
 | `tdb-button-confirm`    | the "Yes, delete" button                                    |
 | `tdb-button-keep`       | the "No" button                                             |
+| `tdb-select`            | the checkbox column, header too                             |
+| `tdb-select-row`        | a row's checkbox                                            |
+| `tdb-select-all`        | the "check all" checkbox                                    |
+| `tdb-row-selected`      | a selected row                                              |
 
 To use Bootstrap, Tailwind or anything else, add your own classes. They always go next to the `tdb-` ones, never instead of them. There are two places:
 
@@ -476,6 +481,7 @@ const table = new Tadabut(container, {
 | `delete`         | the Delete button only        |
 | `confirm`        | the "Yes, delete" button only |
 | `keep`           | the "No" button only          |
+| `select`         | the selection checkboxes      |
 
 All of them are optional. Tadabut doesn't know any CSS framework: it adds the classes you give it, and nothing else. If you use Tailwind: it only keeps classes it finds in your own files. Classes in your column config count, so they work.
 
@@ -887,6 +893,46 @@ confirmDelete: async (row) => {
 
 Leave it out for the question in the row. To only change its words, use `texts` (`deleteQuestion`, `confirm`, `keep`). To style it, use `classNames` (`delete`, `confirm`, `keep`).
 
+### Selecting rows
+
+Turn on `selection`, and the table gets a checkbox column at the start, with a "check all" box in the header:
+
+```ts
+const table = new Tadabut(container, {
+  data: employees,
+  rowId: 'id',
+  columns,
+  selection: true,
+  onSelect: (rows) => console.log(`${rows.length} selected`),
+});
+
+table.getSelected(); // the selected rows
+```
+
+- Ticks are kept by row id, so they stay when you change page, sort or search.
+- `onSelect` gets every selected row each time the selection changes, from a click or from code.
+- The header box is ticked when every row it takes is selected, and shows a dash when only some are.
+- A selected row gets the `tdb-row-selected` class. Tadabut doesn't color it: that's your CSS.
+- Rows that leave the table, after a delete or `setData`, are unselected.
+- The new row `add()` opens has no checkbox until it's saved.
+- `selection` needs a `rowId`, and Tadabut throws an error without one.
+
+**Which rows "check all" takes,** with `checkAll`:
+
+```ts
+selection: { checkAll: 'page' },
+```
+
+| `checkAll`             | Takes                                            |
+| ---------------------- | ------------------------------------------------ |
+| `'searched'` (default) | every row that matches the search, on every page |
+| `'all'`                | every row, whatever the search                   |
+| `'page'`               | only the rows on the page shown                  |
+
+Rows you ticked that "check all" doesn't take stay ticked: unticking it only unselects the rows it takes.
+
+Your `order` in `dataTables` still counts your own columns: `[[0, 'asc']]` is your first column, not the checkboxes.
+
 ### Editing options
 
 When at least one column has an `editor`, the table gets one more column at the end, with an Edit button in each row. While a row is being edited, its Edit button is replaced by Save and Cancel. The labels can be changed with `texts`.
@@ -924,6 +970,12 @@ await table.saveNew(); // validate it and call onAdd
 table.cancelNew(); // throw the new row away
 table.isAdding(); // true while the new row is open
 
+table.select([1, 2]); // tick rows 1 and 2
+table.deselect([2]); // untick row 2
+table.clearSelection(); // untick every row
+table.isSelected(1); // true while row 1 is ticked
+table.getSelected(); // the ticked rows
+
 table.setData(newEmployees); // replace all rows, keeps sorting and search
 table.destroy(); // remove everything Tadabut created
 ```
@@ -937,6 +989,8 @@ table.destroy(); // remove everything Tadabut created
 `delete` never asks first: only the Delete button does. It returns a promise of `true` once the row is removed, `false` if it wasn't: the row doesn't exist, it's being edited, it's already being deleted, or `onDelete` failed. Without `onDelete`, it just removes the row.
 
 `add` returns `true` if the new row opened, `false` if one is already open, no column has an editor, or a row is being edited in `'single'` mode. `saveNew` works like `save`, and throws if the saved row has no id. `cancelNew` does nothing while `onAdd` runs.
+
+`select` skips ids that aren't in the table. `onSelect` is only called when something really changed. `getSelected` gives the rows in the order they were added, including rows hidden by the search or on other pages. Without `selection`, these do nothing, and `getSelected` gives `[]`.
 
 `setData` and `destroy` cancel any row being edited, and the new row, first. Unsaved changes are lost.
 
@@ -1041,11 +1095,12 @@ export default function Employees() {
 ```
 
 - When `employees` changes, the table updates in place. It doesn't get rebuilt.
-- `onSave`, `onAdd`, `onDelete` and `confirmDelete` can be new functions on every render. The table always calls the latest ones.
+- `onSave`, `onAdd`, `onDelete`, `confirmDelete` and `onSelect` can be new functions on every render. The table always calls the latest ones.
 - In `onAdd` and `onDelete`, update your state too, like above. Otherwise the next time `data` changes, the new row disappears, or the deleted one comes back.
 - `totalRows` is a plain string, so writing it inline is fine. Changing it rebuilds the table, to count other rows.
+- `selection={{ checkAll: 'page' }}` inline is fine too: only turning it on or off, or changing `checkAll`, rebuilds the table. A rebuild clears the selection.
 - `editing` can be a new object on every render too. The table is only rebuilt when `mode` or `button` really change. Changing `columns`, `rowId` or `editing` closes any row being edited.
-- The ref has the same methods as the core: `edit`, `save`, `cancel`, `delete`, `isEditing`, `add`, `saveNew`, `cancelNew` and `isAdding`. Before the table is built, or after it's gone, they give `false` and `cancel` and `cancelNew` do nothing.
+- The ref has the same methods as the core: `edit`, `save`, `cancel`, `delete`, `isEditing`, `add`, `saveNew`, `cancelNew`, `isAdding`, `getSelected`, `isSelected`, `select`, `deselect` and `clearSelection`. Before the table is built, or after it's gone, the methods that return something give `false` (`[]` for `getSelected`), and the others do nothing.
 - There is no `setData` on the ref. To change the rows, change `data`.
 
 ## Roadmap
@@ -1071,11 +1126,11 @@ Done:
 - [x] Checkboxes with your own values, like `'O'` and `'N'` instead of `true` and `false`
 - [x] Money inputs, formatted while typing (`12 500.00`)
 - [x] Totals in the footer: sum, average, min, max, count or your own
+- [x] A checkbox column to select rows, with "check all"
 
 Next, roughly in this order:
 
 - [ ] Dates as `dd/mm/yyyy`, in the input and when sorting
-- [ ] A checkbox column to select rows, with "check all"
 - [ ] More events: when editing starts, after saving, row click and double click
 - [ ] Detail rows that open under a row
 - [ ] Time and read-only inputs

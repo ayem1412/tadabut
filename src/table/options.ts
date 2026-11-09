@@ -39,7 +39,7 @@ export type EditingOptions = {
  *   delete: 'btn-outline-danger',
  *   confirm: 'btn-danger',
  *   keep: 'btn-outline-secondary',
- *   select: 'form-check-input'
+ *   select: 'form-check-input',
  * }
  */
 export type TableClassNames = {
@@ -77,9 +77,12 @@ export type DataTablesSettings = Omit<
   'data' | 'columns' | 'columnDefs' | 'ajax' | 'serverSide'
 >;
 
-/** Options for selection. */
+/** Options for `selection`. */
 export type SelectionOptions = {
-  /** Which rows the header checkbox selects. Defaults to 'searched': every row that matches the search, on every page. */
+  /**
+   * Which rows the header checkbox selects. Defaults to `'searched'`: every
+   * row that matches the search, on every page.
+   */
   readonly checkAll?: RowScope;
 };
 
@@ -115,8 +118,18 @@ export type TadabutOptions<Row extends object> = {
    * Does nothing unless a column has `total`.
    */
   readonly totalRows?: RowScope;
+  /**
+   * Adds a first column with a checkbox on each row, and one in the header to
+   * check them all. `true` uses the defaults. Needs `rowId`.
+   *
+   * @example
+   * selection: { checkAll: 'page' }
+   */
   readonly selection?: boolean | SelectionOptions;
-  /** Called with the selected rows each time the selection changes, by a click or from code. */
+  /**
+   * Called with the selected rows each time the selection changes, by a
+   * click or from code.
+   */
   readonly onSelect?: (rows: readonly Row[]) => void;
   /**
    * Called with the edited row once it passes validation. May be async.

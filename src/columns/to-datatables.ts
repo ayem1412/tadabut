@@ -4,7 +4,7 @@ import { splitClasses } from '../editors/classes';
 import type { AnyEditor } from '../editors/editor';
 import { moneyFormat } from '../editors/money';
 import { formatMoney } from '../editors/money-format';
-import { type Action, buttonHtml } from '../table/elements';
+import { type Action, buttonHtml, selectAllHtml, selectRowHtml } from '../table/elements';
 import type { TableClassNames } from '../table/options';
 import type { Texts } from '../texts/texts';
 import type { Column } from './column';
@@ -33,6 +33,21 @@ function actionsColumn(
   };
 }
 
+/**
+ * The checkbox column. The checkboxes are the same HTML on every row; which
+ * ones are ticked is set after each draw.
+ */
+function selectColumn(classNames: TableClassNames, texts: Texts): ColumnOptions {
+  return {
+    title: selectAllHtml(texts, classNames),
+    data: null,
+    className: 'tdb-select',
+    orderable: false,
+    searchable: false,
+    defaultContent: selectRowHtml(texts, classNames),
+  };
+}
+
 /** `Column<Row>` is a union per field, which makes `render` uncallable here. */
 type LooseColumn<Row> = {
   /** The column's `render`, with its value type erased. */
@@ -42,14 +57,16 @@ type LooseColumn<Row> = {
 };
 
 /**
- * The actions column is always appended last, because the rest of Tadabut
- * finds cells by the user's column index. No `actions` means no column.
+ * The checkbox column goes first with `selection`, and the actions column
+ * last. Tadabut shifts your column indexes to match. No `actions` means no
+ * actions column.
  */
 export function toDataTables<Row extends object>(
   columns: readonly Column<Row>[],
   actions: readonly Action[],
   classNames: TableClassNames,
   texts: Texts,
+  selection: boolean,
 ): ColumnOptions[] {
   const converted = columns.map((column): ColumnOptions => {
     const label = labelOf(column as LooseColumn<Row>);
@@ -85,7 +102,10 @@ export function toDataTables<Row extends object>(
     };
   });
 
-  return actions.length > 0 ? [...converted, actionsColumn(actions, classNames, texts)] : converted;
+  const first = selection ? [selectColumn(classNames, texts)] : [];
+  const last = actions.length > 0 ? [actionsColumn(actions, classNames, texts)] : [];
+
+  return [...first, ...converted, ...last];
 }
 
 /** `render`, then a money format, then `labelProp`, then a fixed list's label, then the value. */

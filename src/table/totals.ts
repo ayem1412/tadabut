@@ -26,9 +26,9 @@ export function footerFor(cellCount: number): HTMLTableSectionElement {
   return tfoot;
 }
 
-/** The DataTables filter for each `totalRows`. */
-export function rowsFor(totalRows: RowScope): SelectorModifier {
-  switch (totalRows) {
+/** The DataTables filter for each `RowScope`. */
+export function rowsFor(scope: RowScope): SelectorModifier {
+  switch (scope) {
     case 'searched':
       return { search: 'applied' };
 

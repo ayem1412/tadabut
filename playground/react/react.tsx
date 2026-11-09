@@ -12,6 +12,7 @@ import { columns, fakeAdd, fakeDelete, fakeSave, type Row, rows, settings } from
 function App() {
   const [data, setData] = useState(rows);
   const [status, setStatus] = useState('');
+  const [selected, setSelected] = useState<string[]>([]);
   const tableRef = useRef<TadabutHandle<Row>>(null);
 
   return (
@@ -49,8 +50,16 @@ function App() {
         >
           Add a row
         </button>
+        <button type='button' onClick={() => tableRef.current?.select([1, 2])}>
+          Select rows 1 and 2
+        </button>
+        <button type='button' onClick={() => tableRef.current?.clearSelection()}>
+          Clear the selection
+        </button>
         <span className='status'>{status}</span>
       </div>
+
+      <p className='status'>Selected: {selected.join(', ') || 'none'}</p>
 
       <Tadabut
         ref={tableRef}
@@ -58,6 +67,8 @@ function App() {
         columns={columns}
         rowId='id'
         dataTables={settings}
+        selection
+        onSelect={(rows) => setSelected(rows.map((row) => row.name))}
         // Inline on purpose: this must not rebuild the table.
         onSave={async (row) => {
           await fakeSave(row);

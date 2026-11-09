@@ -24,6 +24,10 @@ export type Texts = {
   readonly deleteFailed: string;
   /** In the footer's first cell, when that column has no total of its own. */
   readonly total: string;
+  /** The label of each row's checkbox, for screen readers. */
+  readonly selectRow: string;
+  /** The label of the header checkbox. */
+  readonly selectAll: string;
   /** Shown in a select while its options load. */
   readonly loading: string;
   /** Under a row when `onSave` throws something that isn't an `Error`. */
@@ -36,10 +40,6 @@ export type Texts = {
   readonly required: string;
   /** A text that doesn't match `pattern`. */
   readonly patternMismatch: string;
-  /** The label of each row’s checkbox, for screen readers. */
-  readonly selectRow: string;
-  /** The label of the header checkbox. */
-  readonly selectAll: string;
   /** A text shorter than `minLength`. */
   readonly tooShort: (min: number) => string;
   /** A text longer than `maxLength`. */

@@ -26,9 +26,11 @@ export type {
   DataTablesSettings,
   EditingOptions,
   SaveContext,
+  SelectionOptions,
   TableClassNames,
   TadabutOptions,
 } from './table/options';
+export type { RowScope } from './table/scope';
 export { Tadabut } from './table/tadabut';
 export { en } from './texts/en';
 export { fr } from './texts/fr';
