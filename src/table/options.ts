@@ -22,6 +22,10 @@ export type EditingOptions = {
    * shows if `onDelete` is set.
    */
   readonly button?: boolean;
+  /** Double-clicking a row opens it for editing. Defaults to `false`.
+   * `onRowDoubleClick` still fires.
+   */
+  readonly doubleClick?: boolean;
 };
 
 /**
@@ -181,4 +185,12 @@ export type TadabutOptions<Row extends object> = {
    * confirmDelete: (row) => window.confirm(`Delete ${row.name}?`)
    */
   readonly confirmDelete?: false | ((row: Row) => boolean | Promise<boolean>);
+
+  // biome-ignore lint/suspicious/noConfusingVoidType: callbacks that return nothing are typed void.
+  readonly onEditStart?: (row: Row) => boolean | void;
+  readonly onSaved?: (row: Row, context: SaveContext<Row>) => void;
+  readonly onAdded?: (row: Row) => void;
+  readonly onDeleted?: (row: Row) => void;
+  readonly onRowClick?: (row: Row, event: MouseEvent) => void;
+  readonly onRowDoubleClick?: (row: Row, event: MouseEvent) => void;
 };

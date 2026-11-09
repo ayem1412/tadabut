@@ -80,6 +80,12 @@ export class Tadabut<Row extends object> {
   private readonly offset: number;
   /** The ticked rows. Only with `selection`. */
   private readonly selection?: Selection<Row>;
+  private readonly onEditStart: TadabutOptions<Row>['onEditStart'];
+  private readonly onSaved: TadabutOptions<Row>['onSaved'];
+  private readonly onAdded: TadabutOptions<Row>['onAdded'];
+  private readonly onDeleted: TadabutOptions<Row>['onDeleted'];
+  private readonly onRowClick: TadabutOptions<Row>['onRowClick'];
+  private readonly onRowDoubleClick: TadabutOptions<Row>['onRowDoubleClick'];
 
   /**
    * Builds the table inside `container`, which should be empty.
@@ -100,6 +106,7 @@ export class Tadabut<Row extends object> {
     this.editing = {
       mode: options.editing?.mode ?? 'single',
       button: options.editing?.button ?? true,
+      doubleClick: options.editing?.doubleClick ?? false,
     };
 
     const actions: Action[] = [];
@@ -116,6 +123,12 @@ export class Tadabut<Row extends object> {
     this.onSave = options.onSave;
     this.onAdd = options.onAdd;
     this.onDelete = options.onDelete;
+    this.onEditStart = options.onEditStart;
+    this.onSaved = options.onSaved;
+    this.onAdded = options.onAdded;
+    this.onDeleted = options.onDeleted;
+    this.onRowClick = options.onRowClick;
+    this.onRowDoubleClick = options.onRowDoubleClick;
     this.confirmDelete = options.confirmDelete;
     this.classNames = options.classNames ?? {};
     this.texts = { ...en, ...options.texts };
