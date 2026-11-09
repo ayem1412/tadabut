@@ -24,6 +24,7 @@ const classNames: TableClassNames = {
   delete: 'btn-outline-danger',
   confirm: 'btn-danger',
   keep: 'btn-outline-secondary',
+  select: 'form-check-input',
 };
 
 const columns = makeColumns({
@@ -40,6 +41,7 @@ const table = new Tadabut(container, {
   onAdd: fakeAdd,
   onDelete: fakeDelete,
   classNames,
+  selection: true,
 });
 
 addBtn.addEventListener('click', () => {

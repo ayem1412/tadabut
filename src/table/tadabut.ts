@@ -1,7 +1,6 @@
 import DataTable, { type Api, type ApiRowMethods } from 'datatables.net';
 import type { Column } from '../columns/column';
 import { toDataTables } from '../columns/to-datatables';
-import type { TotalRows } from '../columns/total';
 import { type EditableCell, EditSession } from '../editing/session';
 import { addClasses } from '../editors/classes';
 import { en } from '../texts/en';
@@ -15,7 +14,14 @@ import {
   saveCancelButtons,
 } from './elements';
 import { NewRow } from './new-row';
-import type { EditingOptions, TableClassNames, TadabutOptions } from './options';
+import type {
+  DataTablesSettings,
+  EditingOptions,
+  TableClassNames,
+  TadabutOptions,
+} from './options';
+import type { RowScope } from './scope';
+import { Selection } from './selection';
 import { footerFor, rowsFor, totalText } from './totals';
 
 /**
@@ -39,7 +45,7 @@ export class Tadabut<Row extends object> {
   /** The `<table>` Tadabut created. */
   private readonly tableEl: HTMLTableElement;
   /** The field that identifies a row. */
-  private readonly rowId: (keyof Row & string) | undefined;
+  private readonly rowId?: keyof Row & string;
   /** The user's columns, without the actions column. */
   private readonly columns: readonly Column<Row>[];
   /** `editing` with its defaults filled in. */
@@ -65,17 +71,22 @@ export class Tadabut<Row extends object> {
   /** Rows waiting for `onDelete`, by row id. */
   private readonly deleting: Set<string | number> = new Set();
   /** The row `add()` opened, if any. */
-  private newRow: NewRow<Row> | undefined;
+  private newRow?: NewRow<Row>;
   /** Whether any column has a `total`, so the table has a footer. */
   private readonly hasTotals: boolean;
   /** Which rows the totals count, with its default filled in. */
-  private readonly totalRows: TotalRows;
+  private readonly totalRows: RowScope;
+  /** How many columns Tadabut adds before yours: 1 with `selection`. */
+  private readonly offset: number;
+  /** The ticked rows. Only with `selection`. */
+  private readonly selection?: Selection<Row>;
 
   /**
    * Builds the table inside `container`, which should be empty.
    *
    * @throws If a column has an `editor` and there's no `rowId`.
    * @throws If `onDelete` is set and there's no `rowId`.
+   * @throws If `selection` is on and there's no `rowId`.
    * @throws If a hidden column (`visible: false`) has an `editor`.
    * @throws If a select's `labelProp` is its own column.
    * @throws If a money editor's `separator` and `point` are the same.
@@ -110,6 +121,7 @@ export class Tadabut<Row extends object> {
     this.texts = { ...en, ...options.texts };
     this.hasTotals = options.columns.some((column) => column.total !== undefined);
     this.totalRows = options.totalRows ?? 'searched';
+    this.offset = options.selection ? 1 : 0;
 
     this.tableEl = document.createElement('table');
     addClasses(this.tableEl, [], this.classNames.table);
@@ -117,15 +129,29 @@ export class Tadabut<Row extends object> {
 
     // Before DataTables starts, or it won't manage the footer.
     if (this.hasTotals) {
-      this.tableEl.append(footerFor(this.columns.length + (this.hasActions ? 1 : 0)));
+      this.tableEl.append(footerFor(this.offset + this.columns.length + (this.hasActions ? 1 : 0)));
     }
 
     this.dataTable = new DataTable(this.tableEl, {
-      // Spread first so `data` and `columns` can't be overridden from JS.
       ...options.dataTables,
+      ...(this.offset > 0 && { order: shiftOrder(options.dataTables?.order, this.offset) }),
       data: [...options.data],
-      columns: toDataTables(options.columns, actions, this.classNames, this.texts),
+      columns: toDataTables(options.columns, actions, this.classNames, this.texts, this.offset > 0),
     });
+
+    if (this.offset > 0) {
+      this.selection = new Selection({
+        dataTable: this.dataTable,
+        rowId: this.rowId as keyof Row & string,
+        scope:
+          typeof options.selection === 'object'
+            ? (options.selection.checkAll ?? 'searched')
+            : 'searched',
+        onSelect: options.onSelect,
+      });
+      this.dataTable.on('draw', () => this.selection?.sync());
+      this.selection.sync();
+    }
 
     // The first draw already happened inside `new DataTable`.
     if (this.hasTotals) {
@@ -156,6 +182,8 @@ export class Tadabut<Row extends object> {
       .clear()
       .rows.add([...rows])
       .draw(false);
+
+    this.selection?.prune();
   }
 
   /**
@@ -188,7 +216,7 @@ export class Tadabut<Row extends object> {
 
     this.columns.forEach((column, columnIndex) => {
       if (column.editor !== undefined) {
-        const cell = this.dataTable.cell(rowIndex, columnIndex).node();
+        const cell = this.dataTable.cell(rowIndex, this.dtIndex(columnIndex)).node();
         cells.push({ column, cell: cell as HTMLTableCellElement });
       }
     });
@@ -225,10 +253,11 @@ export class Tadabut<Row extends object> {
 
     const newRow = new NewRow(defaults, {
       columns: this.columns,
-      isVisible: (index) => this.dataTable.column(index).visible(),
+      isVisible: (index) => this.dataTable.column(this.dtIndex(index)).visible(),
       withButtons: this.hasActions,
       texts: this.texts,
       classNames: this.classNames,
+      leadingCells: this.offset,
     });
 
     this.tableEl.insertBefore(newRow.body, this.dataTable.table().body());
@@ -241,6 +270,40 @@ export class Tadabut<Row extends object> {
   /** Whether a new row is open. */
   public isAdding(): boolean {
     return this.newRow !== undefined;
+  }
+
+  /**
+   * The selected rows, in the order they were added. Rows the search hides,
+   * or on other pages, are in it too. Always `[]` without `selection`.
+   */
+  public getSelected(): Row[] {
+    return this.selection?.selected() ?? [];
+  }
+
+  /** Whether a row is selected. Always `false` without `selection`. */
+  public isSelected(id: string | number): boolean {
+    return this.selection?.has(id) ?? false;
+  }
+
+  /**
+   * Selects rows by id. Ids not in the table are skipped. Does nothing
+   * without `selection`.
+   *
+   * @example
+   * table.select([1, 2]);
+   */
+  public select(ids: readonly (string | number)[]): void {
+    this.selection?.set(ids, true);
+  }
+
+  /** Unselects rows by id. Does nothing without `selection`. */
+  public deselect(ids: readonly (string | number)[]): void {
+    this.selection?.set(ids, false);
+  }
+
+  /** Unselects every row. Does nothing without `selection`. */
+  public clearSelection(): void {
+    this.selection?.clear();
   }
 
   /**
@@ -484,6 +547,8 @@ export class Tadabut<Row extends object> {
 
     this.findRow(id)?.remove().draw(false);
 
+    this.selection?.prune();
+
     return true;
   }
 
@@ -493,6 +558,7 @@ export class Tadabut<Row extends object> {
     this.tableEl.removeEventListener('keydown', this.onKeyDown);
     this.destroySessions();
     this.deleting.clear();
+    this.selection?.destroy();
     this.dataTable.destroy();
     this.tableEl.remove();
   }
@@ -552,7 +618,9 @@ export class Tadabut<Row extends object> {
 
   /** The last cell of a row, the one with the buttons. */
   private actionsCell(row: ApiRowMethods<Row>): HTMLTableCellElement {
-    return this.dataTable.cell(row.index(), this.columns.length).node() as HTMLTableCellElement;
+    return this.dataTable
+      .cell(row.index(), this.dtIndex(this.columns.length))
+      .node() as HTMLTableCellElement;
   }
 
   /**
@@ -725,7 +793,7 @@ export class Tadabut<Row extends object> {
     const rows = this.dataTable.rows(rowsFor(this.totalRows)).data().toArray();
 
     this.columns.forEach((column, index) => {
-      const cell = this.dataTable.column(index).footer();
+      const cell = this.dataTable.column(this.dtIndex(index)).footer();
 
       if (column.total !== undefined) {
         cell.textContent = totalText(column, rows);
@@ -734,4 +802,32 @@ export class Tadabut<Row extends object> {
       }
     });
   };
+
+  /** Your column's index as DataTables counts it. */
+  private dtIndex(index: number): number {
+    return index + this.offset;
+  }
+}
+
+/**
+ * DataTables counts the checkbox column too, so `[[1, 'asc']]` from you means
+ * its column 2. Moves each `[index, direction]` along; the default sorts by
+ * your first column, as without selection. Other shapes of `order` are rare
+ * and left as they are.
+ */
+function shiftOrder(
+  order: DataTablesSettings['order'],
+  offset: number,
+): DataTablesSettings['order'] {
+  if (order === undefined) {
+    return [[offset, 'asc']];
+  }
+
+  if (!Array.isArray(order)) {
+    return order;
+  }
+
+  return order.map((entry) =>
+    Array.isArray(entry) && typeof entry[0] === 'number' ? [entry[0] + offset, entry[1]] : entry,
+  ) as DataTablesSettings['order'];
 }

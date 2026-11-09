@@ -19,24 +19,39 @@ import { Tadabut as Core, type TadabutOptions } from '../index';
 /** What the `ref` gets. No `setData`: change the `data` prop instead. */
 export type TadabutHandle<Row extends object> = Pick<
   Core<Row>,
-  'edit' | 'save' | 'cancel' | 'delete' | 'isEditing' | 'add' | 'isAdding' | 'saveNew' | 'cancelNew'
+  | 'edit'
+  | 'save'
+  | 'cancel'
+  | 'delete'
+  | 'isEditing'
+  | 'add'
+  | 'isAdding'
+  | 'saveNew'
+  | 'cancelNew'
+  | 'getSelected'
+  | 'isSelected'
+  | 'select'
+  | 'deselect'
+  | 'clearSelection'
 >;
 
 /** The core options, plus `ref`. */
 export type TadabutProps<Row extends object> = TadabutOptions<Row> & {
   /**
    * Gives you the same methods as the core table: `edit`, `save`, `cancel`,
-   * `delete`, `add`, `saveNew`, `cancelNew`, `isEditing` and `isAdding`.
+   * `delete`, `add`, `saveNew`, `cancelNew`, `isEditing`, `isAdding`,
+   * `getSelected`, `isSelected`, `select`, `deselect` and `clearSelection`.
    */
   readonly ref?: Ref<TadabutHandle<Row>>;
 };
 
 /**
  * New `data` updates the table in place. Changing `columns`, `rowId`,
- * `dataTables`, `texts` or `totalRows` rebuilds it (and closes open rows), so
- * keep the objects stable with a constant or `useMemo`. `editing`,
- * `classNames`, `onSave`, `onAdd`, `onDelete` and `confirmDelete` can be
- * inline: they're compared by value or read through a ref.
+ * `dataTables`, `texts`, `totalRows` or `selection` rebuilds it (and closes
+ * open rows, and clears the selection), so keep the objects stable with a
+ * constant or `useMemo`. `editing`, `selection`, `classNames`, `onSave`,
+ * `onAdd`, `onDelete`, `confirmDelete` and `onSelect` can be inline: they're
+ * compared by value or read through a ref.
  */
 export function Tadabut<Row extends object>({
   data,
@@ -47,6 +62,8 @@ export function Tadabut<Row extends object>({
   dataTables,
   texts,
   totalRows,
+  selection,
+  onSelect,
   onSave,
   onAdd,
   onDelete,
@@ -67,6 +84,8 @@ export function Tadabut<Row extends object>({
   const onDeleteRef = useRef(onDelete);
   /** The latest `confirmDelete`, so a new one doesn't rebuild the table. */
   const confirmDeleteRef = useRef(confirmDelete);
+  /** The latest `onSelect`, so a new one doesn't rebuild the table. */
+  const onSelectRef = useRef(onSelect);
 
   // Pulled out so inline objects don't trigger a rebuild every render.
   const mode = editing?.mode;
@@ -79,6 +98,9 @@ export function Tadabut<Row extends object>({
   const deleteClass = classNames?.delete;
   const confirmClass = classNames?.confirm;
   const keepClass = classNames?.keep;
+  const selectClass = classNames?.select;
+  const selectionOn = Boolean(selection);
+  const checkAll = typeof selection === 'object' ? selection.checkAll : undefined;
   // Only whether they're set changes the buttons, not which function it is.
   const hasDelete = onDelete !== undefined;
   const confirmWith =
@@ -112,6 +134,7 @@ export function Tadabut<Row extends object>({
       dataTables,
       texts,
       totalRows,
+      selection: selectionOn && { checkAll },
       classNames: {
         table: tableClass,
         button: buttonClass,
@@ -121,11 +144,13 @@ export function Tadabut<Row extends object>({
         delete: deleteClass,
         confirm: confirmClass,
         keep: keepClass,
+        select: selectClass,
       },
       onSave: (row, context) => onSaveRef.current?.(row, context),
       onAdd: (row) => onAddRef.current?.(row),
       onDelete: hasDelete ? (row) => onDeleteRef.current?.(row) : undefined,
       confirmDelete: confirm,
+      onSelect: (rows) => onSelectRef.current?.(rows),
     });
     tableRef.current = table;
 
@@ -149,6 +174,9 @@ export function Tadabut<Row extends object>({
     deleteClass,
     confirmClass,
     keepClass,
+    selectClass,
+    selectionOn,
+    checkAll,
     hasDelete,
     confirmWith,
   ]);
@@ -163,6 +191,7 @@ export function Tadabut<Row extends object>({
     onAddRef.current = onAdd;
     onDeleteRef.current = onDelete;
     confirmDeleteRef.current = confirmDelete;
+    onSelectRef.current = onSelect;
   });
 
   useImperativeHandle(
@@ -177,6 +206,11 @@ export function Tadabut<Row extends object>({
       saveNew: () => tableRef.current?.saveNew() ?? Promise.resolve(false),
       cancelNew: () => tableRef.current?.cancelNew(),
       isEditing: (id) => tableRef.current?.isEditing(id) ?? false,
+      getSelected: () => tableRef.current?.getSelected() ?? [],
+      isSelected: (id) => tableRef.current?.isSelected(id) ?? false,
+      select: (ids) => tableRef.current?.select(ids),
+      deselect: (ids) => tableRef.current?.deselect(ids),
+      clearSelection: () => tableRef.current?.clearSelection(),
     }),
     [],
   );

@@ -40,6 +40,15 @@
         </select>
       </label>
       <label>
+        Checkboxes
+        <select id="selection">
+          <option value="off">off</option>
+          <option value="searched">check all: the searched rows</option>
+          <option value="all">check all: every row</option>
+          <option value="page">check all: this page</option>
+        </select>
+      </label>
+      <label>
         Before deleting
         <select id="confirm">
           <option value="inline">ask in the row</option>
@@ -50,12 +59,15 @@
     </div>
 
     <p id="status" class="status"></p>
+    <p id="selected" class="status"></p>
 
     <p>
       Try: Edit, Save, Cancel, Enter and Escape in an input, a name of "error" to see a failed save,
       and sorting before editing. Change the country quickly to see the cities reload, and pick
       Atlantis to see a failed load. Delete Karim to see a failed delete, and add a row named
-      "error" to see a failed add.
+      "error" to see a failed add. Turn on the checkboxes, tick rows, change page and search, then
+      try
+      <code>table.select([1, 2])</code> and <code>table.getSelected()</code> in the console.
     </p>
 
     <div id="container"></div>

@@ -1,10 +1,11 @@
 import type { SelectorModifier } from 'datatables.net';
 
 import type { Column } from '../columns/column';
-import type { NumberTotal, TotalFunction, TotalRows } from '../columns/total';
+import type { NumberTotal, TotalFunction } from '../columns/total';
 import type { AnyEditor } from '../editors/editor';
 import { moneyFormat } from '../editors/money';
 import { formatMoney } from '../editors/money-format';
+import type { RowScope } from './scope';
 
 /**
  * An empty footer, one cell per column. It must be in the table before
@@ -25,9 +26,9 @@ export function footerFor(cellCount: number): HTMLTableSectionElement {
   return tfoot;
 }
 
-/** The DataTables filter for each `totalRows`. */
-export function rowsFor(totalRows: TotalRows): SelectorModifier {
-  switch (totalRows) {
+/** The DataTables filter for each `RowScope`. */
+export function rowsFor(scope: RowScope): SelectorModifier {
+  switch (scope) {
     case 'searched':
       return { search: 'applied' };
 

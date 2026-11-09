@@ -17,6 +17,8 @@ export const en: Texts = {
   loadFailed: 'Could not load the options.',
   required: 'This field is required.',
   patternMismatch: 'Wrong format.',
+  selectRow: 'Select row',
+  selectAll: 'Select all',
   tooShort: (min) => `Must be at least ${min} characters.`,
   tooLong: (max) => `Must be at most ${max} characters.`,
   tooSmall: (min) => `Must be ${min} or more.`,

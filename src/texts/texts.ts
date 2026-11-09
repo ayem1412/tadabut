@@ -24,6 +24,10 @@ export type Texts = {
   readonly deleteFailed: string;
   /** In the footer's first cell, when that column has no total of its own. */
   readonly total: string;
+  /** The label of each row's checkbox, for screen readers. */
+  readonly selectRow: string;
+  /** The label of the header checkbox. */
+  readonly selectAll: string;
   /** Shown in a select while its options load. */
   readonly loading: string;
   /** Under a row when `onSave` throws something that isn't an `Error`. */

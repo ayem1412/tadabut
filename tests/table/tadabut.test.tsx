@@ -4,6 +4,7 @@ import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vite
 
 import { type Column, fr } from '../../src/index';
 import { Tadabut, type TadabutHandle, type TadabutProps } from '../../src/react/index';
+import { mountPoint, type } from '../helpers';
 
 type Row = { id: number; name: string; city: string };
 
@@ -45,8 +46,7 @@ describe('React Tadabut', () => {
   });
 
   beforeEach(() => {
-    container = document.createElement('div');
-    document.body.appendChild(container);
+    container = mountPoint();
     root = createRoot(container);
   });
 
@@ -54,7 +54,6 @@ describe('React Tadabut', () => {
     await act(async () => {
       root.unmount();
     });
-    document.body.innerHTML = '';
   });
 
   it('leaves exactly one table under StrictMode', async () => {
@@ -119,8 +118,7 @@ function nameInput(): HTMLInputElement {
 
 describe('React Tadabut editing', () => {
   beforeEach(() => {
-    container = document.createElement('div');
-    document.body.appendChild(container);
+    container = mountPoint();
     root = createRoot(container);
   });
 
@@ -128,7 +126,6 @@ describe('React Tadabut editing', () => {
     await act(async () => {
       root.unmount();
     });
-    document.body.innerHTML = '';
   });
 
   it('gives the ref the editing methods', async () => {
@@ -342,8 +339,7 @@ function clickAction(action: string): void {
 
 describe('React Tadabut deleting', () => {
   beforeEach(() => {
-    container = document.createElement('div');
-    document.body.appendChild(container);
+    container = mountPoint();
     root = createRoot(container);
   });
 
@@ -351,7 +347,6 @@ describe('React Tadabut deleting', () => {
     await act(async () => {
       root.unmount();
     });
-    document.body.innerHTML = '';
   });
 
   it('shows the Delete button with onDelete, and deletes on Yes', async () => {
@@ -445,15 +440,12 @@ describe('React Tadabut deleting', () => {
 
 /** Types into the new row's Name input. */
 function typeNewName(value: string): void {
-  const input = container.querySelector('tr.tdb-row-new input') as HTMLInputElement;
-  input.value = value;
-  input.dispatchEvent(new Event('input', { bubbles: true }));
+  type(container.querySelector('tr.tdb-row-new input') as HTMLInputElement, value);
 }
 
 describe('React Tadabut adding', () => {
   beforeEach(() => {
-    container = document.createElement('div');
-    document.body.appendChild(container);
+    container = mountPoint();
     root = createRoot(container);
   });
 
@@ -461,7 +453,6 @@ describe('React Tadabut adding', () => {
     await act(async () => {
       root.unmount();
     });
-    document.body.innerHTML = '';
   });
 
   it('adds a row through the ref', async () => {
@@ -527,5 +518,120 @@ describe('React Tadabut adding', () => {
 
     expect(first).not.toHaveBeenCalled();
     expect(second).toHaveBeenCalled();
+  });
+});
+
+describe('React Tadabut selecting', () => {
+  beforeEach(() => {
+    container = mountPoint();
+    root = createRoot(container);
+  });
+
+  afterEach(async () => {
+    await act(async () => {
+      root.unmount();
+    });
+  });
+
+  /** The row checkboxes. */
+  const boxes = () => [...container.querySelectorAll<HTMLInputElement>('tbody .tdb-select-row')];
+
+  it('shows the checkboxes with selection, and calls onSelect', async () => {
+    const onSelect = vi.fn();
+    await renderWith({ selection: true, onSelect });
+
+    act(() => {
+      boxes()[0]?.click();
+    });
+
+    expect(boxes()).toHaveLength(3);
+    expect(onSelect).toHaveBeenLastCalledWith([rows[0]]);
+  });
+
+  it('keeps the table and the ticks when selection is a new object with the same values', async () => {
+    const ref = createRef<TadabutHandle<Row>>();
+    await renderWith({ ref, selection: { checkAll: 'all' } });
+    const table = container.querySelector('table');
+
+    act(() => {
+      ref.current?.select([2]);
+    });
+    await renderWith({ ref, selection: { checkAll: 'all' } });
+
+    expect(container.querySelector('table')).toBe(table);
+    expect(ref.current?.isSelected(2)).toBe(true);
+  });
+
+  it('rebuilds the table when checkAll changes', async () => {
+    await renderWith({ selection: { checkAll: 'all' } });
+    const table = container.querySelector('table');
+
+    await renderWith({ selection: { checkAll: 'page' } });
+
+    expect(container.querySelector('table')).not.toBe(table);
+  });
+
+  it('removes the checkboxes when selection is turned off', async () => {
+    await renderWith({ selection: true });
+    await renderWith({ selection: false });
+
+    expect(boxes()).toHaveLength(0);
+  });
+
+  it('calls the latest onSelect without a rebuild', async () => {
+    const first = vi.fn();
+    const second = vi.fn();
+    await renderWith({ selection: true, onSelect: first });
+    const table = container.querySelector('table');
+    await renderWith({ selection: true, onSelect: second });
+
+    act(() => {
+      boxes()[0]?.click();
+    });
+
+    expect(container.querySelector('table')).toBe(table);
+    expect(first).not.toHaveBeenCalled();
+    expect(second).toHaveBeenCalled();
+  });
+
+  it('selects through the ref', async () => {
+    const ref = createRef<TadabutHandle<Row>>();
+    await renderWith({ ref, selection: true });
+
+    act(() => {
+      ref.current?.select([1, 3]);
+    });
+
+    expect(ref.current?.getSelected().map((row) => row.id)).toEqual([1, 3]);
+
+    act(() => {
+      ref.current?.deselect([1]);
+    });
+
+    expect(ref.current?.isSelected(1)).toBe(false);
+
+    act(() => {
+      ref.current?.clearSelection();
+    });
+
+    expect(ref.current?.getSelected()).toEqual([]);
+  });
+
+  it('forgets rows that leave data', async () => {
+    const ref = createRef<TadabutHandle<Row>>();
+    await renderWith({ ref, selection: true });
+
+    act(() => {
+      ref.current?.select([1, 2]);
+    });
+    await renderWith({ ref, selection: true, data: rows.slice(1) });
+
+    expect(ref.current?.getSelected().map((row) => row.id)).toEqual([2]);
+  });
+
+  it('passes the select class', async () => {
+    await renderWith({ selection: true, classNames: { select: 'form-check-input' } });
+
+    expect(container.querySelectorAll('input.form-check-input')).toHaveLength(4);
   });
 });

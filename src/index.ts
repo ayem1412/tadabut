@@ -6,7 +6,7 @@
  */
 
 export type { Column } from './columns/column';
-export type { TotalFunction, TotalRows } from './columns/total';
+export type { TotalFunction } from './columns/total';
 export type { CheckboxEditor } from './editors/checkbox';
 export type { CustomEditor } from './editors/custom';
 export type { DateEditor } from './editors/date';
@@ -26,9 +26,11 @@ export type {
   DataTablesSettings,
   EditingOptions,
   SaveContext,
+  SelectionOptions,
   TableClassNames,
   TadabutOptions,
 } from './table/options';
+export type { RowScope } from './table/scope';
 export { Tadabut } from './table/tadabut';
 export { en } from './texts/en';
 export { fr } from './texts/fr';

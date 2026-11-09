@@ -6,9 +6,9 @@ import '../shared/plain.css';
 import {
   type EditingOptions,
   fr,
+  type RowScope,
   Tadabut,
   type TadabutOptions,
-  type TotalRows,
 } from '../../src/index';
 import {
   columns,
@@ -31,7 +31,9 @@ const buttonsCheckbox = document.querySelector<HTMLInputElement>('#buttons');
 const frenchCheckbox = document.querySelector<HTMLInputElement>('#french');
 const confirmSelect = document.querySelector<HTMLSelectElement>('#confirm');
 const totalRowsSelect = document.querySelector<HTMLSelectElement>('#total-rows');
+const selectionSelect = document.querySelector<HTMLSelectElement>('#selection');
 const status = document.querySelector<HTMLElement>('#status');
+const selected = document.querySelector<HTMLElement>('#selected');
 
 if (
   !container ||
@@ -44,7 +46,9 @@ if (
   !frenchCheckbox ||
   !confirmSelect ||
   !totalRowsSelect ||
-  !status
+  !selectionSelect ||
+  !status ||
+  !selected
 ) {
   throw new Error('Playground: missing elements in vanilla/index.html');
 }
@@ -63,6 +67,10 @@ const confirmDelete = (): TadabutOptions<Row>['confirmDelete'] => {
   }
 };
 
+/** The `selection` picked in the toolbar. */
+const selection = (): TadabutOptions<Row>['selection'] =>
+  selectionSelect.value === 'off' ? false : { checkAll: selectionSelect.value as RowScope };
+
 const createTable = (): Tadabut<Row> => {
   const editing: EditingOptions = {
     mode: modeSelect.value === 'multiple' ? 'multiple' : 'single',
@@ -77,7 +85,11 @@ const createTable = (): Tadabut<Row> => {
     onAdd: fakeAdd,
     onDelete: fakeDelete,
     confirmDelete: confirmDelete(),
-    totalRows: totalRowsSelect.value as TotalRows,
+    totalRows: totalRowsSelect.value as RowScope,
+    selection: selection(),
+    onSelect: (picked) => {
+      selected.textContent = `Selected: ${picked.map((row) => row.name).join(', ') || 'none'}`;
+    },
     editing,
     dataTables: frenchCheckbox.checked ? { ...settings, language: french } : settings,
     texts: frenchCheckbox.checked ? fr : undefined,
@@ -98,6 +110,7 @@ const recreate = (): void => {
   }
 
   table.destroy();
+  selected.textContent = '';
   table = createTable();
   updateStatus();
 };
@@ -110,6 +123,7 @@ createBtn.addEventListener('click', () => {
 destroyBtn.addEventListener('click', () => {
   table?.destroy();
   table = null;
+  selected.textContent = '';
   updateStatus();
 });
 
@@ -127,6 +141,10 @@ buttonsCheckbox.addEventListener('change', recreate);
 frenchCheckbox.addEventListener('change', recreate);
 confirmSelect.addEventListener('change', recreate);
 totalRowsSelect.addEventListener('change', recreate);
+selectionSelect.addEventListener('change', recreate);
 
 table = createTable();
 updateStatus();
+
+// For the browser console. A getter, so it follows Create and Destroy.
+Object.defineProperty(window, 'table', { get: () => table });

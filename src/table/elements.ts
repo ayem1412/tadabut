@@ -88,3 +88,20 @@ export function rowErrorMessage(message: string): HTMLDivElement {
 
   return error;
 }
+
+/** The header's "check all" checkbox, as HTML for the column title. */
+export function selectAllHtml(texts: Texts, classNames: TableClassNames): string {
+  return checkboxHtml('tdb-select-all', texts.selectAll, classNames);
+}
+
+/** A row's checkbox, as HTML for `defaultContent`. */
+export function selectRowHtml(texts: Texts, classNames: TableClassNames): string {
+  return checkboxHtml('tdb-select-row', texts.selectRow, classNames);
+}
+
+/** A selection checkbox as HTML, so the classes and the label are escaped. */
+function checkboxHtml(kind: string, label: string, classNames: TableClassNames): string {
+  const classes = [kind, ...splitClasses(classNames.select)].join(' ');
+
+  return `<input type="checkbox" class="${escapeHtml(classes)}" aria-label="${escapeHtml(label)}">`;
+}

@@ -18,6 +18,8 @@ export const fr: Texts = {
   loadFailed: 'Impossible de charger les options.',
   required: 'Ce champ est obligatoire.',
   patternMismatch: 'Format incorrect.',
+  selectRow: 'Sélectionner la ligne',
+  selectAll: 'Tout sélectionner',
   tooShort: (min) => `Au moins ${min} caractères.`,
   tooLong: (max) => `Au plus ${max} caractères.`,
   tooSmall: (min) => `Doit être supérieur ou égal à ${min}.`,

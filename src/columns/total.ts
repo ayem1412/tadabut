@@ -18,6 +18,3 @@ export type TotalFunction<Row extends object> = (rows: readonly Row[]) => string
 export type TotalFor<Value, Row extends object> = [NonNullable<Value>] extends [number]
   ? NumberTotal | 'count' | TotalFunction<Row>
   : 'count' | TotalFunction<Row>;
-
-/** Which rows the totals count. */
-export type TotalRows = 'searched' | 'all' | 'page';

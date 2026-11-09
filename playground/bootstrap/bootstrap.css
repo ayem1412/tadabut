@@ -20,3 +20,7 @@
 .table > tbody > tr.tdb-row-editing .tdb-input-checkbox {
   margin-top: 0.5rem;
 }
+
+.table > tbody > tr.tdb-row-selected > * {
+  --bs-table-bg-state: var(--bs-primary-bg-subtle);
+}

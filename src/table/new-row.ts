@@ -17,6 +17,8 @@ export type NewRowOptions<Row extends object> = {
   readonly texts: Texts;
   /** The table's classes. */
   readonly classNames: TableClassNames;
+  /** Empty cells before the columns, for the checkbox column. */
+  readonly leadingCells: number;
 };
 
 /**
@@ -41,6 +43,10 @@ export class NewRow<Row extends object> {
 
     this.tr = document.createElement('tr');
     this.tr.classList.add('tdb-row-new', 'tdb-row-editing');
+
+    for (let index = 0; index < options.leadingCells; index++) {
+      this.tr.append(document.createElement('td'));
+    }
 
     const cells: EditableCell<Row>[] = [];
 
