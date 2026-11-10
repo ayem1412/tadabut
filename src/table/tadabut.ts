@@ -80,6 +80,18 @@ export class Tadabut<Row extends object> {
   private readonly offset: number;
   /** The ticked rows. Only with `selection`. */
   private readonly selection?: Selection<Row>;
+  /** Asked before a row opens. */
+  private readonly onEditStart: TadabutOptions<Row>['onEditStart'];
+  /** The user's after-save callback. */
+  private readonly onSaved: TadabutOptions<Row>['onSaved'];
+  /** The user's after-add callback. */
+  private readonly onAdded: TadabutOptions<Row>['onAdded'];
+  /** The user's after-delete callback. */
+  private readonly onDeleted: TadabutOptions<Row>['onDeleted'];
+  /** The user's row click callback. */
+  private readonly onRowClick: TadabutOptions<Row>['onRowClick'];
+  /** The user's row double click callback. */
+  private readonly onRowDoubleClick: TadabutOptions<Row>['onRowDoubleClick'];
 
   /**
    * Builds the table inside `container`, which should be empty.
@@ -100,6 +112,7 @@ export class Tadabut<Row extends object> {
     this.editing = {
       mode: options.editing?.mode ?? 'single',
       button: options.editing?.button ?? true,
+      doubleClick: options.editing?.doubleClick ?? false,
     };
 
     const actions: Action[] = [];
@@ -116,6 +129,12 @@ export class Tadabut<Row extends object> {
     this.onSave = options.onSave;
     this.onAdd = options.onAdd;
     this.onDelete = options.onDelete;
+    this.onEditStart = options.onEditStart;
+    this.onSaved = options.onSaved;
+    this.onAdded = options.onAdded;
+    this.onDeleted = options.onDeleted;
+    this.onRowClick = options.onRowClick;
+    this.onRowDoubleClick = options.onRowDoubleClick;
     this.confirmDelete = options.confirmDelete;
     this.classNames = options.classNames ?? {};
     this.texts = { ...en, ...options.texts };
@@ -166,6 +185,9 @@ export class Tadabut<Row extends object> {
     if (this.hasEditor) {
       this.tableEl.addEventListener('keydown', this.onKeyDown);
     }
+
+    this.tableEl.addEventListener('click', this.onRowEvent);
+    this.tableEl.addEventListener('dblclick', this.onRowEvent);
   }
 
   /**
@@ -192,7 +214,8 @@ export class Tadabut<Row extends object> {
    * @param id The value of the row's `rowId` field.
    * @returns `false` if the row doesn't exist, is already open, another row
    *   or the new row is open in `'single'` mode, nothing is editable, the row
-   *   is being deleted, or it's on a page that hasn't been displayed yet.
+   *   is being deleted, it's on a page that hasn't been displayed yet, or
+   *   `onEditStart` returned `false`.
    */
   public edit(id: string | number): boolean {
     if (
@@ -208,6 +231,10 @@ export class Tadabut<Row extends object> {
 
     // With deferred rendering, rows on pages never shown have no cells yet.
     if (row === undefined || row.node() === null) {
+      return false;
+    }
+
+    if (this.onEditStart?.(row.data()) === false) {
       return false;
     }
 
@@ -400,6 +427,8 @@ export class Tadabut<Row extends object> {
       this.dataTable.page(Math.floor(position / length)).draw(false);
     }
 
+    this.onAdded?.(added.data());
+
     return true;
   }
 
@@ -498,6 +527,8 @@ export class Tadabut<Row extends object> {
     this.findRow(id)?.node()?.classList.remove('tdb-row-editing');
     this.setSaving(id, false);
 
+    this.onSaved?.(saved, { previous: session.originalData });
+
     return true;
   }
 
@@ -519,12 +550,14 @@ export class Tadabut<Row extends object> {
       return false;
     }
 
+    const data = row.data();
+
     this.clearRowError(id);
     this.deleting.add(id);
     this.setSaving(id, true);
 
     try {
-      await this.onDelete?.(row.data());
+      await this.onDelete?.(data);
     } catch (error) {
       // setData or destroy may have run while we were waiting.
       if (!this.deleting.has(id)) {
@@ -549,6 +582,8 @@ export class Tadabut<Row extends object> {
 
     this.selection?.prune();
 
+    this.onDeleted?.(data);
+
     return true;
   }
 
@@ -556,6 +591,9 @@ export class Tadabut<Row extends object> {
   public destroy(): void {
     this.tableEl.removeEventListener('click', this.onClick);
     this.tableEl.removeEventListener('keydown', this.onKeyDown);
+    this.tableEl.removeEventListener('click', this.onRowEvent);
+    this.tableEl.removeEventListener('dblclick', this.onRowEvent);
+
     this.destroySessions();
     this.deleting.clear();
     this.selection?.destroy();
@@ -807,6 +845,70 @@ export class Tadabut<Row extends object> {
   private dtIndex(index: number): number {
     return index + this.offset;
   }
+
+  /**
+   * The row a click landed on, or `undefined` if it doesn't count: buttons,
+   * inputs, links, the checkbox and buttons cells, the new row, a row being
+   * edited, the header, the footer and error lines.
+   */
+  private clickedRow(event: MouseEvent): ApiRowMethods<Row> | undefined {
+    const target = event.target;
+
+    if (!(target instanceof Element)) {
+      return undefined;
+    }
+
+    // closest, so an icon inside a button counts as the button.
+    if (target.closest('button, input, select, textarea, label, a') !== null) {
+      return undefined;
+    }
+
+    // A click that just missed the checkbox or a button.
+    if (target.closest('td.tdb-select, td.tdb-actions') !== null) {
+      return undefined;
+    }
+
+    if (this.isInNewRow(target)) {
+      return undefined;
+    }
+
+    const tr = target.closest('tr');
+
+    // The class, not the sessions, so it works without rowId.
+    if (tr === null || tr.classList.contains('tdb-row-editing')) {
+      return undefined;
+    }
+
+    const row = this.dataTable.row(tr);
+
+    // The header and footer aren't rows. An error line is a child row, which
+    // DataTables maps back to its parent row, so its `<tr>` isn't the row's.
+    return row.any() && row.node() === tr ? row : undefined;
+  }
+
+  /**
+   * Row clicks and double clicks. A double click also opens the row with
+   * `editing.doubleClick`. An arrow function, so `destroy` can remove it.
+   */
+  private readonly onRowEvent = (event: MouseEvent): void => {
+    const row = this.clickedRow(event);
+
+    if (row === undefined) {
+      return;
+    }
+
+    if (event.type === 'click') {
+      this.onRowClick?.(row.data(), event);
+      return;
+    }
+
+    // First, so isEditing is already true in onRowDoubleClick.
+    if (this.editing.doubleClick && this.rowId !== undefined) {
+      this.edit(row.data()[this.rowId] as string | number);
+    }
+
+    this.onRowDoubleClick?.(row.data(), event);
+  };
 }
 
 /**

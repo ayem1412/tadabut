@@ -42,6 +42,7 @@ const table = new Tadabut(container, {
   onDelete: fakeDelete,
   classNames,
   selection: true,
+  editing: { doubleClick: true },
 });
 
 addBtn.addEventListener('click', () => {

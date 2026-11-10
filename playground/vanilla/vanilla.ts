@@ -29,11 +29,14 @@ const addBtn = document.querySelector<HTMLButtonElement>('#add');
 const modeSelect = document.querySelector<HTMLSelectElement>('#mode');
 const buttonsCheckbox = document.querySelector<HTMLInputElement>('#buttons');
 const frenchCheckbox = document.querySelector<HTMLInputElement>('#french');
+const doubleClickCheckbox = document.querySelector<HTMLInputElement>('#double-click');
+const lockCheckbox = document.querySelector<HTMLInputElement>('#lock');
 const confirmSelect = document.querySelector<HTMLSelectElement>('#confirm');
 const totalRowsSelect = document.querySelector<HTMLSelectElement>('#total-rows');
 const selectionSelect = document.querySelector<HTMLSelectElement>('#selection');
 const status = document.querySelector<HTMLElement>('#status');
 const selected = document.querySelector<HTMLElement>('#selected');
+const events = document.querySelector<HTMLElement>('#events');
 
 if (
   !container ||
@@ -44,11 +47,14 @@ if (
   !modeSelect ||
   !buttonsCheckbox ||
   !frenchCheckbox ||
+  !doubleClickCheckbox ||
+  !lockCheckbox ||
   !confirmSelect ||
   !totalRowsSelect ||
   !selectionSelect ||
   !status ||
-  !selected
+  !selected ||
+  !events
 ) {
   throw new Error('Playground: missing elements in vanilla/index.html');
 }
@@ -67,6 +73,14 @@ const confirmDelete = (): TadabutOptions<Row>['confirmDelete'] => {
   }
 };
 
+/** Puts an event at the top of the list under the table, keeping the last 10. */
+const log = (text: string): void => {
+  const item = document.createElement('li');
+  item.textContent = text;
+  events.prepend(item);
+  events.querySelector('li:nth-child(11)')?.remove();
+};
+
 /** The `selection` picked in the toolbar. */
 const selection = (): TadabutOptions<Row>['selection'] =>
   selectionSelect.value === 'off' ? false : { checkAll: selectionSelect.value as RowScope };
@@ -75,6 +89,7 @@ const createTable = (): Tadabut<Row> => {
   const editing: EditingOptions = {
     mode: modeSelect.value === 'multiple' ? 'multiple' : 'single',
     button: buttonsCheckbox.checked,
+    doubleClick: doubleClickCheckbox.checked,
   };
 
   return new Tadabut(container, {
@@ -90,6 +105,17 @@ const createTable = (): Tadabut<Row> => {
     onSelect: (picked) => {
       selected.textContent = `Selected: ${picked.map((row) => row.name).join(', ') || 'none'}`;
     },
+    // Read on each edit, so the checkbox works without a rebuild.
+    onEditStart: (row) => {
+      const locked = lockCheckbox.checked && row.id === 7;
+      log(locked ? `onEditStart: ${row.name} is locked` : `onEditStart: ${row.name}`);
+      return !locked;
+    },
+    onSaved: (row, { previous }) => log(`onSaved: ${previous.name} → ${row.name}`),
+    onAdded: (row) => log(`onAdded: ${row.name} (id ${row.id})`),
+    onDeleted: (row) => log(`onDeleted: ${row.name}`),
+    onRowClick: (row) => log(`onRowClick: ${row.name}`),
+    onRowDoubleClick: (row) => log(`onRowDoubleClick: ${row.name}`),
     editing,
     dataTables: frenchCheckbox.checked ? { ...settings, language: french } : settings,
     texts: frenchCheckbox.checked ? fr : undefined,
@@ -139,6 +165,7 @@ addBtn.addEventListener('click', () => {
 modeSelect.addEventListener('change', recreate);
 buttonsCheckbox.addEventListener('change', recreate);
 frenchCheckbox.addEventListener('change', recreate);
+doubleClickCheckbox.addEventListener('change', recreate);
 confirmSelect.addEventListener('change', recreate);
 totalRowsSelect.addEventListener('change', recreate);
 selectionSelect.addEventListener('change', recreate);

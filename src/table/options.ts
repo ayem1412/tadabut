@@ -22,6 +22,11 @@ export type EditingOptions = {
    * shows if `onDelete` is set.
    */
   readonly button?: boolean;
+  /**
+   * Double-clicking a row opens it for editing. Defaults to `false`.
+   * `onRowDoubleClick` still fires.
+   */
+  readonly doubleClick?: boolean;
 };
 
 /**
@@ -181,4 +186,36 @@ export type TadabutOptions<Row extends object> = {
    * confirmDelete: (row) => window.confirm(`Delete ${row.name}?`)
    */
   readonly confirmDelete?: false | ((row: Row) => boolean | Promise<boolean>);
+  /**
+   * Called when a row opens for editing: by the Edit button, a double click,
+   * or `edit()`. Return `false` to keep it closed; `edit()` then returns
+   * `false`. Not called for the new row `add()` opens.
+   *
+   * @example
+   * onEditStart: (row) => row.status !== 'validated'
+   */
+  // biome-ignore lint/suspicious/noConfusingVoidType: callbacks that return nothing are typed void.
+  readonly onEditStart?: (row: Row) => boolean | void;
+  /**
+   * Called after a save worked and the row closed, with the row as it is now
+   * in the table (what `onSave` returned, if anything) and the row before
+   * editing.
+   */
+  readonly onSaved?: (row: Row, context: SaveContext<Row>) => void;
+  /** Called after a new row joined the table, with the row as saved. */
+  readonly onAdded?: (row: Row) => void;
+  /** Called after a row left the table, with that row. */
+  readonly onDeleted?: (row: Row) => void;
+  /**
+   * Called when a row is clicked. Clicks on buttons, inputs and checkboxes
+   * don't count, and neither do clicks in a row being edited, the new row,
+   * or an error line.
+   */
+  readonly onRowClick?: (row: Row, event: MouseEvent) => void;
+  /**
+   * Called when a row is double-clicked, with the same rules as
+   * `onRowClick`. The browser fires two clicks first, so `onRowClick` runs
+   * twice before it.
+   */
+  readonly onRowDoubleClick?: (row: Row, event: MouseEvent) => void;
 };

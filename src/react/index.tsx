@@ -49,9 +49,9 @@ export type TadabutProps<Row extends object> = TadabutOptions<Row> & {
  * New `data` updates the table in place. Changing `columns`, `rowId`,
  * `dataTables`, `texts`, `totalRows` or `selection` rebuilds it (and closes
  * open rows, and clears the selection), so keep the objects stable with a
- * constant or `useMemo`. `editing`, `selection`, `classNames`, `onSave`,
- * `onAdd`, `onDelete`, `confirmDelete` and `onSelect` can be inline: they're
- * compared by value or read through a ref.
+ * constant or `useMemo`. `editing`, `selection`, `classNames` and every `on…`
+ * callback (and `confirmDelete`) can be inline: they're compared by value or
+ * read through a ref.
  */
 export function Tadabut<Row extends object>({
   data,
@@ -68,6 +68,12 @@ export function Tadabut<Row extends object>({
   onAdd,
   onDelete,
   confirmDelete,
+  onEditStart,
+  onSaved,
+  onAdded,
+  onDeleted,
+  onRowClick,
+  onRowDoubleClick,
   ref,
 }: TadabutProps<Row>): ReactElement {
   /** The `<div>` the core builds the table in. */
@@ -86,10 +92,23 @@ export function Tadabut<Row extends object>({
   const confirmDeleteRef = useRef(confirmDelete);
   /** The latest `onSelect`, so a new one doesn't rebuild the table. */
   const onSelectRef = useRef(onSelect);
+  /** The latest `onEditStart`, so a new one doesn't rebuild the table. */
+  const onEditStartRef = useRef(onEditStart);
+  /** The latest `onSaved`, so a new one doesn't rebuild the table. */
+  const onSavedRef = useRef(onSaved);
+  /** The latest `onAdded`, so a new one doesn't rebuild the table. */
+  const onAddedRef = useRef(onAdded);
+  /** The latest `onDeleted`, so a new one doesn't rebuild the table. */
+  const onDeletedRef = useRef(onDeleted);
+  /** The latest `onRowClick`, so a new one doesn't rebuild the table. */
+  const onRowClickRef = useRef(onRowClick);
+  /** The latest `onRowDoubleClick`, so a new one doesn't rebuild the table. */
+  const onRowDoubleClickRef = useRef(onRowDoubleClick);
 
   // Pulled out so inline objects don't trigger a rebuild every render.
   const mode = editing?.mode;
   const button = editing?.button;
+  const doubleClick = editing?.doubleClick;
   const tableClass = classNames?.table;
   const buttonClass = classNames?.button;
   const editClass = classNames?.edit;
@@ -130,7 +149,7 @@ export function Tadabut<Row extends object>({
       data: dataRef.current,
       columns,
       rowId,
-      editing: { mode, button },
+      editing: { mode, button, doubleClick },
       dataTables,
       texts,
       totalRows,
@@ -151,6 +170,12 @@ export function Tadabut<Row extends object>({
       onDelete: hasDelete ? (row) => onDeleteRef.current?.(row) : undefined,
       confirmDelete: confirm,
       onSelect: (rows) => onSelectRef.current?.(rows),
+      onEditStart: (row) => onEditStartRef.current?.(row),
+      onSaved: (row, context) => onSavedRef.current?.(row, context),
+      onAdded: (row) => onAddedRef.current?.(row),
+      onDeleted: (row) => onDeletedRef.current?.(row),
+      onRowClick: (row, event) => onRowClickRef.current?.(row, event),
+      onRowDoubleClick: (row, event) => onRowDoubleClickRef.current?.(row, event),
     });
     tableRef.current = table;
 
@@ -166,6 +191,7 @@ export function Tadabut<Row extends object>({
     totalRows,
     mode,
     button,
+    doubleClick,
     tableClass,
     buttonClass,
     editClass,
@@ -192,6 +218,12 @@ export function Tadabut<Row extends object>({
     onDeleteRef.current = onDelete;
     confirmDeleteRef.current = confirmDelete;
     onSelectRef.current = onSelect;
+    onEditStartRef.current = onEditStart;
+    onSavedRef.current = onSaved;
+    onAddedRef.current = onAdded;
+    onDeletedRef.current = onDeleted;
+    onRowClickRef.current = onRowClick;
+    onRowDoubleClickRef.current = onRowDoubleClick;
   });
 
   useImperativeHandle(

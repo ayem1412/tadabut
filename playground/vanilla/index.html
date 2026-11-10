@@ -32,6 +32,14 @@
         French
       </label>
       <label>
+        <input id="double-click" type="checkbox" />
+        Double click edits
+      </label>
+      <label>
+        <input id="lock" type="checkbox" checked />
+        Lock Leila
+      </label>
+      <label>
         Totals count
         <select id="total-rows">
           <option value="searched">the searched rows</option>
@@ -65,12 +73,16 @@
       Try: Edit, Save, Cancel, Enter and Escape in an input, a name of "error" to see a failed save,
       and sorting before editing. Change the country quickly to see the cities reload, and pick
       Atlantis to see a failed load. Delete Karim to see a failed delete, and add a row named
-      "error" to see a failed add. Turn on the checkboxes, tick rows, change page and search, then
-      try
-      <code>table.select([1, 2])</code> and <code>table.getSelected()</code> in the console.
+      "error" to see a failed add. Leila can't be edited while "Lock Leila" is on: that's
+      <code>onEditStart</code>. Every event shows up under the table. Turn on the checkboxes, tick
+      rows, change page and search, then try <code>table.select([1, 2])</code> and
+      <code>table.getSelected()</code> in the console.
     </p>
 
     <div id="container"></div>
+
+    <h2>Events</h2>
+    <ul id="events" class="events"></ul>
 
     <script type="module" src="./vanilla.ts"></script>
   </body>

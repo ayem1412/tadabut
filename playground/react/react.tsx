@@ -67,6 +67,9 @@ function App() {
         columns={columns}
         rowId='id'
         dataTables={settings}
+        editing={{ doubleClick: true }}
+        onRowClick={(row) => setStatus(`Clicked ${row.name}`)}
+        onSaved={(row, { previous }) => setStatus(`Saved ${previous.name} → ${row.name}`)}
         selection
         onSelect={(rows) => setSelected(rows.map((row) => row.name))}
         // Inline on purpose: this must not rebuild the table.
