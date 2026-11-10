@@ -1,3 +1,4 @@
+import { defaultDateFormat, parseDate } from '../editors/date-format';
 import { moneyFormat } from '../editors/money';
 import type { TadabutOptions } from './options';
 
@@ -10,6 +11,7 @@ import type { TadabutOptions } from './options';
  * @throws If a hidden column (`visible: false`) has an `editor`.
  * @throws If a select's `labelProp` is its own column.
  * @throws If a money editor's `separator` and `point` are the same.
+ * @throws If a date editor's `min` or `max` isn't a real date in its `format`.
  */
 export function checkOptions<Row extends object>(options: TadabutOptions<Row>): void {
   if (options.rowId === undefined) {
@@ -59,6 +61,22 @@ export function checkOptions<Row extends object>(options: TadabutOptions<Row>): 
       throw new Error(
         `Tadabut: the "${column.prop}" column's money separator and point can't both be "${point}".`,
       );
+    }
+  }
+
+  for (const column of options.columns) {
+    if (column.editor?.type !== 'date') {
+      continue;
+    }
+
+    const format = column.editor.format ?? defaultDateFormat;
+
+    for (const limit of [column.editor.min, column.editor.max]) {
+      if (limit !== undefined && parseDate(limit, format) === null) {
+        throw new Error(
+          `Tadabut: the "${column.prop}" column's date "${limit}" isn't a real date written as ${format}.`,
+        );
+      }
     }
   }
 }

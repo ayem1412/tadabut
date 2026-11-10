@@ -12,6 +12,8 @@ export type Row = {
   salary: number | null;
   /** 'O' (oui) or 'N' (non), like an old database. `null` when nobody said. */
   active: 'O' | 'N' | null;
+  /** 'dd/mm/yyyy', like an old PHP backend sends it. */
+  hired: string | null;
 };
 
 export const rows: Row[] = [
@@ -24,6 +26,7 @@ export const rows: Row[] = [
     age: 29,
     salary: 12500,
     active: 'O',
+    hired: '15/03/2019',
   },
   {
     id: 2,
@@ -34,6 +37,7 @@ export const rows: Row[] = [
     age: 34,
     salary: 9800.5,
     active: 'N',
+    hired: '02/11/2021',
   },
   {
     id: 3,
@@ -44,6 +48,7 @@ export const rows: Row[] = [
     age: 25,
     salary: 15000,
     active: 'O',
+    hired: '28/02/2024',
   },
   {
     id: 4,
@@ -54,6 +59,7 @@ export const rows: Row[] = [
     age: 41,
     salary: 22750,
     active: null,
+    hired: '07/07/2015',
   },
   {
     id: 5,
@@ -64,6 +70,7 @@ export const rows: Row[] = [
     age: 37,
     salary: 8400,
     active: 'O',
+    hired: '19/09/2022',
   },
   {
     id: 6,
@@ -74,6 +81,7 @@ export const rows: Row[] = [
     age: 22,
     salary: 11200.75,
     active: 'N',
+    hired: '01/12/2023',
   },
   {
     id: 7,
@@ -84,6 +92,7 @@ export const rows: Row[] = [
     age: 31,
     salary: 30000,
     active: 'O',
+    hired: '30/06/2018',
   },
   {
     id: 8,
@@ -94,6 +103,7 @@ export const rows: Row[] = [
     age: 45,
     salary: 7600,
     active: null,
+    hired: '11/01/2010',
   },
   {
     id: 9,
@@ -104,6 +114,7 @@ export const rows: Row[] = [
     age: 28,
     salary: null,
     active: 'O',
+    hired: null,
   },
   {
     id: 10,
@@ -114,6 +125,7 @@ export const rows: Row[] = [
     age: 33,
     salary: 18900,
     active: 'N',
+    hired: '23/04/2020',
   },
   {
     id: 11,
@@ -124,6 +136,7 @@ export const rows: Row[] = [
     age: 26,
     salary: 26400.25,
     active: 'O',
+    hired: '05/05/2024',
   },
   {
     id: 12,
@@ -134,6 +147,7 @@ export const rows: Row[] = [
     age: 39,
     salary: 14100,
     active: null,
+    hired: '14/02/2017',
   },
 ];
 
@@ -262,6 +276,16 @@ export function makeColumns(classes: InputClasses = {}): Column<Row>[] {
       // An untouched null stays null, so it shows as "—".
       render: (value) => (value === 'O' ? 'Yes' : value === 'N' ? 'No' : '—'),
     },
+    {
+      title: 'Hired',
+      prop: 'hired',
+      editor: {
+        type: 'date',
+        format: 'dd/mm/yyyy',
+        min: '01/01/2000',
+        className: classes.input,
+      },
+    },
   ];
 }
 
@@ -299,6 +323,7 @@ export async function fakeAdd(row: Partial<Row>): Promise<Row> {
     age: row.age ?? 0,
     salary: row.salary ?? null,
     active: row.active ?? null,
+    hired: row.hired ?? null,
   };
 }
 
