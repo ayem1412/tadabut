@@ -1143,17 +1143,17 @@ export default function Employees() {
 
   return (
     <>
-      <button type="button" onClick={() => tableRef.current?.edit(1)}>
+      <button type='button' onClick={() => tableRef.current?.edit(1)}>
         Edit Amina
       </button>
-      <button type="button" onClick={() => tableRef.current?.add()}>
+      <button type='button' onClick={() => tableRef.current?.add()}>
         Add an employee
       </button>
 
       <Tadabut
         ref={tableRef}
         data={employees}
-        rowId="id"
+        rowId='id'
         columns={columns}
         editing={{ mode: 'multiple' }}
         onSave={(row) => saveEmployee(row)}
