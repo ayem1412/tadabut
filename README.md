@@ -933,6 +933,49 @@ Rows you ticked that "check all" doesn't take stay ticked: unticking it only uns
 
 Your `order` in `dataTables` still counts your own columns: `[[0, 'asc']]` is your first column, not the checkboxes.
 
+### Events
+
+Six callbacks tell you what happened. Each one gets the row:
+
+| Option             | When                                   | Gets                  |
+| ------------------ | -------------------------------------- | --------------------- |
+| `onEditStart`      | a row opens for editing                | `(row)`               |
+| `onSaved`          | after a save worked and the row closed | `(row, { previous })` |
+| `onAdded`          | after a new row joined the table       | `(row)`               |
+| `onDeleted`        | after a row left the table             | `(row)`               |
+| `onRowClick`       | a row is clicked                       | `(row, event)`        |
+| `onRowDoubleClick` | a row is double-clicked                | `(row, event)`        |
+
+```ts
+const table = new Tadabut(container, {
+  data: employees,
+  rowId: 'id',
+  columns,
+  onSave: saveEmployee,
+  onEditStart: (row) => row.status !== 'validated', // false keeps the row closed
+  onSaved: (row, { previous }) => toast(`${previous.name} saved`),
+  onRowClick: (row) => showDetails(row),
+});
+```
+
+- `onSave`, `onAdd` and `onDelete` do the work and can fail. `onSaved`, `onAdded` and `onDeleted` come after, once it worked and the table changed. They're never called when it failed.
+- They're called the same way from the buttons and from code: `table.edit(1)` calls `onEditStart`, and `await table.save(1)` calls `onSaved`.
+- `onEditStart` can return `false` to keep the row closed, for rows a user can't change. `edit()` then returns `false`. It's not called for the new row `add()` opens, and it can't be async.
+- `onSaved` gets the row as it now is in the table (what `onSave` returned, if anything), and the row before editing.
+- Tadabut doesn't wait for the "after" callbacks, so async is fine. If one throws, the table is already done: the error goes to the console, and `save()` or `saveNew()` rejects.
+
+**Which clicks count:** clicks on buttons, inputs, checkboxes, labels and links don't, and neither do clicks in the checkbox and buttons cells (a click that just missed a button). Clicks in a row being edited, the new row, the header, the footer or an error line don't count either. `onRowClick` works without `rowId` and without editors.
+
+**Double clicks:** the browser fires two clicks before a double click, so `onRowClick` runs twice before `onRowDoubleClick`. Tadabut doesn't wait to tell them apart, because that would make every single click feel slow.
+
+**Double click to edit:**
+
+```ts
+editing: { doubleClick: true },
+```
+
+Double-clicking a row then opens it, the same as its Edit button: `onEditStart` and the `'single'` mode still apply. `onRowDoubleClick` still fires, after the row opened.
+
 ### Editing options
 
 When at least one column has an `editor`, the table gets one more column at the end, with an Edit button in each row. While a row is being edited, its Edit button is replaced by Save and Cancel. The labels can be changed with `texts`.
@@ -948,13 +991,15 @@ const table = new Tadabut(container, {
   editing: {
     mode: 'multiple', // default: 'single'
     button: false, // default: true. false hides the edit button
+    doubleClick: true, // default: false. true opens a row on double click
   },
 });
 ```
 
 - `'single'` mode: one row at a time. You can't start a new edit while another row is open.
 - `'multiple'` mode: several rows can be open. Each one saves on its own, so `onSave` runs once per row.
-- `button: false`: no Edit button. Start edits from your own code. <kbd>Enter</kbd> and <kbd>Escape</kbd> still work. With `onDelete`, the column stays, with only the Delete button.
+- `doubleClick: true`: double-clicking a row opens it. See [Events](#events).
+- `button: false`: no Edit button. Start edits from your own code, or with `doubleClick`. <kbd>Enter</kbd> and <kbd>Escape</kbd> still work. With `onDelete`, the column stays, with only the Delete button.
 
 ### Controlling it from code
 
@@ -980,7 +1025,7 @@ table.setData(newEmployees); // replace all rows, keeps sorting and search
 table.destroy(); // remove everything Tadabut created
 ```
 
-`edit` returns `true` if editing started. It returns `false` when the row doesn't exist, it's already open, another row is open in `'single'` mode, no column has an editor, or the row is on a page that hasn't been shown yet. DataTables only builds a row's cells once it's shown, so go to that page first.
+`edit` returns `true` if editing started. It returns `false` when the row doesn't exist, it's already open, another row is open in `'single'` mode, no column has an editor, `onEditStart` returned `false`, or the row is on a page that hasn't been shown yet. DataTables only builds a row's cells once it's shown, so go to that page first.
 
 `save` returns a promise of `true` if the row was saved and closed, `false` if it wasn't: a field is invalid, `onSave` failed, the row isn't being edited, or it's already saving.
 
@@ -1095,11 +1140,11 @@ export default function Employees() {
 ```
 
 - When `employees` changes, the table updates in place. It doesn't get rebuilt.
-- `onSave`, `onAdd`, `onDelete`, `confirmDelete` and `onSelect` can be new functions on every render. The table always calls the latest ones.
+- `onSave`, `onAdd`, `onDelete`, `confirmDelete`, `onSelect` and the [events](#events) can be new functions on every render. The table always calls the latest ones.
 - In `onAdd` and `onDelete`, update your state too, like above. Otherwise the next time `data` changes, the new row disappears, or the deleted one comes back.
 - `totalRows` is a plain string, so writing it inline is fine. Changing it rebuilds the table, to count other rows.
 - `selection={{ checkAll: 'page' }}` inline is fine too: only turning it on or off, or changing `checkAll`, rebuilds the table. A rebuild clears the selection.
-- `editing` can be a new object on every render too. The table is only rebuilt when `mode` or `button` really change. Changing `columns`, `rowId` or `editing` closes any row being edited.
+- `editing` can be a new object on every render too. The table is only rebuilt when `mode`, `button` or `doubleClick` really change. Changing `columns`, `rowId` or `editing` closes any row being edited.
 - The ref has the same methods as the core: `edit`, `save`, `cancel`, `delete`, `isEditing`, `add`, `saveNew`, `cancelNew`, `isAdding`, `getSelected`, `isSelected`, `select`, `deselect` and `clearSelection`. Before the table is built, or after it's gone, the methods that return something give `false` (`[]` for `getSelected`), and the others do nothing.
 - There is no `setData` on the ref. To change the rows, change `data`.
 
@@ -1127,11 +1172,11 @@ Done:
 - [x] Money inputs, formatted while typing (`12 500.00`)
 - [x] Totals in the footer: sum, average, min, max, count or your own
 - [x] A checkbox column to select rows, with "check all"
+- [x] More events: when editing starts (and stopping it), after saving, adding and deleting, row click and double click, and double click to edit
 
 Next, roughly in this order:
 
 - [ ] Dates as `dd/mm/yyyy`, in the input and when sorting
-- [ ] More events: when editing starts, after saving, row click and double click
 - [ ] Detail rows that open under a row
 - [ ] Time and read-only inputs
 - [ ] Methods to read rows (`getData`, `getRow`), put a row in directly without opening it, and reach the DataTables API

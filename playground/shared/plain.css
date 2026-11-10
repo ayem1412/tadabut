@@ -34,3 +34,9 @@ tr.tdb-row-editing .tdb-input-checkbox {
 tr.tdb-row-selected > td {
   box-shadow: inset 0 0 0 9999px rgb(13 110 253 / 0.12);
 }
+
+.events {
+  color: #444;
+  font-family: ui-monospace, monospace;
+  font-size: 0.85rem;
+}

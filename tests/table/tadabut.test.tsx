@@ -635,3 +635,106 @@ describe('React Tadabut selecting', () => {
     expect(container.querySelectorAll('input.form-check-input')).toHaveLength(4);
   });
 });
+
+describe('React Tadabut events', () => {
+  beforeEach(() => {
+    container = mountPoint();
+    root = createRoot(container);
+  });
+
+  afterEach(async () => {
+    await act(async () => {
+      root.unmount();
+    });
+  });
+
+  /** The first cell of a row, from 0. */
+  const cell = (index: number) =>
+    container.querySelectorAll('tbody tr')[index]?.querySelector('td') as HTMLElement;
+
+  it('calls the latest row callbacks without a rebuild', async () => {
+    const first = vi.fn();
+    const second = vi.fn();
+    const double = vi.fn();
+    await renderWith({ onRowClick: first });
+    const table = container.querySelector('table');
+    await renderWith({ onRowClick: second, onRowDoubleClick: double });
+
+    act(() => {
+      cell(0).click();
+      cell(0).dispatchEvent(new MouseEvent('dblclick', { bubbles: true }));
+    });
+
+    expect(container.querySelector('table')).toBe(table);
+    expect(first).not.toHaveBeenCalled();
+    expect(second).toHaveBeenCalledWith(expect.objectContaining({ id: 1 }), expect.any(MouseEvent));
+    expect(double).toHaveBeenCalledTimes(1);
+  });
+
+  it('passes what onEditStart returns', async () => {
+    const ref = createRef<TadabutHandle<Row>>();
+    await renderWith({ ref, onEditStart: (row) => row.id !== 1 });
+
+    let started = true;
+    act(() => {
+      started = ref.current?.edit(1) ?? true;
+    });
+
+    expect(started).toBe(false);
+  });
+
+  it('calls the latest onSaved, onAdded and onDeleted', async () => {
+    const ref = createRef<TadabutHandle<Row>>();
+    const onSaved = vi.fn();
+    const onAdded = vi.fn();
+    const onDeleted = vi.fn();
+    await renderWith({ ref, onSaved: () => {}, onAdded: () => {}, onDeleted: () => {} });
+    await renderWith({
+      ref,
+      onAdd: (row) => ({ ...row, id: 4, city: '' }) as Row,
+      onDelete: () => {},
+      onSaved,
+      onAdded,
+      onDeleted,
+    });
+
+    act(() => {
+      ref.current?.edit(1);
+    });
+    await act(async () => {
+      await ref.current?.save(1);
+    });
+    act(() => {
+      ref.current?.add();
+    });
+    typeNewName('Nadia');
+    await act(async () => {
+      await ref.current?.saveNew();
+      await ref.current?.delete(2);
+    });
+
+    expect(onSaved).toHaveBeenCalledTimes(1);
+    expect(onAdded).toHaveBeenCalledWith(expect.objectContaining({ id: 4 }));
+    expect(onDeleted).toHaveBeenCalledWith(expect.objectContaining({ id: 2 }));
+  });
+
+  it('keeps the table when editing is a new object with the same doubleClick', async () => {
+    await renderWith({ editing: { doubleClick: true } });
+    const table = container.querySelector('table');
+
+    await renderWith({ editing: { doubleClick: true } });
+
+    expect(container.querySelector('table')).toBe(table);
+  });
+
+  it('opens a row on double click with doubleClick', async () => {
+    const ref = createRef<TadabutHandle<Row>>();
+    await renderWith({ ref, editing: { doubleClick: true } });
+
+    act(() => {
+      cell(0).dispatchEvent(new MouseEvent('dblclick', { bubbles: true }));
+    });
+
+    expect(ref.current?.isEditing(1)).toBe(true);
+  });
+});
