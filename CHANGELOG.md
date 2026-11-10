@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.6.0](https://github.com/ayem1412/tadabut/compare/v0.5.0...v0.6.0) (2026-11-10)
+
+
+### Features
+
+* a checkbox column to select rows ([#50](https://github.com/ayem1412/tadabut/issues/50)) ([f14a383](https://github.com/ayem1412/tadabut/commit/f14a3838321890f63b103df2700e38851f85edbd))
+* dates in any format, like dd/mm/yyyy ([#54](https://github.com/ayem1412/tadabut/issues/54)) ([b0df3ec](https://github.com/ayem1412/tadabut/commit/b0df3ec3b2521436ceb0dec631b012902940e013))
+* more events and double click to edit ([#52](https://github.com/ayem1412/tadabut/issues/52)) ([8294bbf](https://github.com/ayem1412/tadabut/commit/8294bbfa03c70240a7549e52ffef9ff88cd640ed))
+
 ## [0.5.0](https://github.com/ayem1412/tadabut/compare/v0.4.0...v0.5.0) (2026-11-07)
 
 
