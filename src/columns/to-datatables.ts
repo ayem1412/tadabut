@@ -1,6 +1,7 @@
 import type { ColumnOptions } from 'datatables.net';
 
 import { splitClasses } from '../editors/classes';
+import { defaultDateFormat, formatDate, parseDate } from '../editors/date-format';
 import type { AnyEditor } from '../editors/editor';
 import { moneyFormat } from '../editors/money';
 import { formatMoney } from '../editors/money-format';
@@ -70,6 +71,7 @@ export function toDataTables<Row extends object>(
 ): ColumnOptions[] {
   const converted = columns.map((column): ColumnOptions => {
     const label = labelOf(column as LooseColumn<Row>);
+    const sortValue = sortValueOf(column as LooseColumn<Row>);
 
     return {
       // Passing `width: undefined` would wipe DataTables' default.
@@ -95,8 +97,8 @@ export function toDataTables<Row extends object>(
             return `${label(value, row)} ${asText(value)}`;
 
           default:
-            // sort and type: keep numbers as numbers
-            return value;
+            // sort and type: dates as ISO, numbers as numbers
+            return sortValue(value);
         }
       },
     };
@@ -108,7 +110,10 @@ export function toDataTables<Row extends object>(
   return [...first, ...converted, ...last];
 }
 
-/** `render`, then a money format, then `labelProp`, then a fixed list's label, then the value. */
+/**
+ * `render`, then a money or date format, then `labelProp`, then a fixed
+ * list's label, then the value. A date that isn't valid shows as it is.
+ */
 function labelOf<Row>(column: LooseColumn<Row>): (value: unknown, row: Row) => string {
   const { render, editor } = column;
 
@@ -116,24 +121,42 @@ function labelOf<Row>(column: LooseColumn<Row>): (value: unknown, row: Row) => s
     return render;
   }
 
-  if (editor?.type === 'money') {
-    // Once here, not for every cell.
-    const format = moneyFormat(editor);
+  switch (editor?.type) {
+    case 'money': {
+      const format = moneyFormat(editor);
 
-    return (value) => (typeof value === 'number' ? formatMoney(value, format) : asText(value));
-  }
-
-  if (editor?.type === 'select') {
-    const labelProp = editor.labelProp;
-
-    if (labelProp !== undefined) {
-      return (_value, row) => asText((row as Record<string, unknown>)[labelProp]);
+      return (value) => (typeof value === 'number' ? formatMoney(value, format) : asText(value));
     }
+    case 'date': {
+      const format = editor.format ?? defaultDateFormat;
+      const display = editor.display ?? format;
 
-    if (typeof editor.options !== 'function') {
-      const options = editor.options;
+      return (value) => {
+        if (typeof value !== 'string') {
+          return asText(value);
+        }
 
-      return (value) => options.find((option) => option.value === value)?.label ?? asText(value);
+        const iso = parseDate(value, format);
+
+        if (iso === null) {
+          return asText(value);
+        }
+
+        return formatDate(iso, display);
+      };
+    }
+    case 'select': {
+      const labelProp = editor.labelProp;
+
+      if (labelProp !== undefined) {
+        return (_value, row) => asText((row as Record<string, unknown>)[labelProp]);
+      }
+
+      if (typeof editor.options !== 'function') {
+        const options = editor.options;
+
+        return (value) => options.find((option) => option.value === value)?.label ?? asText(value);
+      }
     }
   }
 
@@ -150,4 +173,21 @@ function defined<T extends object>(values: T): Partial<T> {
   const kept = Object.entries(values).filter(([, value]) => value !== undefined);
 
   return Object.fromEntries(kept) as Partial<T>;
+}
+
+/**
+ * What DataTables sorts by. Dates become `'yyyy-mm-dd'`, so `'05/01/2024'`
+ * sorts as January; invalid and empty dates give `''`, which sorts first.
+ * Anything else stays as it is: numbers stay numbers.
+ */
+function sortValueOf<Row>(column: LooseColumn<Row>): (value: unknown) => unknown {
+  const editor = column.editor;
+
+  if (editor?.type === 'date') {
+    const format = editor.format ?? defaultDateFormat;
+
+    return (value) => (typeof value === 'string' ? (parseDate(value, format) ?? '') : '');
+  }
+
+  return (value) => value;
 }

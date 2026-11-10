@@ -102,6 +102,7 @@ export class Tadabut<Row extends object> {
    * @throws If a hidden column (`visible: false`) has an `editor`.
    * @throws If a select's `labelProp` is its own column.
    * @throws If a money editor's `separator` and `point` are the same.
+   * @throws If a date editor's `min` or `max` isn't a real date in its `format`.
    */
   public constructor(container: HTMLElement, options: TadabutOptions<Row>) {
     checkOptions(options);

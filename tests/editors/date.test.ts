@@ -1,6 +1,7 @@
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 
 import { createDateEditor, type DateEditor } from '../../src/editors/date';
+import { type } from '../helpers';
 
 function setup(config: Omit<DateEditor, 'type'> = {}, value: string | null = '2024-01-05') {
   const { className, ...options } = config;
@@ -12,16 +13,12 @@ function setup(config: Omit<DateEditor, 'type'> = {}, value: string | null = '20
   return { editor, input, onChange };
 }
 
+/** Picking a date in the calendar sets the text like typing does. */
 function pick(input: HTMLInputElement, date: string): void {
-  input.value = date;
-  input.dispatchEvent(new Event('input', { bubbles: true }));
+  type(input, date);
 }
 
 describe('date editor', () => {
-  afterEach(() => {
-    document.body.innerHTML = '';
-  });
-
   it('is a date input', () => {
     const { input } = setup();
 
@@ -42,8 +39,15 @@ describe('date editor', () => {
     expect(editor.getValue()).toBeNull();
   });
 
+  it('drops a time after the date', () => {
+    const { editor, input } = setup({}, '2024-01-05T10:30:00');
+
+    expect(input.value).toBe('2024-01-05');
+    expect(editor.getValue()).toBe('2024-01-05');
+  });
+
   it('shows other date formats as empty', () => {
-    const { editor, input } = setup({}, '2024-01-05T00:00:00');
+    const { editor, input } = setup({}, '05/01/2024');
 
     expect(input.value).toBe('');
     expect(editor.getValue()).toBeNull();
@@ -105,5 +109,39 @@ describe('date editor', () => {
     editor.destroy();
 
     expect(document.body.contains(input)).toBe(false);
+  });
+
+  describe('with a format', () => {
+    it('shows a dd/mm/yyyy value in the picker, and gives it back the same way', () => {
+      const { editor, input, onChange } = setup({ format: 'dd/mm/yyyy' }, '05/01/2024');
+
+      expect(input.value).toBe('2024-01-05');
+      expect(editor.getValue()).toBe('05/01/2024');
+
+      pick(input, '2024-02-29');
+
+      expect(editor.getValue()).toBe('29/02/2024');
+      expect(onChange).toHaveBeenLastCalledWith('29/02/2024');
+    });
+
+    it('shows a value in another format, or not a real date, as empty', () => {
+      expect(setup({ format: 'dd/mm/yyyy' }, '2024-01-05').input.value).toBe('');
+      expect(setup({ format: 'dd/mm/yyyy' }, '31/02/2024').input.value).toBe('');
+    });
+
+    it('reads min and max in the format', () => {
+      const { input } = setup({ format: 'dd/mm/yyyy', min: '01/01/2020', max: '31/12/2030' });
+
+      expect(input.min).toBe('2020-01-01');
+      expect(input.max).toBe('2030-12-31');
+    });
+
+    it('sets the value from code in the format', () => {
+      const { editor, input } = setup({ format: 'dd.mm.yyyy' }, null);
+
+      editor.setValue('05.01.2024');
+
+      expect(input.value).toBe('2024-01-05');
+    });
   });
 });

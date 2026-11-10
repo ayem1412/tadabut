@@ -10,6 +10,7 @@ export type { TotalFunction } from './columns/total';
 export type { CheckboxEditor } from './editors/checkbox';
 export type { CustomEditor } from './editors/custom';
 export type { DateEditor } from './editors/date';
+export { type DateFormat, defaultDateFormat, formatDate, parseDate } from './editors/date-format';
 export type { EditorFor } from './editors/editor';
 export type { EditorContext, EditorInstance } from './editors/instance';
 export type { MoneyEditor } from './editors/money';

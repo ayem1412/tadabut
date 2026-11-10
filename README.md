@@ -170,7 +170,7 @@ A select's values must have the same type as the column. `countryId` is a number
 | `text`     | `string`               | `''`        | `minLength`, `maxLength`, `pattern`            |
 | `number`   | `number`               | `null`      | `min`, `max`, `step`                           |
 | `money`    | `number`               | `null`      | `min`, `max`, `decimals`, `separator`, `point` |
-| `date`     | `string`               | `null`      | `min`, `max`                                   |
+| `date`     | `string`               | `null`      | `min`, `max`, `format`, `display`              |
 | `checkbox` | `boolean`, or `values` | never empty | `values`                                       |
 | `select`   | same as the column     | `null`      | `options`, `dependsOn`, `labelProp`            |
 
@@ -181,7 +181,7 @@ A few things to know:
 - An empty number or date gives `null`, not `0` or `NaN`. A select with nothing picked gives `null` too.
 - A checkbox shows `null` as unchecked, but keeps it: an untouched `null` is still `null` after saving. It only becomes `true` or `false` once the user clicks it.
 - A `string | null` column gets the same editors as a `string` column. `null` shows as an empty input.
-- Date columns must hold `'YYYY-MM-DD'`. Something like `'2024-01-05T00:00:00'` shows as empty, and saving turns it into `null`. Convert your dates first.
+- Date columns hold `'YYYY-MM-DD'` unless you give a `format`. See [Dates](#dates).
 
 #### Checkboxes with your own values
 
@@ -229,6 +229,38 @@ import { defaultMoneyFormat, formatMoney } from 'tadabut';
 { prop: 'bonus', title: 'Bonus', render: (value) => formatMoney(value, defaultMoneyFormat) }
 ```
 
+#### Dates
+
+`date` is for `string` columns. The input is the browser's date picker. By default, the rows hold `'2024-01-05'` (year first). If your server sends another order, say so with `format`, and pick what the cells show with `display`:
+
+```ts
+{
+  prop: 'hiredAt',
+  title: 'Hired',
+  editor: { type: 'date', format: 'dd/mm/yyyy', min: '01/01/2000' },
+}
+```
+
+- `format` is how the date is written in your rows: what the server sends, and what `onSave` gets back. It defaults to `'yyyy-mm-dd'`.
+- `display` is how the cells show it. It defaults to `format`. With ISO data and `display: 'dd/mm/yyyy'`, the cells show `05/01/2024`, but the rows keep `'2024-01-05'`.
+- Both take `dd`, `mm` and `yyyy` in any order, with `/`, `-` or `.` between them: `'dd/mm/yyyy'`, `'mm-dd-yyyy'`, `'dd.mm.yyyy'`, and so on. TypeScript catches a typo like `'dd/mm-yyyy'`.
+- `min` and `max` are written in `format` too. Tadabut throws an error if they aren't real dates in that format.
+- Sorting uses the real date, whatever the format. `'12/01/2023'` comes before `'05/01/2024'`.
+- A time after the date is dropped: `'2024-01-05T10:30:00'` shows the 5th, and saves as `'2024-01-05'`.
+- A value that isn't a real date in `format`, like `'31/02/2024'`, shows as it is in the cell, so you can see it. The input shows it as empty, and saving turns it into `null`.
+- The picker itself shows the date the way the computer's language does. A French computer shows `05/01/2024` and an American one `01/05/2024`. Browsers don't let a page change that.
+
+`parseDate`, `formatDate` and `defaultDateFormat` are exported, to read and write the same formats elsewhere. `parseDate` gives `'yyyy-mm-dd'`, or `null` if it isn't a real date:
+
+```ts
+import { formatDate, parseDate } from 'tadabut';
+
+parseDate('05/01/2024', 'dd/mm/yyyy'); // '2024-01-05'
+formatDate('2024-01-05', 'dd.mm.yyyy'); // '05.01.2024'
+```
+
+A column you can't edit has no date editor, so for now, show its dates with `render`: `render: (value) => formatDate(value, 'dd/mm/yyyy')`. It sorts by the raw value, which is right for ISO dates.
+
 ### What cells show
 
 When a row isn't being edited, a cell shows its value as text. These change that:
@@ -236,6 +268,7 @@ When a row isn't being edited, a cell shows its value as text. These change that
 - A select with a fixed list shows the option's label. A `countryId` of `1` shows "Morocco", with nothing to write.
 - A select with `labelProp` shows that field of the row, like `cityName`. See [Chained selects](#chained-selects).
 - A `money` editor shows its format, like `12 500.00`.
+- A `date` editor shows its `display`, like `05/01/2024`.
 - `render` sets the text yourself, on any column:
 
 ```ts
@@ -244,9 +277,9 @@ When a row isn't being edited, a cell shows its value as text. These change that
 
 A few things to know:
 
-- The order is: `render`, then the money format, then `labelProp`, then the fixed list's label, then the value itself.
+- The order is: `render`, then the money or date format, then `labelProp`, then the fixed list's label, then the value itself.
 - What `render` returns is shown as plain text, never as HTML. `<b>` shows as `<b>`, so text from a server can't break the page or run code.
-- Searching uses both the text and the raw value, so `12500` finds `12 500.00`, and a country's id finds "Morocco". Sorting uses the raw value, so `200 MAD` comes before `1000 MAD`. A city column sorts by id, not by name.
+- Searching uses both the text and the raw value, so `12500` finds `12 500.00`, and a country's id finds "Morocco". Sorting uses the raw value, so `200 MAD` comes before `1000 MAD`. Dates are the exception: they sort by the real date. A city column sorts by id, not by name.
 - An empty value (`null` or `undefined`) shows an empty cell. On a nullable column, `render` gets `null` too.
 - Editors always get the raw value. After saving or cancelling, the text is worked out again.
 
@@ -1173,10 +1206,10 @@ Done:
 - [x] Totals in the footer: sum, average, min, max, count or your own
 - [x] A checkbox column to select rows, with "check all"
 - [x] More events: when editing starts (and stopping it), after saving, adding and deleting, row click and double click, and double click to edit
+- [x] Dates in any format (`dd/mm/yyyy`…), in the data and the cells, and sorting by the real date
 
 Next, roughly in this order:
 
-- [ ] Dates as `dd/mm/yyyy`, in the input and when sorting
 - [ ] Detail rows that open under a row
 - [ ] Time and read-only inputs
 - [ ] Methods to read rows (`getData`, `getRow`), put a row in directly without opening it, and reach the DataTables API
