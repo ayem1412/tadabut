@@ -24,3 +24,8 @@
 .table > tbody > tr.tdb-row-selected > * {
   --bs-table-bg-state: var(--bs-primary-bg-subtle);
 }
+
+.events {
+  font-family: var(--bs-font-monospace);
+  font-size: 0.85rem;
+}

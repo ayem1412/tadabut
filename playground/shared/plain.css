@@ -1,4 +1,4 @@
-/* The vanilla and React pages: no CSS framework. */
+/* The React page and the index: no CSS framework. */
 
 body {
   font-family: system-ui, sans-serif;
@@ -33,10 +33,4 @@ tr.tdb-row-editing .tdb-input-checkbox {
 /* A shadow, not a background, so it shows over DataTables' stripes. */
 tr.tdb-row-selected > td {
   box-shadow: inset 0 0 0 9999px rgb(13 110 253 / 0.12);
-}
-
-.events {
-  color: #444;
-  font-family: ui-monospace, monospace;
-  font-size: 0.85rem;
 }

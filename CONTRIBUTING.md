@@ -15,21 +15,20 @@ pnpm install
 pnpm dev
 ```
 
-`pnpm dev` opens the playground. It has three pages, plain, Bootstrap and React, and all of them use the code in `src/` directly. Use them to try your change.
+`pnpm dev` opens the playground. It has two pages, Bootstrap and React, and both use the code in `src/` directly. The Bootstrap page has a switch for every option and logs every event. Use them to try your change.
 
 ```
 playground/
-  index.html      links to the three pages
+  index.html      links to the two pages
   shared/         used by every page
     data.ts       the rows, and the columns (makeColumns)
     tadabut.css   the CSS every page needs
-    plain.css     the look of the vanilla and React pages
-  vanilla/        index.html, vanilla.ts
+    plain.css     the look of the React page
   bootstrap/      index.html, bootstrap.ts, bootstrap.css
   react/          index.html, react.tsx
 ```
 
-All three pages share the same rows and columns, from `makeColumns()` in `shared/data.ts`, so a new column is added once. The Bootstrap page passes its input classes to it.
+Both pages share the same rows and columns, from `makeColumns()` in `shared/data.ts`, so a new column is added once. The Bootstrap page passes its input classes to it.
 
 | Command          | What it does                           |
 | ---------------- | -------------------------------------- |
