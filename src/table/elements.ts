@@ -7,7 +7,7 @@ import type { TableClassNames } from './options';
 export type Action = 'edit' | 'delete';
 
 /** Every button Tadabut makes, by its `data-tdb-action`. */
-export type ButtonAction = Action | 'save' | 'cancel' | 'confirm' | 'keep';
+export type ButtonAction = Action | 'save' | 'cancel' | 'confirm' | 'keep' | 'detail';
 
 /** The same list at runtime, to check what's read back from the page. */
 const buttonActions: ReadonlySet<string> = new Set<ButtonAction>([
@@ -17,6 +17,7 @@ const buttonActions: ReadonlySet<string> = new Set<ButtonAction>([
   'cancel',
   'confirm',
   'keep',
+  'detail',
 ]);
 
 /** Whether a `data-tdb-action` is one of ours. */
@@ -104,4 +105,11 @@ function checkboxHtml(kind: string, label: string, classNames: TableClassNames):
   const classes = [kind, ...splitClasses(classNames.select)].join(' ');
 
   return `<input type="checkbox" class="${escapeHtml(classes)}" aria-label="${escapeHtml(label)}">`;
+}
+
+/** The ▸ button that opens a row's detail, as HTML for `defaultContent`. Starts closed. */
+export function detailToggleHtml(texts: Texts, classNames: TableClassNames): string {
+  const classes = ['tdb-detail-toggle', ...splitClasses(classNames.detail)].join(' ');
+
+  return `<button type="button" class="${escapeHtml(classes)}" data-tdb-action="detail" aria-expanded="false" aria-label="${escapeHtml(texts.showDetail)}">▸</button>`;
 }

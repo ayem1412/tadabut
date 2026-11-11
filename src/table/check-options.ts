@@ -8,6 +8,7 @@ import type { TadabutOptions } from './options';
  * @throws If a column has an `editor` and there's no `rowId`.
  * @throws If `onDelete` is set and there's no `rowId`.
  * @throws If `selection` is on and there's no `rowId`.
+ * @throws If `detail` is set and there's no `rowId`.
  * @throws If a hidden column (`visible: false`) has an `editor`.
  * @throws If a select's `labelProp` is its own column.
  * @throws If a money editor's `separator` and `point` are the same.
@@ -25,6 +26,10 @@ export function checkOptions<Row extends object>(options: TadabutOptions<Row>): 
 
     if (options.selection) {
       throw new Error('Tadabut: rowId is required with selection.');
+    }
+
+    if (options.detail !== undefined) {
+      throw new Error('Tadabut: rowId is required with detail.');
     }
   }
 

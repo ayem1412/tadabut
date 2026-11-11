@@ -190,3 +190,56 @@ describe('checking min and max', () => {
     ).not.toThrow();
   });
 });
+
+describe('validating dates', () => {
+  /** Opens Salma's row, picks a date and saves. */
+  async function saveWith(column: Column<Row>, picked: string) {
+    const onSave = vi.fn();
+    const { table, container } = setup(column, { onSave });
+
+    table.edit(3);
+    type(container.querySelector<HTMLInputElement>('.tdb-input-date') as HTMLInputElement, picked);
+    await table.save(3);
+
+    return { onSave, error: container.querySelector('.tdb-error')?.textContent ?? null };
+  }
+
+  it('compares real dates, not text, with min', async () => {
+    // As text, "15/03/1999" comes after "01/01/2000".
+    const { onSave, error } = await saveWith(
+      { ...hired, editor: { type: 'date', format: 'dd/mm/yyyy', min: '01/01/2000' } },
+      '1999-03-15',
+    );
+
+    expect(onSave).not.toHaveBeenCalled();
+    expect(error).toBe('Must be on or after 01/01/2000.');
+  });
+
+  it('compares real dates with max, and shows it in display', async () => {
+    const { onSave, error } = await saveWith(
+      {
+        ...hired,
+        editor: { type: 'date', format: 'dd/mm/yyyy', display: 'dd.mm.yyyy', max: '31/12/2024' },
+      },
+      '2025-01-02',
+    );
+
+    expect(onSave).not.toHaveBeenCalled();
+    expect(error).toBe('Must be on or before 31.12.2024.');
+  });
+
+  it('accepts a date between the limits', async () => {
+    const { onSave } = await saveWith(
+      {
+        ...hired,
+        editor: { type: 'date', format: 'dd/mm/yyyy', min: '01/01/2000', max: '31/12/2030' },
+      },
+      '2015-06-20',
+    );
+
+    expect(onSave).toHaveBeenCalledWith(
+      expect.objectContaining({ hired: '20/06/2015' }),
+      expect.anything(),
+    );
+  });
+});

@@ -76,7 +76,7 @@ export class Tadabut<Row extends object> {
   private readonly hasTotals: boolean;
   /** Which rows the totals count, with its default filled in. */
   private readonly totalRows: RowScope;
-  /** How many columns Tadabut adds before yours: 1 with `selection`. */
+  /** How many columns Tadabut adds before yours: the checkboxes and the ▸ button. */
   private readonly offset: number;
   /** The ticked rows. Only with `selection`. */
   private readonly selection?: Selection<Row>;
@@ -99,6 +99,7 @@ export class Tadabut<Row extends object> {
    * @throws If a column has an `editor` and there's no `rowId`.
    * @throws If `onDelete` is set and there's no `rowId`.
    * @throws If `selection` is on and there's no `rowId`.
+   * @throws If `detail` is set and there's no `rowId`.
    * @throws If a hidden column (`visible: false`) has an `editor`.
    * @throws If a select's `labelProp` is its own column.
    * @throws If a money editor's `separator` and `point` are the same.
@@ -141,7 +142,7 @@ export class Tadabut<Row extends object> {
     this.texts = { ...en, ...options.texts };
     this.hasTotals = options.columns.some((column) => column.total !== undefined);
     this.totalRows = options.totalRows ?? 'searched';
-    this.offset = options.selection ? 1 : 0;
+    this.offset = (options.selection ? 1 : 0) + (options.detail !== undefined ? 1 : 0);
 
     this.tableEl = document.createElement('table');
     addClasses(this.tableEl, [], this.classNames.table);
@@ -156,10 +157,13 @@ export class Tadabut<Row extends object> {
       ...options.dataTables,
       ...(this.offset > 0 && { order: shiftOrder(options.dataTables?.order, this.offset) }),
       data: [...options.data],
-      columns: toDataTables(options.columns, actions, this.classNames, this.texts, this.offset > 0),
+      columns: toDataTables(options.columns, actions, this.classNames, this.texts, {
+        selection: Boolean(options.selection),
+        detail: options.detail !== undefined,
+      }),
     });
 
-    if (this.offset > 0) {
+    if (options.selection) {
       this.selection = new Selection({
         dataTable: this.dataTable,
         rowId: this.rowId as keyof Row & string,

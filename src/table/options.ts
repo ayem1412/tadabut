@@ -66,6 +66,8 @@ export type TableClassNames = {
   readonly keep?: string;
   /** The selection checkboxes, header included. */
   readonly select?: string;
+  /** The button that opens and closes a detail. */
+  readonly detail?: string;
 };
 
 /**
@@ -89,6 +91,15 @@ export type SelectionOptions = {
    * row that matches the search, on every page.
    */
   readonly checkAll?: RowScope;
+};
+
+/** What `detail` returns: an element, or text. Text is shown as it is, never as HTML. */
+export type DetailContent = Node | string;
+
+/** The second argument of `detail`. */
+export type DetailContext = {
+  /** Aborted when the detail closes before it finished loading. Pass it to `fetch`. */
+  readonly signal: AbortSignal;
 };
 
 /** Options for `new Tadabut()`. */
@@ -136,6 +147,23 @@ export type TadabutOptions<Row extends object> = {
    * click or from code.
    */
   readonly onSelect?: (rows: readonly Row[]) => void;
+  /**
+   * Adds a ▸ button at the start of each row. It opens a line under the row
+   * with what this returns. May be async: "Loading…" shows while it waits,
+   * and the error message if it throws. It runs again after the row is
+   * saved. Needs `rowId`.
+   *
+   * @example
+   * detail: async (row, { signal }) => {
+   *   const res = await fetch(`/api/orders/${row.id}/lines`, { signal });
+   *   const box = document.createElement('ul');
+   *   for (const line of await res.json()) {
+   *     box.append(Object.assign(document.createElement('li'), { textContent: line.label }));
+   *   }
+   *   return box;
+   * }
+   */
+  readonly detail?: (row: Row, context: DetailContext) => DetailContent | Promise<DetailContent>;
   /**
    * Called with the edited row once it passes validation. May be async.
    *
