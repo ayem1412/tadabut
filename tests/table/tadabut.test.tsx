@@ -1,4 +1,4 @@
-import { act, createRef, StrictMode } from 'react';
+import { act, createRef, StrictMode, useState } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -736,5 +736,152 @@ describe('React Tadabut events', () => {
     });
 
     expect(ref.current?.isEditing(1)).toBe(true);
+  });
+});
+
+/** A component with its own state, to check hooks work inside a detail. */
+function Counter({ name }: { readonly name: string }) {
+  const [count, setCount] = useState(0);
+
+  return (
+    <button type='button' className='counter' onClick={() => setCount(count + 1)}>
+      {name}: {count}
+    </button>
+  );
+}
+
+describe('React Tadabut details', () => {
+  beforeEach(() => {
+    container = mountPoint();
+    root = createRoot(container);
+  });
+
+  afterEach(async () => {
+    await act(async () => {
+      root.unmount();
+    });
+  });
+
+  /** The ▸ button of the first row. */
+  const button = () => container.querySelector('tbody .tdb-detail-toggle') as HTMLButtonElement;
+  /** Waits for the async detail, and for React to draw it. */
+  const settled = () => act(async () => {});
+
+  it('draws JSX under the row', async () => {
+    await renderWith({ detail: (row) => <strong className='who'>{row.name}</strong> });
+
+    act(() => {
+      button().click();
+    });
+    await settled();
+
+    expect(container.querySelector('tr.tdb-row-detail strong.who')?.textContent).toBe('Amina');
+  });
+
+  it('runs hooks and state inside it', async () => {
+    await renderWith({ detail: (row) => <Counter name={row.name} /> });
+
+    act(() => {
+      button().click();
+    });
+    await settled();
+    act(() => {
+      container.querySelector<HTMLElement>('.counter')?.click();
+    });
+
+    expect(container.querySelector('.counter')?.textContent).toBe('Amina: 1');
+  });
+
+  it('waits for an async detail', async () => {
+    await renderWith({ detail: async (row) => <em>{row.city}</em> });
+
+    act(() => {
+      button().click();
+    });
+    await settled();
+
+    expect(container.querySelector('tr.tdb-row-detail em')?.textContent).toBe('Rabat');
+  });
+
+  it('removes what it drew when the detail closes', async () => {
+    await renderWith({ detail: (row) => <Counter name={row.name} /> });
+
+    act(() => {
+      button().click();
+    });
+    await settled();
+
+    expect(container.querySelector('.counter')).not.toBeNull();
+
+    act(() => {
+      button().click();
+    });
+
+    expect(container.querySelector('.counter')).toBeNull();
+  });
+
+  it('opens through the ref', async () => {
+    const ref = createRef<TadabutHandle<Row>>();
+    await renderWith({ ref, detail: (row) => <b>{row.name}</b> });
+
+    act(() => {
+      ref.current?.openDetail(2);
+    });
+    await settled();
+
+    expect(ref.current?.isDetailOpen(2)).toBe(true);
+    expect(container.querySelector('tr.tdb-row-detail b')?.textContent).toBe('Youness');
+
+    act(() => {
+      ref.current?.toggleDetail(2);
+    });
+
+    expect(ref.current?.isDetailOpen(2)).toBe(false);
+  });
+
+  it('uses the latest detail without a rebuild', async () => {
+    await renderWith({ detail: () => <i>first</i> });
+    const table = container.querySelector('table');
+    await renderWith({ detail: () => <i>second</i> });
+
+    act(() => {
+      button().click();
+    });
+    await settled();
+
+    expect(container.querySelector('table')).toBe(table);
+    expect(container.querySelector('tr.tdb-row-detail i')?.textContent).toBe('second');
+  });
+
+  it('adds and removes the ▸ column when detail is turned on and off', async () => {
+    await renderWith({});
+
+    expect(button()).toBeNull();
+
+    await renderWith({ detail: () => 'x' });
+
+    expect(button()).not.toBeNull();
+
+    await renderWith({});
+
+    expect(button()).toBeNull();
+  });
+
+  it('closes the details when data changes', async () => {
+    const ref = createRef<TadabutHandle<Row>>();
+    await renderWith({ ref, detail: (row) => <b className='open'>{row.name}</b> });
+
+    act(() => {
+      ref.current?.openDetail(1);
+    });
+    await settled();
+    await renderWith({
+      ref,
+      detail: (row) => <b className='open'>{row.name}</b>,
+      data: rows.slice(0, 2),
+    });
+
+    expect(ref.current?.isDetailOpen(1)).toBe(false);
+    expect(container.querySelector('.open')).toBeNull();
   });
 });

@@ -14,9 +14,11 @@ import {
   type TadabutOptions,
 } from '../../src/index';
 import {
+  type Details,
   fakeAdd,
   fakeDelete,
   fakeSave,
+  fetchDetails,
   french,
   makeColumns,
   type Row,
@@ -33,6 +35,7 @@ const modeSelect = document.querySelector<HTMLSelectElement>('#mode');
 const buttonsCheckbox = document.querySelector<HTMLInputElement>('#buttons');
 const frenchCheckbox = document.querySelector<HTMLInputElement>('#french');
 const doubleClickCheckbox = document.querySelector<HTMLInputElement>('#double-click');
+const detailsCheckbox = document.querySelector<HTMLInputElement>('#details');
 const lockCheckbox = document.querySelector<HTMLInputElement>('#lock');
 const confirmSelect = document.querySelector<HTMLSelectElement>('#confirm');
 const totalRowsSelect = document.querySelector<HTMLSelectElement>('#total-rows');
@@ -51,6 +54,7 @@ if (
   !buttonsCheckbox ||
   !frenchCheckbox ||
   !doubleClickCheckbox ||
+  !detailsCheckbox ||
   !lockCheckbox ||
   !confirmSelect ||
   !totalRowsSelect ||
@@ -72,6 +76,7 @@ const classNames: TableClassNames = {
   confirm: 'btn-danger',
   keep: 'btn-outline-secondary',
   select: 'form-check-input',
+  detail: 'text-body-secondary',
 };
 
 const columns = makeColumns({
@@ -100,6 +105,25 @@ const log = (text: string): void => {
   item.textContent = text;
   events.prepend(item);
   events.querySelector('li:nth-child(11)')?.remove();
+};
+
+/** A row's details as a list: built with textContent, since it comes from a server. */
+const detailsList = (details: Details): HTMLElement => {
+  const list = document.createElement('dl');
+  list.className = 'tdb-details small';
+
+  for (const [label, value] of [
+    ['Email', details.email],
+    ['Phone', details.phone],
+    ['Manager', details.manager],
+  ]) {
+    list.append(
+      Object.assign(document.createElement('dt'), { textContent: label }),
+      Object.assign(document.createElement('dd'), { textContent: value }),
+    );
+  }
+
+  return list;
 };
 
 /** The `selection` picked in the toolbar. */
@@ -138,6 +162,9 @@ const createTable = (): Tadabut<Row> => {
     onDeleted: (row) => log(`onDeleted: ${row.name}`),
     onRowClick: (row) => log(`onRowClick: ${row.name}`),
     onRowDoubleClick: (row) => log(`onRowDoubleClick: ${row.name}`),
+    detail: detailsCheckbox.checked
+      ? async (row, { signal }) => detailsList(await fetchDetails(row, signal))
+      : undefined,
     editing,
     dataTables: frenchCheckbox.checked ? { ...settings, language: french } : settings,
     texts: frenchCheckbox.checked ? fr : undefined,
@@ -188,6 +215,7 @@ modeSelect.addEventListener('change', recreate);
 buttonsCheckbox.addEventListener('change', recreate);
 frenchCheckbox.addEventListener('change', recreate);
 doubleClickCheckbox.addEventListener('change', recreate);
+detailsCheckbox.addEventListener('change', recreate);
 confirmSelect.addEventListener('change', recreate);
 totalRowsSelect.addEventListener('change', recreate);
 selectionSelect.addEventListener('change', recreate);

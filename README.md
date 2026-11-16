@@ -25,6 +25,7 @@ DataTables is great for showing data. Editing that data inside the table is a di
 - Delete a row, with a question first, or your own popup.
 - Text, number, money, date, checkbox and select inputs, with validation.
 - Selects that depend on another field, like country and city. Old requests get cancelled when the user changes their mind.
+- Detail rows that open under a row, loaded from your server if you like, with JSX in React.
 - Fully typed. The table knows what your rows look like, so a typo in a column name is a type error.
 - No jQuery. It's built on DataTables 3, which doesn't need it anymore.
 
@@ -43,7 +44,7 @@ The core has no framework in it. Each framework gets a small adapter on top.
 ## Requirements
 
 - DataTables 3: `datatables.net`, or one of its styling packages like `datatables.net-dt`
-- React 19, only if you use the React adapter
+- React 19 and `react-dom`, only if you use the React adapter
 - A modern browser
 
 ## Installation
@@ -67,7 +68,7 @@ bun add tadabut datatables.net-dt
 deno add npm:tadabut npm:datatables.net-dt
 ```
 
-For the React adapter, you also need React 19, which your app most likely has already.
+For the React adapter, you also need React 19 and `react-dom`, which your app most likely has already.
 
 Then import DataTables and its CSS once, before you create a table:
 
@@ -411,24 +412,27 @@ texts: { ...fr, save: 'Valider' }
 texts: { edit: 'Bearbeiten', save: 'Speichern', cancel: 'Abbrechen' }
 ```
 
-| Key                      | English                                                              |
-| ------------------------ | -------------------------------------------------------------------- |
-| `edit`, `save`, `cancel` | Edit, Save, Cancel                                                   |
-| `delete`                 | Delete                                                               |
-| `deleteQuestion`         | Delete this row?                                                     |
-| `confirm`, `keep`        | Yes, delete / No                                                     |
-| `loading`                | Loading…                                                             |
-| `saveFailed`             | Could not save.                                                      |
-| `addFailed`              | Could not add.                                                       |
-| `deleteFailed`           | Could not delete.                                                    |
-| `total`                  | Total                                                                |
-| `selectRow`, `selectAll` | Select row / Select all (the checkboxes' labels, for screen readers) |
-| `loadFailed`             | Could not load the options.                                          |
-| `required`               | This field is required.                                              |
-| `patternMismatch`        | Wrong format.                                                        |
-| `tooShort`, `tooLong`    | Must be at least 2 characters.                                       |
-| `tooSmall`, `tooLarge`   | Must be 18 or more.                                                  |
-| `tooEarly`, `tooLate`    | Must be on or after 2020-01-01.                                      |
+| Key                        | English                                                                           |
+| -------------------------- | --------------------------------------------------------------------------------- |
+| `edit`, `save`, `cancel`   | Edit, Save, Cancel                                                                |
+| `delete`                   | Delete                                                                            |
+| `deleteQuestion`           | Delete this row?                                                                  |
+| `confirm`, `keep`          | Yes, delete / No                                                                  |
+| `loading`                  | Loading…                                                                          |
+| `saveFailed`               | Could not save.                                                                   |
+| `addFailed`                | Could not add.                                                                    |
+| `deleteFailed`             | Could not delete.                                                                 |
+| `total`                    | Total                                                                             |
+| `selectRow`, `selectAll`   | Select row / Select all (the checkboxes' labels, for screen readers)              |
+| `showDetail`, `hideDetail` | Show details / Hide details (the ▸ button's label, for screen readers)            |
+| `detailLoading`            | Loading… (while a detail loads)                                                   |
+| `detailFailed`             | Couldn't load the details. (when `detail` throws something that isn't an `Error`) |
+| `loadFailed`               | Could not load the options.                                                       |
+| `required`                 | This field is required.                                                           |
+| `patternMismatch`          | Wrong format.                                                                     |
+| `tooShort`, `tooLong`      | Must be at least 2 characters.                                                    |
+| `tooSmall`, `tooLarge`     | Must be 18 or more.                                                               |
+| `tooEarly`, `tooLate`      | Must be on or after 2020-01-01.                                                   |
 
 The messages with a number or a date are functions, so you can put the value where your language needs it:
 
@@ -478,6 +482,10 @@ Tadabut doesn't ship any CSS. Everything it creates gets these classes, so you c
 | `tdb-select-row`        | a row's checkbox                                            |
 | `tdb-select-all`        | the "check all" checkbox                                    |
 | `tdb-row-selected`      | a selected row                                              |
+| `tdb-detail`            | the ▸ column, header too                                    |
+| `tdb-detail-toggle`     | the ▸ / ▾ button                                            |
+| `tdb-detail-open`       | a row whose detail is open                                  |
+| `tdb-row-detail`        | the line under a row with its detail                        |
 
 To use Bootstrap, Tailwind or anything else, add your own classes. They always go next to the `tdb-` ones, never instead of them. There are two places:
 
@@ -515,6 +523,7 @@ const table = new Tadabut(container, {
 | `confirm`        | the "Yes, delete" button only |
 | `keep`           | the "No" button only          |
 | `select`         | the selection checkboxes      |
+| `detail`         | the ▸ button                  |
 
 All of them are optional. Tadabut doesn't know any CSS framework: it adds the classes you give it, and nothing else. If you use Tailwind: it only keeps classes it finds in your own files. Classes in your column config count, so they work.
 
@@ -966,6 +975,53 @@ Rows you ticked that "check all" doesn't take stay ticked: unticking it only uns
 
 Your `order` in `dataTables` still counts your own columns: `[[0, 'asc']]` is your first column, not the checkboxes.
 
+### Detail rows
+
+Give `detail` a function, and each row gets a ▸ button at the start. Clicking it opens a line under the row with what the function returns:
+
+```ts
+const table = new Tadabut(container, {
+  data: orders,
+  rowId: 'id',
+  columns,
+  detail: async (row, { signal }) => {
+    const res = await fetch(`/api/orders/${row.id}/lines`, { signal });
+    const lines: { label: string }[] = await res.json();
+
+    const list = document.createElement('ul');
+
+    for (const line of lines) {
+      const item = document.createElement('li');
+      item.textContent = line.label;
+      list.append(item);
+    }
+
+    return list;
+  },
+});
+```
+
+- It returns an element, or a string. A string is shown as plain text, never as HTML, so text from a server can't break the page. To show HTML, build the elements yourself.
+- It can be async. "Loading…" shows while it waits. If it throws, the error message shows in the line.
+- Pass `signal` to `fetch`. It's aborted when the detail closes before it finished loading, so a slow request stops instead of showing up late.
+- Several details can be open at once.
+- The ▸ button comes after the selection checkboxes and before your columns. Your `order` in `dataTables` still counts from your first column.
+- `detail` needs a `rowId`, and Tadabut throws an error without one.
+
+**What happens to an open detail when…**
+
+- **You sort, search or change page:** it stays open, and comes back when its row is shown again.
+- **The row is being edited:** it stays open.
+- **The row is saved:** `detail` runs again, so it shows the new values.
+- **A save or delete fails:** the error shows under the detail. Neither one replaces the other.
+- **The row is deleted, `setData` runs, or the table is destroyed:** it closes, and a load still running is stopped.
+
+**Open it on a row click** instead of, or as well as, the button:
+
+```ts
+onRowClick: (row) => table.toggleDetail(row.id),
+```
+
 ### Events
 
 Six callbacks tell you what happened. Each one gets the row:
@@ -1054,6 +1110,11 @@ table.clearSelection(); // untick every row
 table.isSelected(1); // true while row 1 is ticked
 table.getSelected(); // the ticked rows
 
+table.openDetail(1); // open row 1's detail
+table.closeDetail(1); // close it
+table.toggleDetail(1); // open it if closed, close it if open
+table.isDetailOpen(1); // true while it's open, or loading
+
 table.setData(newEmployees); // replace all rows, keeps sorting and search
 table.destroy(); // remove everything Tadabut created
 ```
@@ -1068,7 +1129,7 @@ table.destroy(); // remove everything Tadabut created
 
 `add` returns `true` if the new row opened, `false` if one is already open, no column has an editor, or a row is being edited in `'single'` mode. `saveNew` works like `save`, and throws if the saved row has no id. `cancelNew` does nothing while `onAdd` runs.
 
-`select` skips ids that aren't in the table. `onSelect` is only called when something really changed. `getSelected` gives the rows in the order they were added, including rows hidden by the search or on other pages. Without `selection`, these do nothing, and `getSelected` gives `[]`.
+`select` skips ids that aren't in the table. `onSelect` is only called when something really changed. `getSelected` gives the rows in the order they were added, including rows hidden by the search or on other pages. Without `selection`, these do nothing, and `getSelected` gives `[]`. The detail methods do nothing without `detail`, and `isDetailOpen` gives `false`.
 
 `setData` and `destroy` cancel any row being edited, and the new row, first. Unsaved changes are lost.
 
@@ -1177,8 +1238,9 @@ export default function Employees() {
 - In `onAdd` and `onDelete`, update your state too, like above. Otherwise the next time `data` changes, the new row disappears, or the deleted one comes back.
 - `totalRows` is a plain string, so writing it inline is fine. Changing it rebuilds the table, to count other rows.
 - `selection={{ checkAll: 'page' }}` inline is fine too: only turning it on or off, or changing `checkAll`, rebuilds the table. A rebuild clears the selection.
+- `detail` can return JSX, async or not: `detail={(row) => <OrderLines orderId={row.id} />}`. React draws it under the row, so your components, hooks and state work inside it, and it's cleaned up when the detail closes. It can be a new function on every render: only turning it on or off rebuilds the table. This needs `react-dom`, which every React app already has.
 - `editing` can be a new object on every render too. The table is only rebuilt when `mode`, `button` or `doubleClick` really change. Changing `columns`, `rowId` or `editing` closes any row being edited.
-- The ref has the same methods as the core: `edit`, `save`, `cancel`, `delete`, `isEditing`, `add`, `saveNew`, `cancelNew`, `isAdding`, `getSelected`, `isSelected`, `select`, `deselect` and `clearSelection`. Before the table is built, or after it's gone, the methods that return something give `false` (`[]` for `getSelected`), and the others do nothing.
+- The ref has the same methods as the core: `edit`, `save`, `cancel`, `delete`, `isEditing`, `add`, `saveNew`, `cancelNew`, `isAdding`, `getSelected`, `isSelected`, `select`, `deselect`, `clearSelection`, `openDetail`, `closeDetail`, `toggleDetail` and `isDetailOpen`. Before the table is built, or after it's gone, the methods that return something give `false` (`[]` for `getSelected`), and the others do nothing.
 - There is no `setData` on the ref. To change the rows, change `data`.
 
 ## Roadmap
@@ -1207,10 +1269,10 @@ Done:
 - [x] A checkbox column to select rows, with "check all"
 - [x] More events: when editing starts (and stopping it), after saving, adding and deleting, row click and double click, and double click to edit
 - [x] Dates in any format (`dd/mm/yyyy`…), in the data and the cells, and sorting by the real date
+- [x] Detail rows that open under a row, async and with JSX in React
 
 Next, roughly in this order:
 
-- [ ] Detail rows that open under a row
 - [ ] Time and read-only inputs
 - [ ] Methods to read rows (`getData`, `getRow`), put a row in directly without opening it, and reach the DataTables API
 - [ ] Keyboard navigation and theming
