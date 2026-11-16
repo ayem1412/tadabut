@@ -5,7 +5,13 @@ import { defaultDateFormat, formatDate, parseDate } from '../editors/date-format
 import type { AnyEditor } from '../editors/editor';
 import { moneyFormat } from '../editors/money';
 import { formatMoney } from '../editors/money-format';
-import { type Action, buttonHtml, selectAllHtml, selectRowHtml } from '../table/elements';
+import {
+  type Action,
+  buttonHtml,
+  detailToggleHtml,
+  selectAllHtml,
+  selectRowHtml,
+} from '../table/elements';
 import type { TableClassNames } from '../table/options';
 import type { Texts } from '../texts/texts';
 import type { Column } from './column';
@@ -49,6 +55,18 @@ function selectColumn(classNames: TableClassNames, texts: Texts): ColumnOptions 
   };
 }
 
+/** The column with the ▸ button. Which ones are open is set after each draw. */
+function detailColumn(classNames: TableClassNames, texts: Texts): ColumnOptions {
+  return {
+    title: '',
+    data: null,
+    className: 'tdb-detail',
+    orderable: false,
+    searchable: false,
+    defaultContent: detailToggleHtml(texts, classNames),
+  };
+}
+
 /** `Column<Row>` is a union per field, which makes `render` uncallable here. */
 type LooseColumn<Row> = {
   /** The column's `render`, with its value type erased. */
@@ -58,16 +76,16 @@ type LooseColumn<Row> = {
 };
 
 /**
- * The checkbox column goes first with `selection`, and the actions column
- * last. Tadabut shifts your column indexes to match. No `actions` means no
- * actions column.
+ * The checkbox column goes first with `selection`, then the ▸ column with
+ * `detail`, and the actions column last. Tadabut shifts your column indexes
+ * to match. No `actions` means no actions column.
  */
 export function toDataTables<Row extends object>(
   columns: readonly Column<Row>[],
   actions: readonly Action[],
   classNames: TableClassNames,
   texts: Texts,
-  selection: boolean,
+  leading: { readonly selection: boolean; readonly detail: boolean },
 ): ColumnOptions[] {
   const converted = columns.map((column): ColumnOptions => {
     const label = labelOf(column as LooseColumn<Row>);
@@ -104,7 +122,10 @@ export function toDataTables<Row extends object>(
     };
   });
 
-  const first = selection ? [selectColumn(classNames, texts)] : [];
+  const first = [
+    ...(leading.selection ? [selectColumn(classNames, texts)] : []),
+    ...(leading.detail ? [detailColumn(classNames, texts)] : []),
+  ];
   const last = actions.length > 0 ? [actionsColumn(actions, classNames, texts)] : [];
 
   return [...first, ...converted, ...last];

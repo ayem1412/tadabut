@@ -7,7 +7,42 @@ import { StrictMode, useRef, useState } from 'react';
 import { createRoot } from 'react-dom/client';
 
 import { Tadabut, type TadabutHandle } from '../../src/react/index';
-import { columns, fakeAdd, fakeDelete, fakeSave, type Row, rows, settings } from '../shared/data';
+import {
+  columns,
+  type Details,
+  fakeAdd,
+  fakeDelete,
+  fakeSave,
+  fetchDetails,
+  type Row,
+  rows,
+  settings,
+} from '../shared/data';
+
+/** A row's details as JSX. React escapes the text, like everywhere. */
+function DetailsList({ details }: { readonly details: Details }) {
+  const [shown, setShown] = useState(false);
+
+  return (
+    <dl className='tdb-details'>
+      <dt>Email</dt>
+      <dd>{details.email}</dd>
+      <dt>Phone</dt>
+      <dd>
+        {/* State inside a detail, to show hooks work there. */}
+        {shown ? (
+          details.phone
+        ) : (
+          <button type='button' onClick={() => setShown(true)}>
+            Show the number
+          </button>
+        )}
+      </dd>
+      <dt>Manager</dt>
+      <dd>{details.manager}</dd>
+    </dl>
+  );
+}
 
 function App() {
   const [data, setData] = useState(rows);
@@ -71,6 +106,9 @@ function App() {
         onRowClick={(row) => setStatus(`Clicked ${row.name}`)}
         onSaved={(row, { previous }) => setStatus(`Saved ${previous.name} → ${row.name}`)}
         selection
+        detail={async (row, { signal }) => (
+          <DetailsList details={await fetchDetails(row, signal)} />
+        )}
         onSelect={(rows) => setSelected(rows.map((row) => row.name))}
         // Inline on purpose: this must not rebuild the table.
         onSave={async (row) => {

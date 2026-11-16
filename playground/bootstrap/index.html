@@ -39,6 +39,10 @@
           <label class="form-check-label" for="lock">Lock Leila</label>
         </div>
         <div class="form-check form-switch mb-0">
+          <input id="details" class="form-check-input" type="checkbox" checked />
+          <label class="form-check-label" for="details">Details</label>
+        </div>
+        <div class="form-check form-switch mb-0">
           <input id="french" class="form-check-input" type="checkbox" />
           <label class="form-check-label" for="french">French</label>
         </div>
@@ -80,9 +84,10 @@
         save, and sorting before editing. Change the country quickly to see the cities reload, and
         pick Atlantis to see a failed load. Delete Karim to see a failed delete, and add a row named
         "error" to see a failed add. Leila can't be edited while "Lock Leila" is on: that's
-        <code>onEditStart</code>. Every event shows up under the table. Tick rows, change page and
-        search, then try <code>table.select([1, 2])</code> and <code>table.getSelected()</code> in
-        the console.
+        <code>onEditStart</code>. Every event shows up under the table. Click ▸ to open a row's
+        details, loaded from a slow fake server: Omar's fail, and editing a row reloads them. Tick
+        rows, change page and search, then try <code>table.select([1, 2])</code> and
+        <code>table.getSelected()</code> in the console.
       </p>
 
       <div id="container"></div>

@@ -336,6 +336,30 @@ export async function fakeDelete(row: Row): Promise<void> {
   }
 }
 
+/** What the fake server knows about someone, for the detail rows. */
+export type Details = {
+  readonly email: string;
+  readonly phone: string;
+  readonly manager: string;
+};
+
+// Like a slow API. Omar (id 8) has no file, to see a failed load.
+export async function fetchDetails(row: Row, signal: AbortSignal): Promise<Details> {
+  await wait(600, signal);
+
+  if (row.id === 8) {
+    throw new Error('The server has no file for this person');
+  }
+
+  const login = row.name.toLowerCase().replaceAll(' ', '.');
+
+  return {
+    email: `${login}@example.com`,
+    phone: `+212 6 ${String(10 + row.id).padStart(2, '0')} 34 56 78`,
+    manager: row.id === 7 ? '—' : 'Leila Berrada',
+  };
+}
+
 export const settings: DataTablesSettings = {
   order: [[1, 'asc']],
   lengthMenu: [5, 10, 20, -1],

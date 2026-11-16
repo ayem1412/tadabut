@@ -40,6 +40,14 @@ export type Texts = {
   readonly required: string;
   /** A text that doesn't match `pattern`. */
   readonly patternMismatch: string;
+  /** The label of the ▸ button, for screen readers. */
+  readonly showDetail: string;
+  /** Its label while the detail is open. */
+  readonly hideDetail: string;
+  /** Shown while an async `detail` loads. */
+  readonly detailLoading: string;
+  /** Shown when `detail` throws something that isn't an `Error`. */
+  readonly detailFailed: string;
   /** A text shorter than `minLength`. */
   readonly tooShort: (min: number) => string;
   /** A text longer than `maxLength`. */
@@ -48,8 +56,8 @@ export type Texts = {
   readonly tooSmall: (min: number) => string;
   /** A number above `max`. */
   readonly tooLarge: (max: number) => string;
-  /** A date before `min`, given as `'YYYY-MM-DD'`. */
+  /** A date before `min`, given as the column shows dates (its `display`). */
   readonly tooEarly: (min: string) => string;
-  /** A date after `max`, given as `'YYYY-MM-DD'`. */
+  /** A date after `max`, given as the column shows dates (its `display`). */
   readonly tooLate: (max: string) => string;
 };

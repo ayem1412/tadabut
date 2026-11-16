@@ -12,9 +12,18 @@
  * ```
  */
 
-import { type ReactElement, type Ref, useEffect, useImperativeHandle, useRef } from 'react';
+import {
+  type ReactElement,
+  type ReactNode,
+  type Ref,
+  useEffect,
+  useImperativeHandle,
+  useRef,
+  useState,
+} from 'react';
+import { createPortal } from 'react-dom';
 
-import { Tadabut as Core, type TadabutOptions } from '../index';
+import { Tadabut as Core, type DetailContext, type TadabutOptions } from '../index';
 
 /** What the `ref` gets. No `setData`: change the `data` prop instead. */
 export type TadabutHandle<Row extends object> = Pick<
@@ -33,25 +42,49 @@ export type TadabutHandle<Row extends object> = Pick<
   | 'select'
   | 'deselect'
   | 'clearSelection'
+  | 'openDetail'
+  | 'closeDetail'
+  | 'toggleDetail'
+  | 'isDetailOpen'
 >;
 
-/** The core options, plus `ref`. */
-export type TadabutProps<Row extends object> = TadabutOptions<Row> & {
+/** The core options, with `detail` returning JSX, plus `ref`. */
+export type TadabutProps<Row extends object> = Omit<TadabutOptions<Row>, 'detail'> & {
+  /**
+   * Adds a ▸ button at the start of each row. It opens a line under the row
+   * with what this returns: any JSX, so hooks, state and your components
+   * work inside. May be async: "Loading…" shows while it waits, and the
+   * error message if it throws. It runs again after the row is saved. Needs
+   * `rowId`.
+   *
+   * @example
+   * detail={(row) => <OrderLines orderId={row.id} />}
+   */
+  readonly detail?: (row: Row, context: DetailContext) => ReactNode | Promise<ReactNode>;
   /**
    * Gives you the same methods as the core table: `edit`, `save`, `cancel`,
    * `delete`, `add`, `saveNew`, `cancelNew`, `isEditing`, `isAdding`,
-   * `getSelected`, `isSelected`, `select`, `deselect` and `clearSelection`.
+   * `getSelected`, `isSelected`, `select`, `deselect`, `clearSelection`,
+   * `openDetail`, `closeDetail`, `toggleDetail` and `isDetailOpen`.
    */
   readonly ref?: Ref<TadabutHandle<Row>>;
+};
+
+/** An open detail: where it goes, and what React draws there. */
+type Detail = {
+  /** The `<div>` the core put under the row. */
+  readonly element: HTMLDivElement;
+  /** What `detail` returned. */
+  readonly content: ReactNode;
 };
 
 /**
  * New `data` updates the table in place. Changing `columns`, `rowId`,
  * `dataTables`, `texts`, `totalRows` or `selection` rebuilds it (and closes
- * open rows, and clears the selection), so keep the objects stable with a
- * constant or `useMemo`. `editing`, `selection`, `classNames` and every `on…`
- * callback (and `confirmDelete`) can be inline: they're compared by value or
- * read through a ref.
+ * open rows and details, and clears the selection), so keep the objects
+ * stable with a constant or `useMemo`. `editing`, `selection`, `classNames`,
+ * `detail` and every `on…` callback (and `confirmDelete`) can be inline:
+ * they're compared by value or read through a ref.
  */
 export function Tadabut<Row extends object>({
   data,
@@ -74,6 +107,7 @@ export function Tadabut<Row extends object>({
   onDeleted,
   onRowClick,
   onRowDoubleClick,
+  detail,
   ref,
 }: TadabutProps<Row>): ReactElement {
   /** The `<div>` the core builds the table in. */
@@ -104,6 +138,12 @@ export function Tadabut<Row extends object>({
   const onRowClickRef = useRef(onRowClick);
   /** The latest `onRowDoubleClick`, so a new one doesn't rebuild the table. */
   const onRowDoubleClickRef = useRef(onRowDoubleClick);
+  /** The latest `detail`, so a new one doesn't rebuild the table. */
+  const detailRef = useRef(detail);
+  /** The next key for an open detail. Never reused, so a reload gets a fresh one. */
+  const nextKeyRef = useRef(0);
+  /** The open details React draws into, by key. */
+  const [details, setDetails] = useState<ReadonlyMap<number, Detail>>(() => new Map());
 
   // Pulled out so inline objects don't trigger a rebuild every render.
   const mode = editing?.mode;
@@ -124,6 +164,7 @@ export function Tadabut<Row extends object>({
   const hasDelete = onDelete !== undefined;
   const confirmWith =
     confirmDelete === false ? 'never' : confirmDelete === undefined ? 'inline' : 'function';
+  const hasDetail = detail !== undefined;
 
   useEffect(() => {
     const container = containerRef.current;
@@ -176,6 +217,37 @@ export function Tadabut<Row extends object>({
       onDeleted: (row) => onDeletedRef.current?.(row),
       onRowClick: (row, event) => onRowClickRef.current?.(row, event),
       onRowDoubleClick: (row, event) => onRowDoubleClickRef.current?.(row, event),
+      // The core shows a <div>, and React draws the JSX into it with a portal.
+      detail: hasDetail
+        ? async (row, context) => {
+            const content = await detailRef.current?.(row, context);
+
+            // Closed while it loaded: the core ignores what we return.
+            if (context.signal.aborted) {
+              return '';
+            }
+
+            const key = nextKeyRef.current++;
+            const element = document.createElement('div');
+
+            setDetails((previous) => new Map(previous).set(key, { element, content }));
+
+            // The core aborts the signal when the detail closes, reloads, or
+            // the table goes away, even after it loaded.
+            context.signal.addEventListener(
+              'abort',
+              () =>
+                setDetails((previous) => {
+                  const next = new Map(previous);
+                  next.delete(key);
+                  return next;
+                }),
+              { once: true },
+            );
+
+            return element;
+          }
+        : undefined,
     });
     tableRef.current = table;
 
@@ -205,6 +277,7 @@ export function Tadabut<Row extends object>({
     checkAll,
     hasDelete,
     confirmWith,
+    hasDetail,
   ]);
 
   useEffect(() => {
@@ -224,6 +297,7 @@ export function Tadabut<Row extends object>({
     onDeletedRef.current = onDeleted;
     onRowClickRef.current = onRowClick;
     onRowDoubleClickRef.current = onRowDoubleClick;
+    detailRef.current = detail;
   });
 
   useImperativeHandle(
@@ -243,9 +317,18 @@ export function Tadabut<Row extends object>({
       select: (ids) => tableRef.current?.select(ids),
       deselect: (ids) => tableRef.current?.deselect(ids),
       clearSelection: () => tableRef.current?.clearSelection(),
+      openDetail: (id) => tableRef.current?.openDetail(id),
+      closeDetail: (id) => tableRef.current?.closeDetail(id),
+      toggleDetail: (id) => tableRef.current?.toggleDetail(id),
+      isDetailOpen: (id) => tableRef.current?.isDetailOpen(id) ?? false,
     }),
     [],
   );
 
-  return <div ref={containerRef} />;
+  return (
+    <>
+      <div ref={containerRef} />
+      {[...details].map(([key, { element, content }]) => createPortal(content, element, key))}
+    </>
+  );
 }

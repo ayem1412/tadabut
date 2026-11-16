@@ -6,13 +6,7 @@ import { addClasses } from '../editors/classes';
 import { en } from '../texts/en';
 import type { Texts } from '../texts/texts';
 import { checkOptions } from './check-options';
-import {
-  type Action,
-  deleteQuestion,
-  isButtonAction,
-  rowErrorMessage,
-  saveCancelButtons,
-} from './elements';
+import { type Action, deleteQuestion, isButtonAction, saveCancelButtons } from './elements';
 import { NewRow } from './new-row';
 import type {
   DataTablesSettings,
@@ -20,6 +14,7 @@ import type {
   TableClassNames,
   TadabutOptions,
 } from './options';
+import { RowLines } from './row-lines';
 import type { RowScope } from './scope';
 import { Selection } from './selection';
 import { footerFor, rowsFor, totalText } from './totals';
@@ -76,7 +71,7 @@ export class Tadabut<Row extends object> {
   private readonly hasTotals: boolean;
   /** Which rows the totals count, with its default filled in. */
   private readonly totalRows: RowScope;
-  /** How many columns Tadabut adds before yours: 1 with `selection`. */
+  /** How many columns Tadabut adds before yours: the checkboxes and the ▸ button. */
   private readonly offset: number;
   /** The ticked rows. Only with `selection`. */
   private readonly selection?: Selection<Row>;
@@ -92,6 +87,8 @@ export class Tadabut<Row extends object> {
   private readonly onRowClick: TadabutOptions<Row>['onRowClick'];
   /** The user's row double click callback. */
   private readonly onRowDoubleClick: TadabutOptions<Row>['onRowDoubleClick'];
+  /** The lines under each row: details and errors. */
+  private readonly rowLines: RowLines<Row>;
 
   /**
    * Builds the table inside `container`, which should be empty.
@@ -99,6 +96,7 @@ export class Tadabut<Row extends object> {
    * @throws If a column has an `editor` and there's no `rowId`.
    * @throws If `onDelete` is set and there's no `rowId`.
    * @throws If `selection` is on and there's no `rowId`.
+   * @throws If `detail` is set and there's no `rowId`.
    * @throws If a hidden column (`visible: false`) has an `editor`.
    * @throws If a select's `labelProp` is its own column.
    * @throws If a money editor's `separator` and `point` are the same.
@@ -141,7 +139,7 @@ export class Tadabut<Row extends object> {
     this.texts = { ...en, ...options.texts };
     this.hasTotals = options.columns.some((column) => column.total !== undefined);
     this.totalRows = options.totalRows ?? 'searched';
-    this.offset = options.selection ? 1 : 0;
+    this.offset = (options.selection ? 1 : 0) + (options.detail !== undefined ? 1 : 0);
 
     this.tableEl = document.createElement('table');
     addClasses(this.tableEl, [], this.classNames.table);
@@ -156,10 +154,25 @@ export class Tadabut<Row extends object> {
       ...options.dataTables,
       ...(this.offset > 0 && { order: shiftOrder(options.dataTables?.order, this.offset) }),
       data: [...options.data],
-      columns: toDataTables(options.columns, actions, this.classNames, this.texts, this.offset > 0),
+      columns: toDataTables(options.columns, actions, this.classNames, this.texts, {
+        selection: Boolean(options.selection),
+        detail: options.detail !== undefined,
+      }),
     });
 
-    if (this.offset > 0) {
+    this.rowLines = new RowLines({
+      dataTable: this.dataTable,
+      rowId: this.rowId,
+      detail: options.detail,
+      texts: this.texts,
+    });
+
+    // Redrawing a row (save, cancel, paging) brings back a closed ▸.
+    if (options.detail !== undefined) {
+      this.dataTable.on('draw', () => this.rowLines.sync());
+    }
+
+    if (options.selection) {
       this.selection = new Selection({
         dataTable: this.dataTable,
         rowId: this.rowId as keyof Row & string,
@@ -179,7 +192,7 @@ export class Tadabut<Row extends object> {
       this.updateTotals();
     }
 
-    if (this.hasActions) {
+    if (this.hasActions || options.detail !== undefined) {
       this.tableEl.addEventListener('click', this.onClick);
     }
 
@@ -195,11 +208,13 @@ export class Tadabut<Row extends object> {
    * Replaces all rows. Sorting, search and the page are kept.
    *
    * Open rows, and the new row, are closed first, and their unsaved changes
-   * are lost.
+   * are lost. Open details close too.
    */
   public setData(rows: readonly Row[]): void {
     this.destroySessions();
     this.deleting.clear();
+    // Before the draw, so the new rows draw with a closed ▸.
+    this.rowLines.destroy();
 
     this.dataTable
       .clear()
@@ -335,6 +350,33 @@ export class Tadabut<Row extends object> {
   }
 
   /**
+   * Opens a row's detail under it. "Loading…" shows until `detail` returns.
+   * Does nothing without `detail`, if it's open already, or if the row
+   * isn't in the table.
+   *
+   * @example
+   * onRowClick: (row) => table.toggleDetail(row.id)
+   */
+  public openDetail(id: string | number): void {
+    this.rowLines.open(id);
+  }
+
+  /** Closes a row's detail, and stops its load if it's still running. Does nothing without `detail`. */
+  public closeDetail(id: string | number): void {
+    this.rowLines.close(id);
+  }
+
+  /** Opens a closed detail, closes an open one, like the ▸ button. Does nothing without `detail`. */
+  public toggleDetail(id: string | number): void {
+    this.rowLines.toggle(id);
+  }
+
+  /** Whether a row's detail is open, or loading. Always `false` without `detail`. */
+  public isDetailOpen(id: string | number): boolean {
+    return this.rowLines.isOpen(id);
+  }
+
+  /**
    * Closes the new row and throws it away. Does nothing if there's none, or
    * while it's saving.
    */
@@ -451,7 +493,7 @@ export class Tadabut<Row extends object> {
     session.destroy();
     this.sessions.delete(id);
 
-    this.clearRowError(id);
+    this.rowLines.clearError(id);
     this.findRow(id)?.node()?.classList.remove('tdb-row-editing');
 
     // 'data', or DataTables would read the emptied cells back as data.
@@ -480,7 +522,7 @@ export class Tadabut<Row extends object> {
     }
 
     session.clearErrors();
-    this.clearRowError(id);
+    this.rowLines.clearError(id);
 
     const errors = session.validate();
     const [firstInvalid] = errors.keys();
@@ -510,7 +552,7 @@ export class Tadabut<Row extends object> {
       }
 
       this.setSaving(id, false);
-      this.showRowError(id, error instanceof Error ? error.message : this.texts.saveFailed);
+      this.rowLines.showError(id, error instanceof Error ? error.message : this.texts.saveFailed);
       return false;
     }
 
@@ -528,6 +570,7 @@ export class Tadabut<Row extends object> {
     this.findRow(id)?.node()?.classList.remove('tdb-row-editing');
     this.setSaving(id, false);
 
+    this.rowLines.reload(id);
     this.onSaved?.(saved, { previous: session.originalData });
 
     return true;
@@ -553,7 +596,7 @@ export class Tadabut<Row extends object> {
 
     const data = row.data();
 
-    this.clearRowError(id);
+    this.rowLines.clearError(id);
     this.deleting.add(id);
     this.setSaving(id, true);
 
@@ -568,7 +611,7 @@ export class Tadabut<Row extends object> {
       this.deleting.delete(id);
       this.setSaving(id, false);
       this.keepRow(id);
-      this.showRowError(id, error instanceof Error ? error.message : this.texts.deleteFailed);
+      this.rowLines.showError(id, error instanceof Error ? error.message : this.texts.deleteFailed);
 
       return false;
     }
@@ -580,6 +623,8 @@ export class Tadabut<Row extends object> {
     this.deleting.delete(id);
 
     this.findRow(id)?.remove().draw(false);
+
+    this.rowLines.prune();
 
     this.selection?.prune();
 
@@ -598,6 +643,7 @@ export class Tadabut<Row extends object> {
     this.destroySessions();
     this.deleting.clear();
     this.selection?.destroy();
+    this.rowLines.destroy();
     this.dataTable.destroy();
     this.tableEl.remove();
   }
@@ -643,16 +689,6 @@ export class Tadabut<Row extends object> {
       tr.inert = saving;
       tr.classList.toggle('tdb-row-saving', saving);
     }
-  }
-
-  /** Shows a save or delete error in a child row under the row. */
-  private showRowError(id: string | number, message: string): void {
-    this.findRow(id)?.child(rowErrorMessage(message), 'tdb-row-error').show();
-  }
-
-  /** Removes the save or delete error under a row, if any. */
-  private clearRowError(id: string | number): void {
-    this.findRow(id)?.child.remove();
   }
 
   /** The last cell of a row, the one with the buttons. */
@@ -704,8 +740,9 @@ export class Tadabut<Row extends object> {
   }
 
   /**
-   * `undefined` for rows DataTables doesn't know, like the error row or
-   * a table inside a custom editor.
+   * `undefined` for rows DataTables doesn't know, like a table inside a custom
+   * editor, and for the lines under a row (detail and error), which DataTables
+   * maps back to their row.
    */
   private rowIdOf(element: Element): string | number | undefined {
     const tr = element.closest('tr');
@@ -716,7 +753,7 @@ export class Tadabut<Row extends object> {
 
     const row = this.dataTable.row(tr);
 
-    return row.any() ? (row.data()[this.rowId] as string | number) : undefined;
+    return row.any() && row.node() === tr ? (row.data()[this.rowId] as string | number) : undefined;
   }
 
   /**
@@ -776,6 +813,9 @@ export class Tadabut<Row extends object> {
         break;
       case 'confirm':
         void this.delete(id);
+        break;
+      case 'detail':
+        this.toggleDetail(id);
         break;
     }
   };
@@ -849,8 +889,8 @@ export class Tadabut<Row extends object> {
 
   /**
    * The row a click landed on, or `undefined` if it doesn't count: buttons,
-   * inputs, links, the checkbox and buttons cells, the new row, a row being
-   * edited, the header, the footer and error lines.
+   * inputs, links, the checkbox, ▸ and buttons cells, the new row, a row
+   * being edited, the header, the footer, and the lines under a row.
    */
   private clickedRow(event: MouseEvent): ApiRowMethods<Row> | undefined {
     const target = event.target;
@@ -865,7 +905,7 @@ export class Tadabut<Row extends object> {
     }
 
     // A click that just missed the checkbox or a button.
-    if (target.closest('td.tdb-select, td.tdb-actions') !== null) {
+    if (target.closest('td.tdb-select, td.tdb-detail, td.tdb-actions') !== null) {
       return undefined;
     }
 
@@ -882,8 +922,8 @@ export class Tadabut<Row extends object> {
 
     const row = this.dataTable.row(tr);
 
-    // The header and footer aren't rows. An error line is a child row, which
-    // DataTables maps back to its parent row, so its `<tr>` isn't the row's.
+    // The header and footer aren't rows. A detail or error line is a child row,
+    // which DataTables maps back to its parent row, so its `<tr>` isn't the row's.
     return row.any() && row.node() === tr ? row : undefined;
   }
 

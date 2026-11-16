@@ -1,3 +1,4 @@
+import { defaultDateFormat, formatDate, parseDate } from '../editors/date-format';
 import type { AnyEditor } from '../editors/editor';
 import { en } from '../texts/en';
 import type { Texts } from '../texts/texts';
@@ -84,18 +85,34 @@ function rangeError(
   return undefined;
 }
 
-/** `min` and `max` for dates. */
+/**
+ * `min` and `max` for dates. Compared as `'yyyy-mm-dd'`, since `'15/03/1999'`
+ * comes after `'01/01/2000'` as text. The message shows the limit as the
+ * cells show dates.
+ */
 function dateError(
   config: Extract<AnyEditor, { type: 'date' }>,
   value: string,
   texts: Texts,
 ): string | undefined {
-  if (config.min !== undefined && value < config.min) {
-    return texts.tooEarly(config.min);
+  const format = config.format ?? defaultDateFormat;
+  const display = config.display ?? format;
+  const date = parseDate(value, format);
+
+  if (date === null) {
+    return undefined;
   }
 
-  if (config.max !== undefined && value > config.max) {
-    return texts.tooLate(config.max);
+  // checkOptions already threw if min or max aren't real dates.
+  const min = config.min === undefined ? null : parseDate(config.min, format);
+  const max = config.max === undefined ? null : parseDate(config.max, format);
+
+  if (min !== null && date < min) {
+    return texts.tooEarly(formatDate(min, display));
+  }
+
+  if (max !== null && date > max) {
+    return texts.tooLate(formatDate(max, display));
   }
 
   return undefined;

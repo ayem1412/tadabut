@@ -25,6 +25,8 @@ export type {
 export type { TextEditor } from './editors/text';
 export type {
   DataTablesSettings,
+  DetailContent,
+  DetailContext,
   EditingOptions,
   SaveContext,
   SelectionOptions,
