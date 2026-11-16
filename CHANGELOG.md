@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.7.0](https://github.com/ayem1412/tadabut/compare/v0.6.0...v0.7.0) (2026-11-16)
+
+
+### Features
+
+* detail rows that open under a row ([#56](https://github.com/ayem1412/tadabut/issues/56)) ([b23453d](https://github.com/ayem1412/tadabut/commit/b23453d410871ab175635bcde076607dff802dea))
+
 ## [0.6.0](https://github.com/ayem1412/tadabut/compare/v0.5.0...v0.6.0) (2026-11-10)
 
 ### Features
