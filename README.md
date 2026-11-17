@@ -1180,6 +1180,8 @@ table.setData(newEmployees); // replace all rows, keeps sorting and search
 table.destroy(); // remove everything Tadabut created
 ```
 
+See [Reading and changing rows](#reading-and-changing-rows) for `getData`, `insertRow` and the others.
+
 `edit` returns `true` if editing started. It returns `false` when the row doesn't exist, it's already open, another row is open in `'single'` mode, no column has an editor, `onEditStart` returned `false`, or the row is on a page that hasn't been shown yet. DataTables only builds a row's cells once it's shown, so go to that page first.
 
 `save` returns a promise of `true` if the row was saved and closed, `false` if it wasn't: a field is invalid, `onSave` failed, the row isn't being edited, or it's already saving.
@@ -1195,6 +1197,52 @@ table.destroy(); // remove everything Tadabut created
 `setData` and `destroy` cancel any row being edited, and the new row, first. Unsaved changes are lost.
 
 <kbd>Enter</kbd> saves the row you're in. <kbd>Escape</kbd> cancels it. If something else already used the key, like Select2 picking an option with <kbd>Enter</kbd>, Tadabut leaves it alone.
+
+### Reading and changing rows
+
+```ts
+table.getData(); // every row, in the order shown
+table.getData('searched'); // only the rows that match the search ('page': only this page)
+table.getRow(5); // the row with id 5, or undefined
+
+table.insertRow(rowFromServer); // put a row in, or an array of rows
+table.updateRow({ ...table.getRow(5), name: 'Nadia' }); // replace row 5
+table.removeRow(5); // take row 5 out
+
+table.getTotals(); // { salary: 176651.5, age: 32.5 }
+table.getOptions('countryId'); // [{ value: 1, label: 'Morocco' }, …]
+table.getApi(); // DataTables itself
+```
+
+**Reading**
+
+- `getData` and `getRow` give **copies**. Changing them changes nothing in the table: use `updateRow` for that.
+- `getData` follows the sorting. Its scope works like `totalRows`: `'all'` (the default), `'searched'` or `'page'`.
+- `getRow` gives the saved row. While a row is being edited, what's typed isn't in it until Save.
+
+**Changing**
+
+`insertRow`, `updateRow` and `removeRow` change the table from your code, for example when your server pushes a change. They skip the server callbacks and their events: no `onAdd`/`onAdded`, `onSave`/`onSaved`, `onDelete`/`onDeleted`, and `removeRow` never asks. Everything else follows:
+
+- The totals update.
+- An open detail reloads after `updateRow`, and closes after `removeRow`.
+- A removed row leaves the selection, and `onSelect` is called.
+- The table stays on the page it's on.
+
+When they can't:
+
+- `updateRow` and `removeRow` return `false`, and change nothing, when no row has that id, or the row is being edited or deleted. That way, a change from the server never wipes what the user is typing.
+- `insertRow` throws if a row has no id, or its id is already in the table (or twice in the array). Either every row goes in, or none.
+- `updateRow` takes a whole row. To change one field, spread the current one: `{ ...table.getRow(5), name: 'Nadia' }`.
+
+**Totals and options**
+
+- `getTotals` gives the footer's totals by field: plain numbers for `sum`, `avg`, `min`, `max` and `count`, rounded like the footer but not formatted, or your function's text. They count the same rows as the footer.
+- `getOptions` gives a select's options. With a fixed list, that list. With an `options` function, the list it last loaded in an open row, or `undefined` before any row was opened. It gives `undefined` for a column that isn't a select.
+
+**DataTables itself**
+
+`getApi` gives the DataTables API, for anything Tadabut doesn't do, like `table.getApi().order([2, 'desc']).draw()`. Don't add or remove rows through it: that skips Tadabut, so the selection, details and open rows won't know. Use the methods above, or `setData`.
 
 ### React
 
@@ -1301,7 +1349,8 @@ export default function Employees() {
 - `selection={{ checkAll: 'page' }}` inline is fine too: only turning it on or off, or changing `checkAll`, rebuilds the table. A rebuild clears the selection.
 - `detail` can return JSX, async or not: `detail={(row) => <OrderLines orderId={row.id} />}`. React draws it under the row, so your components, hooks and state work inside it, and it's cleaned up when the detail closes. It can be a new function on every render: only turning it on or off rebuilds the table. This needs `react-dom`, which every React app already has.
 - `editing` can be a new object on every render too. The table is only rebuilt when `mode`, `button` or `doubleClick` really change. Changing `columns`, `rowId` or `editing` closes any row being edited.
-- The ref has the same methods as the core: `edit`, `save`, `cancel`, `delete`, `isEditing`, `add`, `saveNew`, `cancelNew`, `isAdding`, `getSelected`, `isSelected`, `select`, `deselect`, `clearSelection`, `openDetail`, `closeDetail`, `toggleDetail` and `isDetailOpen`. Before the table is built, or after it's gone, the methods that return something give `false` (`[]` for `getSelected`), and the others do nothing.
+- The ref has the same methods as the core: `edit`, `save`, `cancel`, `delete`, `isEditing`, `add`, `saveNew`, `cancelNew`, `isAdding`, `getSelected`, `isSelected`, `select`, `deselect`, `clearSelection`, `openDetail`, `closeDetail`, `toggleDetail`, `isDetailOpen`, `getData`, `getRow`, `getApi`, `insertRow`, `updateRow`, `removeRow`, `getTotals` and `getOptions`. Before the table is built, or after it's gone, the methods that return something give `false`, `[]`, `{}` or `undefined`, and the others do nothing.
+- `insertRow`, `updateRow` and `removeRow` change the table, but not your `data`. The next time `data` changes, the table shows `data` again. So in React, it's usually better to change your state instead.
 - There is no `setData` on the ref. To change the rows, change `data`.
 
 ## Roadmap
@@ -1332,10 +1381,14 @@ Done:
 - [x] Dates in any format (`dd/mm/yyyy`…), in the data and the cells, and sorting by the real date
 - [x] Detail rows that open under a row, async and with JSX in React
 - [x] Read-only, time and date-with-time inputs
+- [x] Reading and changing rows from code: `getData`, `getRow`, `insertRow`, `updateRow`, `removeRow`, `getTotals`, `getOptions` and the DataTables API
 
 Next, roughly in this order:
 
-- [ ] Methods to read rows (`getData`, `getRow`), put a row in directly without opening it, and reach the DataTables API
+- [ ] Totals of the ticked rows only (`totalRows: 'selected'`)
+- [ ] A current row: clicking a row highlights it, one at a time, apart from the checkboxes
+- [ ] Turning editing on and off while the table is shown
+- [ ] A new row that opens by itself after each `setData`, and a new row that starts with what's typed in the search box
 - [ ] Keyboard navigation and theming
 
 Later: popup editing, changing many rows in one go, server-side mode, Vue and jQuery adapters.

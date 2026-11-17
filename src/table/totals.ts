@@ -52,12 +52,19 @@ type LooseColumn<Row extends object> = {
   readonly editor?: AnyEditor;
 };
 
-/** The text under a column: `count` and functions as they are, numbers formatted like the cells. */
-export function totalText<Row extends object>(column: Column<Row>, rows: readonly Row[]): string {
-  const { prop, total, render, editor } = column as LooseColumn<Row>;
+/**
+ * The total of a column, before it's written: a number for built-in totals,
+ * rounded like the footer, or your function's text. `undefined` when there's
+ * nothing to show.
+ */
+export function totalValue<Row extends object>(
+  column: Column<Row>,
+  rows: readonly Row[],
+): number | string | undefined {
+  const { prop, total, editor } = column as LooseColumn<Row>;
 
   if (total === undefined) {
-    return '';
+    return undefined;
   }
 
   if (typeof total === 'function') {
@@ -65,7 +72,7 @@ export function totalText<Row extends object>(column: Column<Row>, rows: readonl
   }
 
   if (total === 'count') {
-    return String(rows.length);
+    return rows.length;
   }
 
   const values = rows
@@ -75,18 +82,40 @@ export function totalText<Row extends object>(column: Column<Row>, rows: readonl
   const result = compute(total, values);
 
   if (result === undefined) {
-    return '';
-  }
-
-  if (editor?.type === 'money' && render === undefined) {
-    return formatMoney(result, moneyFormat(editor));
+    return undefined;
   }
 
   // So an average is 31.67, not 31.666666666666668, and 0.1 + 0.2 is 0.3.
-  const rounded = Math.round(result * 100) / 100;
+  return roundTo(result, editor?.type === 'money' ? moneyFormat(editor).decimals : 2);
+}
+
+/** The text under a column: `count` and functions as they are, numbers formatted like the cells. */
+export function totalText<Row extends object>(column: Column<Row>, rows: readonly Row[]): string {
+  const { total, render, editor } = column as LooseColumn<Row>;
+  const value = totalValue(column, rows);
+
+  if (value === undefined) {
+    return '';
+  }
+
+  // A count is never money, and never goes through render.
+  if (typeof value === 'string' || total === 'count') {
+    return String(value);
+  }
+
+  if (editor?.type === 'money' && render === undefined) {
+    return formatMoney(value, moneyFormat(editor));
+  }
 
   // A total isn't a row, so render gets an empty one.
-  return render === undefined ? String(rounded) : render(rounded, {} as Row);
+  return render === undefined ? String(value) : render(value, {} as Row);
+}
+
+/** Rounds to this many decimals. */
+function roundTo(value: number, decimals: number): number {
+  const factor = 10 ** decimals;
+
+  return Math.round(value * factor) / factor;
 }
 
 /** `undefined` when there's nothing to average, or no smallest or biggest. */

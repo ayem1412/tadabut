@@ -1,5 +1,6 @@
 import type { Column } from '../columns/column';
 import { type AnyEditorInstance, createEditor } from '../editors/create';
+import type { SelectOption } from '../editors/select';
 import { en } from '../texts/en';
 import type { Texts } from '../texts/texts';
 import { type AnyValidatedEditor, validateValue } from '../validation/validate';
@@ -14,6 +15,12 @@ export type EditableCell<Row extends object> = {
 
 /** For unique error ids (`aria-describedby` needs one). */
 let errorCount = 0;
+
+/** Called with a select's field and its options, once they loaded. */
+export type OptionsListener<Row extends object> = (
+  prop: keyof Row & string,
+  options: readonly SelectOption<unknown>[],
+) => void;
 
 /** A live editor and the config it came from. */
 type Field = {
@@ -42,11 +49,19 @@ export class EditSession<Row extends object> {
   public saving = false;
   /** Error messages and the "Loading…" text. */
   private readonly texts: Texts;
+  /** Told each time a select's options load, so the table can remember them. */
+  private readonly onOptions: OptionsListener<Row> | undefined;
 
   /** Puts an editor in each cell and starts loading select options. */
-  public constructor(row: Row, cells: readonly EditableCell<Row>[], texts: Texts = en) {
+  public constructor(
+    row: Row,
+    cells: readonly EditableCell<Row>[],
+    texts: Texts = en,
+    onOptions?: OptionsListener<Row>,
+  ) {
     this.originalData = { ...row };
     this.texts = texts;
+    this.onOptions = onOptions;
 
     for (const { column, cell } of cells) {
       if (column.editor === undefined) {
@@ -257,5 +272,7 @@ export class EditSession<Row extends object> {
     if (this.loadErrors.delete(prop)) {
       this.hideError(prop);
     }
+
+    this.onOptions?.(prop, field.editor.getOptions?.() ?? []);
   }
 }

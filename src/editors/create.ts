@@ -7,7 +7,7 @@ import type { AnyEditor } from './editor';
 import type { EditorContext, EditorInstance } from './instance';
 import { createMoneyEditor } from './money';
 import { createNumberEditor } from './number';
-import { createSelectEditor, type LoadResult } from './select';
+import { createSelectEditor, type LoadResult, type SelectOption } from './select';
 import { createTextEditor } from './text';
 import { createTimeEditor } from './time';
 
@@ -17,6 +17,8 @@ export type AnyEditorInstance = EditorInstance<unknown> & {
   readonly load?: (row: Record<string, unknown>) => Promise<LoadResult>;
   /** The picked option's label, for `labelProp`. */
   readonly getLabel?: () => string | null | undefined;
+  /** A select's options on screen, for `getOptions`. */
+  readonly getOptions?: () => readonly SelectOption<unknown>[];
 };
 
 /**

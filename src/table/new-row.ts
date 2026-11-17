@@ -1,5 +1,5 @@
 import type { Column } from '../columns/column';
-import { type EditableCell, EditSession } from '../editing/session';
+import { type EditableCell, EditSession, type OptionsListener } from '../editing/session';
 import { addClasses } from '../editors/classes';
 import type { Texts } from '../texts/texts';
 import { rowErrorMessage, saveCancelButtons } from './elements';
@@ -19,6 +19,8 @@ export type NewRowOptions<Row extends object> = {
   readonly classNames: TableClassNames;
   /** Empty cells before the columns, for the checkbox column. */
   readonly leadingCells: number;
+  /** Told each time a select's options load. */
+  readonly onOptions?: OptionsListener<Row>;
 };
 
 /**
@@ -85,7 +87,7 @@ export class NewRow<Row extends object> {
     }
 
     // The session only reads the fields it edits, so a partial row is enough.
-    this.session = new EditSession(start as Row, cells, options.texts);
+    this.session = new EditSession(start as Row, cells, options.texts, options.onOptions);
     this.firstProp = cells.find(({ column }) => !column.editor?.readOnly)?.column.prop;
   }
 
