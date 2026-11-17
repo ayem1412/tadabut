@@ -38,8 +38,10 @@ export function createDateEditor(
   const format = config.format ?? defaultDateFormat;
   const input = document.createElement('input');
   input.type = 'date';
+  input.disabled = context.readOnly ?? false;
   addClasses(input, ['tdb-input', 'tdb-input-date'], context.className);
 
+  // checkOptions already threw if these aren't real dates.
   if (config.min !== undefined) {
     input.min = parseDate(config.min, format) ?? '';
   }

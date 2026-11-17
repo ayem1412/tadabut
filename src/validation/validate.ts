@@ -32,7 +32,6 @@ function builtInError(config: AnyEditor, value: unknown, texts: Texts): string |
       return typeof value === 'number' ? rangeError(config, value, texts) : undefined;
 
     case 'date':
-      // 'YYYY-MM-DD' strings compare correctly as text.
       return typeof value === 'string' ? dateError(config, value, texts) : undefined;
 
     case 'checkbox':

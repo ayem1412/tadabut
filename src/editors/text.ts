@@ -26,6 +26,7 @@ export function createTextEditor(
 ): EditorInstance<string> {
   const input = document.createElement('input');
   input.type = 'text';
+  input.disabled = context.readOnly ?? false;
   addClasses(input, ['tdb-input', 'tdb-input-text'], context.className);
 
   if (config.minLength !== undefined) {

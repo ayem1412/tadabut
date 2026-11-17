@@ -96,6 +96,8 @@ export function createSelectEditor<Value, Row>(
   texts: Texts = en,
 ): SelectInstance<Value, Row> {
   const select = document.createElement('select');
+  const readOnly = context.readOnly ?? false;
+  select.disabled = readOnly;
   addClasses(select, ['tdb-input', 'tdb-input-select'], context.className);
 
   /** The options on screen. Empty while a loader runs. */
@@ -107,6 +109,9 @@ export function createSelectEditor<Value, Row>(
   /** The running load, so a newer one or `destroy` can abort it. */
   let controller: AbortController | undefined;
 
+  /** Whether "Loading…" or an empty line shows instead of the options. */
+  let waiting = false;
+
   /** Selects `current`. A value that isn't in the list becomes `null`. */
   const pickCurrent = (): void => {
     select.selectedIndex = options.findIndex((option) => option.value === current);
@@ -116,7 +121,7 @@ export function createSelectEditor<Value, Row>(
     }
   };
 
-  /** Shows `list`, enables the select and picks `current`. */
+  /** Shows `list`, unlocks the select unless it's read-only, and picks `current`. */
   const fill = (list: readonly SelectOption<Value>[]): void => {
     options = list;
     select.replaceChildren(
@@ -126,7 +131,8 @@ export function createSelectEditor<Value, Row>(
         return element;
       }),
     );
-    select.disabled = false;
+    waiting = false;
+    select.disabled = readOnly;
     pickCurrent();
   };
 
@@ -136,6 +142,7 @@ export function createSelectEditor<Value, Row>(
     const element = document.createElement('option');
     element.textContent = text;
     select.replaceChildren(element);
+    waiting = true;
     select.disabled = true;
   };
 
@@ -189,7 +196,8 @@ export function createSelectEditor<Value, Row>(
   const setValue = (value: Value | null): void => {
     current = value;
 
-    if (!select.disabled) {
+    // Not `select.disabled`: a read-only select is disabled too.
+    if (!waiting) {
       pickCurrent();
     }
   };

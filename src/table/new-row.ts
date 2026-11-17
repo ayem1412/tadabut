@@ -33,7 +33,7 @@ export class NewRow<Row extends object> {
   private readonly tr: HTMLTableRowElement;
   /** Its inputs. */
   private readonly session: EditSession<Row>;
-  /** The first column with an editor, for the focus. */
+  /** The first field that isn't read-only, for the focus. A locked input can't take it. */
   private readonly firstProp: (keyof Row & string) | undefined;
 
   /** Builds the row. Nothing is shown until `body` is put in the table. */
@@ -86,7 +86,7 @@ export class NewRow<Row extends object> {
 
     // The session only reads the fields it edits, so a partial row is enough.
     this.session = new EditSession(start as Row, cells, options.texts);
-    this.firstProp = cells[0]?.column.prop;
+    this.firstProp = cells.find(({ column }) => !column.editor?.readOnly)?.column.prop;
   }
 
   /** Whether `onAdd` is running. */

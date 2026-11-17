@@ -45,6 +45,7 @@ export function createCheckboxEditor(
 
   const input = document.createElement('input');
   input.type = 'checkbox';
+  input.disabled = context.readOnly ?? false;
   addClasses(input, ['tdb-input', 'tdb-input-checkbox'], context.className);
 
   /**
