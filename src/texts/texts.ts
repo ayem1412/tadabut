@@ -60,4 +60,8 @@ export type Texts = {
   readonly tooEarly: (min: string) => string;
   /** A date after `max`, given as the column shows dates (its `display`). */
   readonly tooLate: (max: string) => string;
+  /** A time before `min`, like `'08:00'`. */
+  readonly timeTooEarly: (min: string) => string;
+  /** A time after `max`, like `'18:00'`. */
+  readonly timeTooLate: (max: string) => string;
 };

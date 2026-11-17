@@ -1,19 +1,21 @@
 import type { CheckboxEditor } from './checkbox';
 import type { CustomEditor } from './custom';
 import type { DateEditor } from './date';
+import type { DateTimeEditor } from './datetime';
 import type { MoneyEditor } from './money';
 import type { NumberEditor } from './number';
 import type { SelectEditor } from './select';
 import type { TextEditor } from './text';
+import type { TimeEditor } from './time';
 
 /**
  * Which editors a column can have, from its value type:
  *
- * | Column value  | Built-in editors                              |
- * | ------------- | --------------------------------------------- |
- * | `string`      | text, date, select, checkbox with `values`    |
- * | `number`      | number, money, select, checkbox with `values` |
- * | `boolean`     | checkbox, select                              |
+ * | Column value  | Built-in editors                                              |
+ * | ------------- | ------------------------------------------------------------- |
+ * | `string`      | text, date, time, datetime, select, checkbox with `values`    |
+ * | `number`      | number, money, select, checkbox with `values`                 |
+ * | `boolean`     | checkbox, select                                              |
  *
  * `custom` works on anything. Nullable columns get the same editors as
  * non-nullable ones.
@@ -23,7 +25,13 @@ export type EditorFor<Value, Row> = EditorForValue<NonNullable<Value>, Row> | Cu
 // Wrapped in [] so a union like 'a' | 'b' isn't distributed.
 /** The built-in editors for a non-null value type. */
 type EditorForValue<Value, Row> = [Value] extends [string]
-  ? TextEditor | DateEditor | SelectEditor<Value, Row> | CheckboxEditor<Value>
+  ?
+      | TextEditor
+      | DateEditor
+      | TimeEditor
+      | DateTimeEditor
+      | SelectEditor<Value, Row>
+      | CheckboxEditor<Value>
   : [Value] extends [number]
     ? NumberEditor | MoneyEditor | SelectEditor<Value, Row> | CheckboxEditor<Value>
     : [Value] extends [boolean]
@@ -36,6 +44,8 @@ export type AnyEditor =
   | NumberEditor
   | MoneyEditor
   | DateEditor
+  | TimeEditor
+  | DateTimeEditor
   | CheckboxEditor
   | CheckboxEditor<unknown>
   | SelectEditor<unknown, Record<string, unknown>>

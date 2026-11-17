@@ -29,4 +29,6 @@ export const en: Texts = {
   tooLarge: (max) => `Must be ${max} or less.`,
   tooEarly: (min) => `Must be on or after ${min}.`,
   tooLate: (max) => `Must be on or before ${max}.`,
+  timeTooEarly: (min) => `Must be at or after ${min}.`,
+  timeTooLate: (max) => `Must be at or before ${max}.`,
 };

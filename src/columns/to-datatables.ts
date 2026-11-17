@@ -2,9 +2,11 @@ import type { ColumnOptions } from 'datatables.net';
 
 import { splitClasses } from '../editors/classes';
 import { defaultDateFormat, formatDate, parseDate } from '../editors/date-format';
+import { formatDateTime, parseDateTime } from '../editors/datetime-format';
 import type { AnyEditor } from '../editors/editor';
 import { moneyFormat } from '../editors/money';
 import { formatMoney } from '../editors/money-format';
+import { formatTime, parseTime } from '../editors/time-format';
 import {
   type Action,
   buttonHtml,
@@ -115,7 +117,7 @@ export function toDataTables<Row extends object>(
             return `${label(value, row)} ${asText(value)}`;
 
           default:
-            // sort and type: dates as ISO, numbers as numbers
+            // sort and type: dates and times as ISO, numbers as numbers
             return sortValue(value);
         }
       },
@@ -132,8 +134,9 @@ export function toDataTables<Row extends object>(
 }
 
 /**
- * `render`, then a money or date format, then `labelProp`, then a fixed
- * list's label, then the value. A date that isn't valid shows as it is.
+ * `render`, then a money, date or time format, then `labelProp`, then a fixed
+ * list's label, then the value. A date or time that isn't valid shows as it
+ * is.
  */
 function labelOf<Row>(column: LooseColumn<Row>): (value: unknown, row: Row) => string {
   const { render, editor } = column;
@@ -164,6 +167,35 @@ function labelOf<Row>(column: LooseColumn<Row>): (value: unknown, row: Row) => s
         }
 
         return formatDate(iso, display);
+      };
+    }
+    case 'time': {
+      const seconds = editor.seconds ?? false;
+
+      return (value) => {
+        if (typeof value !== 'string') {
+          return asText(value);
+        }
+
+        const time = parseTime(value);
+
+        return time === null ? asText(value) : formatTime(time, seconds);
+      };
+    }
+    case 'datetime': {
+      const format = editor.format ?? defaultDateFormat;
+      const display = editor.display ?? format;
+      const seconds = editor.seconds ?? false;
+
+      return (value) => {
+        if (typeof value !== 'string') {
+          return asText(value);
+        }
+
+        const dateTime = parseDateTime(value, format);
+
+        // Always a space in the cells, even when the data uses a `T`.
+        return dateTime === null ? asText(value) : formatDateTime(dateTime, display, seconds, ' ');
       };
     }
     case 'select': {
@@ -198,8 +230,9 @@ function defined<T extends object>(values: T): Partial<T> {
 
 /**
  * What DataTables sorts by. Dates become `'yyyy-mm-dd'`, so `'05/01/2024'`
- * sorts as January; invalid and empty dates give `''`, which sorts first.
- * Anything else stays as it is: numbers stay numbers.
+ * sorts as January, times `'hh:mm:ss'`, and both `'yyyy-mm-ddThh:mm:ss'`.
+ * Invalid and empty ones give `''`, which sorts first. Anything else stays as
+ * it is: numbers stay numbers.
  */
 function sortValueOf<Row>(column: LooseColumn<Row>): (value: unknown) => unknown {
   const editor = column.editor;
@@ -208,6 +241,16 @@ function sortValueOf<Row>(column: LooseColumn<Row>): (value: unknown) => unknown
     const format = editor.format ?? defaultDateFormat;
 
     return (value) => (typeof value === 'string' ? (parseDate(value, format) ?? '') : '');
+  }
+
+  if (editor?.type === 'time') {
+    return (value) => (typeof value === 'string' ? (parseTime(value) ?? '') : '');
+  }
+
+  if (editor?.type === 'datetime') {
+    const format = editor.format ?? defaultDateFormat;
+
+    return (value) => (typeof value === 'string' ? (parseDateTime(value, format) ?? '') : '');
   }
 
   return (value) => value;
