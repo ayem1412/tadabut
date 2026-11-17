@@ -85,10 +85,12 @@
         pick Atlantis to see a failed load. Delete Karim to see a failed delete, and add a row named
         "error" to see a failed add. Leila can't be edited while "Lock Leila" is on: that's
         <code>onEditStart</code>. The Code column is <code>readOnly</code>: it shows while editing
-        but can't be changed, and the server fills it in for new rows. Every event shows up under
-        the table. Click ▸ to open a row's details, loaded from a slow fake server: Omar's fail, and
-        editing a row reloads them. Tick rows, change page and search, then try
-        <code>table.select([1, 2])</code> and <code>table.getSelected()</code> in the console.
+        but can't be changed, and the server fills it in for new rows. Starts is a time between
+        07:00 and 20:00, and Last login a locked date-time: sort by either to see them sort by the
+        real time. Every event shows up under the table. Click ▸ to open a row's details, loaded
+        from a slow fake server: Omar's fail, and editing a row reloads them. Tick rows, change page
+        and search, then try <code>table.select([1, 2])</code> and
+        <code>table.getSelected()</code> in the console.
       </p>
 
       <div id="container"></div>

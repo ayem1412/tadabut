@@ -1,5 +1,7 @@
 import { defaultDateFormat, formatDate, parseDate } from '../editors/date-format';
+import { formatDateTime, parseDateTime } from '../editors/datetime-format';
 import type { AnyEditor } from '../editors/editor';
+import { formatTime, parseTime } from '../editors/time-format';
 import { en } from '../texts/en';
 import type { Texts } from '../texts/texts';
 import type { ValidationOptions } from './rules';
@@ -33,6 +35,12 @@ function builtInError(config: AnyEditor, value: unknown, texts: Texts): string |
 
     case 'date':
       return typeof value === 'string' ? dateError(config, value, texts) : undefined;
+
+    case 'time':
+      return typeof value === 'string' ? timeError(config, value, texts) : undefined;
+
+    case 'datetime':
+      return typeof value === 'string' ? dateTimeError(config, value, texts) : undefined;
 
     case 'checkbox':
     case 'select':
@@ -112,6 +120,70 @@ function dateError(
 
   if (max !== null && date > max) {
     return texts.tooLate(formatDate(max, display));
+  }
+
+  return undefined;
+}
+
+/**
+ * `min` and `max` for times. Compared as `'hh:mm:ss'`, since `'9:05'` comes
+ * after `'14:30'` as text.
+ */
+function timeError(
+  config: Extract<AnyEditor, { type: 'time' }>,
+  value: string,
+  texts: Texts,
+): string | undefined {
+  const seconds = config.seconds ?? false;
+  const time = parseTime(value);
+
+  if (time === null) {
+    return undefined;
+  }
+
+  // checkOptions already threw if min or max aren't real times.
+  const min = config.min === undefined ? null : parseTime(config.min);
+  const max = config.max === undefined ? null : parseTime(config.max);
+
+  if (min !== null && time < min) {
+    return texts.timeTooEarly(formatTime(min, seconds));
+  }
+
+  if (max !== null && time > max) {
+    return texts.timeTooLate(formatTime(max, seconds));
+  }
+
+  return undefined;
+}
+
+/**
+ * `min` and `max` for dates with a time. Compared as `'yyyy-mm-ddThh:mm:ss'`.
+ * The message shows the limit as the cells show it.
+ */
+function dateTimeError(
+  config: Extract<AnyEditor, { type: 'datetime' }>,
+  value: string,
+  texts: Texts,
+): string | undefined {
+  const format = config.format ?? defaultDateFormat;
+  const display = config.display ?? format;
+  const seconds = config.seconds ?? false;
+  const dateTime = parseDateTime(value, format);
+
+  if (dateTime === null) {
+    return undefined;
+  }
+
+  // checkOptions already threw if min or max aren't real.
+  const min = config.min === undefined ? null : parseDateTime(config.min, format);
+  const max = config.max === undefined ? null : parseDateTime(config.max, format);
+
+  if (min !== null && dateTime < min) {
+    return texts.tooEarly(formatDateTime(min, display, seconds, ' '));
+  }
+
+  if (max !== null && dateTime > max) {
+    return texts.tooLate(formatDateTime(max, display, seconds, ' '));
   }
 
   return undefined;

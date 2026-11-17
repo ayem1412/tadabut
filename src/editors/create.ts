@@ -2,12 +2,14 @@ import { en } from '../texts/en';
 import type { Texts } from '../texts/texts';
 import { createCheckboxEditor } from './checkbox';
 import { createDateEditor } from './date';
+import { createDateTimeEditor } from './datetime';
 import type { AnyEditor } from './editor';
 import type { EditorContext, EditorInstance } from './instance';
 import { createMoneyEditor } from './money';
 import { createNumberEditor } from './number';
 import { createSelectEditor, type LoadResult } from './select';
 import { createTextEditor } from './text';
+import { createTimeEditor } from './time';
 
 /** Only selects have `load` and `getLabel`. */
 export type AnyEditorInstance = EditorInstance<unknown> & {
@@ -53,6 +55,12 @@ export function createEditor(
 
     case 'money':
       return loosen(createMoneyEditor(config, tighten(fullContext)));
+
+    case 'time':
+      return loosen(createTimeEditor(config, tighten(fullContext)));
+
+    case 'datetime':
+      return loosen(createDateTimeEditor(config, tighten(fullContext)));
 
     default: {
       const missing: never = config;

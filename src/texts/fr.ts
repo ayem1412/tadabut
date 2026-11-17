@@ -30,4 +30,6 @@ export const fr: Texts = {
   tooLarge: (max) => `Doit être inférieur ou égal à ${max}.`,
   tooEarly: (min) => `Doit être le ${min} ou après.`,
   tooLate: (max) => `Doit être le ${max} ou avant.`,
+  timeTooEarly: (min) => `Doit être à ${min} ou après.`,
+  timeTooLate: (max) => `Doit être à ${max} ou avant.`,
 };

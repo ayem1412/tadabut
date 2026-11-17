@@ -1,5 +1,7 @@
 import { defaultDateFormat, parseDate } from '../editors/date-format';
+import { parseDateTime } from '../editors/datetime-format';
 import { moneyFormat } from '../editors/money';
+import { parseTime } from '../editors/time-format';
 import type { TadabutOptions } from './options';
 
 /**
@@ -13,6 +15,8 @@ import type { TadabutOptions } from './options';
  * @throws If a select's `labelProp` is its own column.
  * @throws If a money editor's `separator` and `point` are the same.
  * @throws If a date editor's `min` or `max` isn't a real date in its `format`.
+ * @throws If a time editor's `min` or `max` isn't a real time.
+ * @throws If a datetime editor's `min` or `max` isn't a real date and time in its `format`.
  */
 export function checkOptions<Row extends object>(options: TadabutOptions<Row>): void {
   if (options.rowId === undefined) {
@@ -80,6 +84,36 @@ export function checkOptions<Row extends object>(options: TadabutOptions<Row>): 
       if (limit !== undefined && parseDate(limit, format) === null) {
         throw new Error(
           `Tadabut: the "${column.prop}" column's date "${limit}" isn't a real date written as ${format}.`,
+        );
+      }
+    }
+  }
+
+  for (const column of options.columns) {
+    if (column.editor?.type !== 'time') {
+      continue;
+    }
+
+    for (const limit of [column.editor.min, column.editor.max]) {
+      if (limit !== undefined && parseTime(limit) === null) {
+        throw new Error(
+          `Tadabut: the "${column.prop}" column's time "${limit}" isn't a real time.`,
+        );
+      }
+    }
+  }
+
+  for (const column of options.columns) {
+    if (column.editor?.type !== 'datetime') {
+      continue;
+    }
+
+    const format = column.editor.format ?? defaultDateFormat;
+
+    for (const limit of [column.editor.min, column.editor.max]) {
+      if (limit !== undefined && parseDateTime(limit, format) === null) {
+        throw new Error(
+          `Tadabut: the "${column.prop}" column's date and time "${limit}" isn't real, or isn't written as ${format} hh:mm.`,
         );
       }
     }

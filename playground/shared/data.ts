@@ -16,6 +16,10 @@ export type Row = {
   active: 'O' | 'N' | null;
   /** 'dd/mm/yyyy', like an old PHP backend sends it. */
   hired: string | null;
+  /** When their day starts, like '08:30'. */
+  starts: string | null;
+  /** 'dd/mm/yyyy hh:mm', like the old backend sends it. */
+  lastLogin: string | null;
 };
 
 export const rows: Row[] = [
@@ -30,6 +34,8 @@ export const rows: Row[] = [
     salary: 12500,
     active: 'O',
     hired: '15/03/2019',
+    starts: '08:30',
+    lastLogin: '16/11/2026 08:42',
   },
   {
     id: 2,
@@ -42,6 +48,8 @@ export const rows: Row[] = [
     salary: 9800.5,
     active: 'N',
     hired: '02/11/2021',
+    starts: '9:00',
+    lastLogin: '15/11/2026 17:05',
   },
   {
     id: 3,
@@ -54,6 +62,8 @@ export const rows: Row[] = [
     salary: 15000,
     active: 'O',
     hired: '28/02/2024',
+    starts: '08:00',
+    lastLogin: '16/11/2026 07:58',
   },
   {
     id: 4,
@@ -66,6 +76,8 @@ export const rows: Row[] = [
     salary: 22750,
     active: null,
     hired: '07/07/2015',
+    starts: '10:15',
+    lastLogin: '02/10/2026 09:12',
   },
   {
     id: 5,
@@ -78,6 +90,8 @@ export const rows: Row[] = [
     salary: 8400,
     active: 'O',
     hired: '19/09/2022',
+    starts: '07:45',
+    lastLogin: '16/11/2026 10:30',
   },
   {
     id: 6,
@@ -90,6 +104,8 @@ export const rows: Row[] = [
     salary: 11200.75,
     active: 'N',
     hired: '01/12/2023',
+    starts: '09:30',
+    lastLogin: null,
   },
   {
     id: 7,
@@ -102,6 +118,8 @@ export const rows: Row[] = [
     salary: 30000,
     active: 'O',
     hired: '30/06/2018',
+    starts: '08:00',
+    lastLogin: '14/11/2026 18:20',
   },
   {
     id: 8,
@@ -114,6 +132,8 @@ export const rows: Row[] = [
     salary: 7600,
     active: null,
     hired: '11/01/2010',
+    starts: '14:00',
+    lastLogin: '01/09/2026 08:00',
   },
   {
     id: 9,
@@ -126,6 +146,8 @@ export const rows: Row[] = [
     salary: null,
     active: 'O',
     hired: null,
+    starts: null,
+    lastLogin: '12/11/2026 13:45',
   },
   {
     id: 10,
@@ -138,6 +160,8 @@ export const rows: Row[] = [
     salary: 18900,
     active: 'N',
     hired: '23/04/2020',
+    starts: '08:30',
+    lastLogin: '16/11/2026 09:01',
   },
   {
     id: 11,
@@ -150,6 +174,8 @@ export const rows: Row[] = [
     salary: 26400.25,
     active: 'O',
     hired: '05/05/2024',
+    starts: '09:00',
+    lastLogin: '13/11/2026 22:10',
   },
   {
     id: 12,
@@ -162,6 +188,8 @@ export const rows: Row[] = [
     salary: 14100,
     active: null,
     hired: '14/02/2017',
+    starts: '11:00',
+    lastLogin: '10/11/2026 07:30',
   },
 ];
 
@@ -306,6 +334,17 @@ export function makeColumns(classes: InputClasses = {}): Column<Row>[] {
         className: classes.input,
       },
     },
+    {
+      title: 'Starts',
+      prop: 'starts',
+      editor: { type: 'time', min: '07:00', max: '20:00', className: classes.input },
+    },
+    {
+      title: 'Last login',
+      prop: 'lastLogin',
+      // The server sets it, so it's locked, but it still shows and sorts as a date-time.
+      editor: { type: 'datetime', format: 'dd/mm/yyyy', readOnly: true, className: classes.input },
+    },
   ];
 }
 
@@ -345,6 +384,8 @@ export async function fakeAdd(row: Partial<Row>): Promise<Row> {
     salary: row.salary ?? null,
     active: row.active ?? null,
     hired: row.hired ?? null,
+    starts: row.starts ?? null,
+    lastLogin: null,
   };
 }
 

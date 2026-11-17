@@ -11,6 +11,8 @@ export type { CheckboxEditor } from './editors/checkbox';
 export type { CustomEditor } from './editors/custom';
 export type { DateEditor } from './editors/date';
 export { type DateFormat, defaultDateFormat, formatDate, parseDate } from './editors/date-format';
+export type { DateTimeEditor } from './editors/datetime';
+export { formatDateTime, parseDateTime } from './editors/datetime-format';
 export type { EditorFor } from './editors/editor';
 export type { EditorContext, EditorInstance } from './editors/instance';
 export type { MoneyEditor } from './editors/money';
@@ -23,6 +25,8 @@ export type {
   SelectOptionsLoader,
 } from './editors/select';
 export type { TextEditor } from './editors/text';
+export type { TimeEditor } from './editors/time';
+export { formatTime, parseTime } from './editors/time-format';
 export type {
   DataTablesSettings,
   DetailContent,

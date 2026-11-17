@@ -172,6 +172,8 @@ A select's values must have the same type as the column. `countryId` is a number
 | `number`   | `number`               | `null`      | `min`, `max`, `step`                           |
 | `money`    | `number`               | `null`      | `min`, `max`, `decimals`, `separator`, `point` |
 | `date`     | `string`               | `null`      | `min`, `max`, `format`, `display`              |
+| `time`     | `string`               | `null`      | `min`, `max`, `seconds`                        |
+| `datetime` | `string`               | `null`      | `min`, `max`, `format`, `display`, `seconds`   |
 | `checkbox` | `boolean`, or `values` | never empty | `values`                                       |
 | `select`   | same as the column     | `null`      | `options`, `dependsOn`, `labelProp`            |
 
@@ -179,7 +181,7 @@ Every editor also takes `className`, for your own CSS classes, and `readOnly`. S
 
 A few things to know:
 
-- An empty number or date gives `null`, not `0` or `NaN`. A select with nothing picked gives `null` too.
+- An empty number, date or time gives `null`, not `0` or `NaN`. A select with nothing picked gives `null` too.
 - A checkbox shows `null` as unchecked, but keeps it: an untouched `null` is still `null` after saving. It only becomes `true` or `false` once the user clicks it.
 - A `string | null` column gets the same editors as a `string` column. `null` shows as an empty input.
 - Date columns hold `'YYYY-MM-DD'` unless you give a `format`. See [Dates](#dates).
@@ -277,6 +279,48 @@ formatDate('2024-01-05', 'dd.mm.yyyy'); // '05.01.2024'
 
 A column you can't edit has no date editor, so for now, show its dates with `render`: `render: (value) => formatDate(value, 'dd/mm/yyyy')`. It sorts by the raw value, which is right for ISO dates.
 
+#### Times
+
+`time` is for `string` columns that hold a time of day, like `'14:30'`. The input is the browser's time picker.
+
+```ts
+{ prop: 'starts', title: 'Starts', editor: { type: 'time', min: '08:00', max: '18:00' } }
+```
+
+- It reads `'9:05'`, `'09:05'` and `'09:05:00'`. What comes after the seconds is ignored, like `.000` from some servers.
+- It saves `'hh:mm'`. With `seconds: true`, the picker shows the seconds and it saves `'hh:mm:ss'`.
+- The cells show `hh:mm` (or `hh:mm:ss`), and sorting uses the real time: `9:05` comes before `14:30`.
+- `min` and `max` are times too. Tadabut throws an error if they aren't real times.
+- A value that isn't a time, like `'25:00'`, shows as it is in the cell, and as empty in the input.
+
+#### Dates with a time
+
+`datetime` is for `string` columns that hold a date and a time. The input is the browser's date-and-time picker.
+
+```ts
+{
+  prop: 'lastLogin',
+  title: 'Last login',
+  editor: { type: 'datetime', format: 'dd/mm/yyyy', min: '01/01/2020 08:00' },
+}
+```
+
+- The rows hold the date in `format`, a space, then the time: `'05/01/2024 14:30'`. With the default ISO `format`, a `T` goes between them instead, as servers send it: `'2024-01-05T14:30'`.
+- `format`, `display` and `seconds` work like for [dates](#dates) and [times](#times). The cells always use a space: `05/01/2024 14:30`.
+- When reading, a `T` and a space both work, and a date with no time counts as midnight.
+- What comes after the seconds is ignored, a time zone too: `'2024-01-05T14:30:00Z'` shows 14:30, as written, not converted to the user's time.
+- `min` and `max` are written like the data. Tadabut throws an error if they aren't real, or aren't in `format`.
+- Sorting uses the real date and time, whatever `display` is.
+
+`parseTime`, `formatTime`, `parseDateTime` and `formatDateTime` are exported, like the date helpers:
+
+```ts
+import { parseDateTime, parseTime } from 'tadabut';
+
+parseTime('9:05'); // '09:05:00'
+parseDateTime('05/01/2024 14:30', 'dd/mm/yyyy'); // '2024-01-05T14:30:00'
+```
+
 ### What cells show
 
 When a row isn't being edited, a cell shows its value as text. These change that:
@@ -285,6 +329,7 @@ When a row isn't being edited, a cell shows its value as text. These change that
 - A select with `labelProp` shows that field of the row, like `cityName`. See [Chained selects](#chained-selects).
 - A `money` editor shows its format, like `12 500.00`.
 - A `date` editor shows its `display`, like `05/01/2024`.
+- A `time` editor shows `09:05`, even when the data says `9:05:00`. A `datetime` editor shows its `display`, then the time, like `05/01/2024 14:30`.
 - `render` sets the text yourself, on any column:
 
 ```ts
@@ -295,7 +340,7 @@ A few things to know:
 
 - The order is: `render`, then the money or date format, then `labelProp`, then the fixed list's label, then the value itself.
 - What `render` returns is shown as plain text, never as HTML. `<b>` shows as `<b>`, so text from a server can't break the page or run code.
-- Searching uses both the text and the raw value, so `12500` finds `12 500.00`, and a country's id finds "Morocco". Sorting uses the raw value, so `200 MAD` comes before `1000 MAD`. Dates are the exception: they sort by the real date. A city column sorts by id, not by name.
+- Searching uses both the text and the raw value, so `12500` finds `12 500.00`, and a country's id finds "Morocco". Sorting uses the raw value, so `200 MAD` comes before `1000 MAD`. Dates and times are the exception: they sort by the real date and time. A city column sorts by id, not by name.
 - An empty value (`null` or `undefined`) shows an empty cell. On a nullable column, `render` gets `null` too.
 - Editors always get the raw value. After saving or cancelling, the text is worked out again.
 
@@ -427,27 +472,28 @@ texts: { ...fr, save: 'Valider' }
 texts: { edit: 'Bearbeiten', save: 'Speichern', cancel: 'Abbrechen' }
 ```
 
-| Key                        | English                                                                           |
-| -------------------------- | --------------------------------------------------------------------------------- |
-| `edit`, `save`, `cancel`   | Edit, Save, Cancel                                                                |
-| `delete`                   | Delete                                                                            |
-| `deleteQuestion`           | Delete this row?                                                                  |
-| `confirm`, `keep`          | Yes, delete / No                                                                  |
-| `loading`                  | Loading…                                                                          |
-| `saveFailed`               | Could not save.                                                                   |
-| `addFailed`                | Could not add.                                                                    |
-| `deleteFailed`             | Could not delete.                                                                 |
-| `total`                    | Total                                                                             |
-| `selectRow`, `selectAll`   | Select row / Select all (the checkboxes' labels, for screen readers)              |
-| `showDetail`, `hideDetail` | Show details / Hide details (the ▸ button's label, for screen readers)            |
-| `detailLoading`            | Loading… (while a detail loads)                                                   |
-| `detailFailed`             | Couldn't load the details. (when `detail` throws something that isn't an `Error`) |
-| `loadFailed`               | Could not load the options.                                                       |
-| `required`                 | This field is required.                                                           |
-| `patternMismatch`          | Wrong format.                                                                     |
-| `tooShort`, `tooLong`      | Must be at least 2 characters.                                                    |
-| `tooSmall`, `tooLarge`     | Must be 18 or more.                                                               |
-| `tooEarly`, `tooLate`      | Must be on or after 2020-01-01.                                                   |
+| Key                           | English                                                                           |
+| ----------------------------- | --------------------------------------------------------------------------------- |
+| `edit`, `save`, `cancel`      | Edit, Save, Cancel                                                                |
+| `delete`                      | Delete                                                                            |
+| `deleteQuestion`              | Delete this row?                                                                  |
+| `confirm`, `keep`             | Yes, delete / No                                                                  |
+| `loading`                     | Loading…                                                                          |
+| `saveFailed`                  | Could not save.                                                                   |
+| `addFailed`                   | Could not add.                                                                    |
+| `deleteFailed`                | Could not delete.                                                                 |
+| `total`                       | Total                                                                             |
+| `selectRow`, `selectAll`      | Select row / Select all (the checkboxes' labels, for screen readers)              |
+| `showDetail`, `hideDetail`    | Show details / Hide details (the ▸ button's label, for screen readers)            |
+| `detailLoading`               | Loading… (while a detail loads)                                                   |
+| `detailFailed`                | Couldn't load the details. (when `detail` throws something that isn't an `Error`) |
+| `loadFailed`                  | Could not load the options.                                                       |
+| `required`                    | This field is required.                                                           |
+| `patternMismatch`             | Wrong format.                                                                     |
+| `tooShort`, `tooLong`         | Must be at least 2 characters.                                                    |
+| `tooSmall`, `tooLarge`        | Must be 18 or more.                                                               |
+| `tooEarly`, `tooLate`         | Must be on or after 2020-01-01.                                                   |
+| `timeTooEarly`, `timeTooLate` | Must be at or after 08:00.                                                        |
 
 The messages with a number or a date are functions, so you can put the value where your language needs it:
 
@@ -1285,10 +1331,10 @@ Done:
 - [x] More events: when editing starts (and stopping it), after saving, adding and deleting, row click and double click, and double click to edit
 - [x] Dates in any format (`dd/mm/yyyy`…), in the data and the cells, and sorting by the real date
 - [x] Detail rows that open under a row, async and with JSX in React
+- [x] Read-only, time and date-with-time inputs
 
 Next, roughly in this order:
 
-- [ ] Time and read-only inputs
 - [ ] Methods to read rows (`getData`, `getRow`), put a row in directly without opening it, and reach the DataTables API
 - [ ] Keyboard navigation and theming
 
