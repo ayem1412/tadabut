@@ -83,6 +83,8 @@ export type SelectInstance<Value, Row> = EditorInstance<Value | null> & {
   readonly load: (row: Row) => Promise<LoadResult>;
   /** `null` when nothing is picked, `undefined` while options aren't loaded. */
   readonly getLabel: () => string | null | undefined;
+  /** The options on screen. Empty while loading. */
+  readonly getOptions: () => readonly SelectOption<Value>[];
 };
 
 /**
@@ -215,6 +217,7 @@ export function createSelectEditor<Value, Row>(
     element: select,
     getValue,
     getLabel,
+    getOptions: () => options,
     setValue,
     load,
     focus: () => select.focus(),

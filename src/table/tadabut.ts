@@ -3,6 +3,7 @@ import type { Column } from '../columns/column';
 import { toDataTables } from '../columns/to-datatables';
 import { type EditableCell, EditSession } from '../editing/session';
 import { addClasses } from '../editors/classes';
+import type { SelectOption } from '../editors/select';
 import { en } from '../texts/en';
 import type { Texts } from '../texts/texts';
 import { checkOptions } from './check-options';
@@ -17,7 +18,7 @@ import type {
 import { RowLines } from './row-lines';
 import type { RowScope } from './scope';
 import { Selection } from './selection';
-import { footerFor, rowsFor, totalText } from './totals';
+import { footerFor, rowsFor, totalText, totalValue } from './totals';
 
 /**
  * A DataTables table with row editing.
@@ -89,6 +90,8 @@ export class Tadabut<Row extends object> {
   private readonly onRowDoubleClick: TadabutOptions<Row>['onRowDoubleClick'];
   /** The lines under each row: details and errors. */
   private readonly rowLines: RowLines<Row>;
+  /** The last options each select loaded, by field. */
+  private readonly loadedOptions = new Map<string, readonly SelectOption<unknown>[]>();
 
   /**
    * Builds the table inside `container`, which should be empty.
@@ -227,6 +230,182 @@ export class Tadabut<Row extends object> {
   }
 
   /**
+   * Every row, in the order shown. `scope` works like `totalRows`: `'all'`
+   * (default), `'searched'` or `'page'`. They're copies, so changing them
+   * changes nothing: use `updateRow` for that.
+   *
+   * @example
+   * table.getData('searched'); // the rows that match the search
+   */
+  public getData(scope: RowScope = 'all'): Row[] {
+    return this.dataTable
+      .rows(rowsFor(scope))
+      .data()
+      .toArray()
+      .map((row) => ({ ...row }));
+  }
+
+  /**
+   * The row with this id, as a copy, or `undefined`. It's the saved row:
+   * while a row is edited, what's typed isn't in it until Save.
+   */
+  public getRow(id: string | number): Row | undefined {
+    const row = this.findRow(id);
+
+    return row === undefined ? undefined : { ...row.data() };
+  }
+
+  /**
+   * The DataTables API, for anything Tadabut doesn't do itself.
+   *
+   * Careful: rows added or removed through it skip Tadabut, so the
+   * selection, details and open rows won't know. Use `insertRow`,
+   * `updateRow`, `removeRow` and `setData` for that.
+   *
+   * @example
+   * table.getApi().order([2, 'desc']).draw();
+   */
+  public getApi(): Api<Row> {
+    return this.dataTable;
+  }
+
+  /**
+   * Puts one row or many in the table, without `onAdd` or the new-row form,
+   * and `onAdded` doesn't fire. They go where the sorting puts them, and the
+   * table stays on the page it's on. Either every row goes in, or none.
+   *
+   * @throws If there's no `rowId`, a row has no `rowId` value, or its id is
+   *   already in the table (or twice in `rows`).
+   *
+   * @example
+   * table.insertRow(rowFromServer);
+   */
+  public insertRow(rows: Row | readonly Row[]): void {
+    const rowId = this.rowId;
+
+    if (rowId === undefined) {
+      throw new Error('Tadabut: rowId is required with insertRow.');
+    }
+
+    // `Array.isArray` doesn't narrow readonly arrays, hence the cast.
+    const list = (Array.isArray(rows) ? rows : [rows]) as readonly Row[];
+    const seen = new Set<string | number>();
+
+    // Every row is checked before any goes in.
+    for (const row of list) {
+      const id = row[rowId];
+
+      if (typeof id !== 'string' && typeof id !== 'number') {
+        throw new Error(`Tadabut: a row given to insertRow has no "${rowId}".`);
+      }
+
+      if (seen.has(id) || this.findRow(id) !== undefined) {
+        throw new Error(`Tadabut: insertRow got the id ${id}, which is already in the table.`);
+      }
+
+      seen.add(id);
+    }
+
+    this.dataTable.rows.add(list.map((row) => ({ ...row }))).draw(false);
+  }
+
+  /**
+   * Replaces the row with the same id, without `onSave`, and `onSaved` doesn't
+   * fire. An open detail reloads.
+   *
+   * @returns `false` if no row has this id, or it's being edited or deleted.
+   *
+   * @example
+   * table.updateRow({ ...table.getRow(1), name: 'Nadia' });
+   */
+  public updateRow(row: Row): boolean {
+    if (this.rowId === undefined) {
+      return false;
+    }
+
+    const id = row[this.rowId] as string | number;
+    const found = this.findRow(id);
+
+    // Changing a row under the user's fingers would lose what they typed.
+    if (found === undefined || this.sessions.has(id) || this.deleting.has(id)) {
+      return false;
+    }
+
+    found.data({ ...row }).draw(false);
+    this.rowLines.reload(id);
+
+    return true;
+  }
+
+  /**
+   * Takes a row out of the table, without `onDelete` and without asking, and
+   * `onDeleted` doesn't fire. Its detail closes, and it leaves the selection.
+   *
+   * @returns `false` if no row has this id, or it's being edited or deleted.
+   */
+  public removeRow(id: string | number): boolean {
+    const found = this.findRow(id);
+
+    if (found === undefined || this.sessions.has(id) || this.deleting.has(id)) {
+      return false;
+    }
+
+    found.remove().draw(false);
+    this.rowLines.prune();
+    this.selection?.prune();
+
+    return true;
+  }
+
+  /**
+   * The footer's totals, by field: numbers for built-in totals (not
+   * formatted, rounded like the footer), or your function's text. They count
+   * the same rows as the footer. If two columns show the same field with a
+   * total each, the last one wins.
+   *
+   * @example
+   * table.getTotals().salary; // 176651.5
+   */
+  public getTotals(): Partial<Record<keyof Row & string, number | string>> {
+    const rows = this.dataTable.rows(rowsFor(this.totalRows)).data().toArray();
+    const totals: Partial<Record<keyof Row & string, number | string>> = {};
+
+    for (const column of this.columns) {
+      const value = totalValue(column, rows);
+
+      if (value !== undefined) {
+        totals[column.prop] = value;
+      }
+    }
+
+    return totals;
+  }
+
+  /**
+   * A select's options. With a fixed list, that list. With an `options`
+   * function, the list it last loaded in an open row, or `undefined` before
+   * any row was opened. `undefined` for a column that isn't a select.
+   *
+   * @example
+   * table.getOptions('countryId'); // [{ value: 1, label: 'Morocco' }, …]
+   */
+  public getOptions<Key extends keyof Row & string>(
+    prop: Key,
+  ): readonly SelectOption<NonNullable<Row[Key]>>[] | undefined {
+    const editor = this.columns.find((column) => column.prop === prop)?.editor;
+
+    if (editor?.type !== 'select') {
+      return undefined;
+    }
+
+    const options =
+      typeof editor.options === 'function' ? this.loadedOptions.get(prop) : editor.options;
+
+    // `Column<Row>` loses the exact value type of each field here.
+    return options as readonly SelectOption<NonNullable<Row[Key]>>[] | undefined;
+  }
+
+  /**
    * Opens a row for editing.
    *
    * @param id The value of the row's `rowId` field.
@@ -266,7 +445,7 @@ export class Tadabut<Row extends object> {
       }
     });
 
-    this.sessions.set(id, new EditSession(row.data(), cells, this.texts));
+    this.sessions.set(id, new EditSession(row.data(), cells, this.texts, this.rememberOptions));
     row.node()?.classList.add('tdb-row-editing');
 
     // Redrawing the row on save/cancel brings Edit and Delete back.
@@ -303,6 +482,7 @@ export class Tadabut<Row extends object> {
       texts: this.texts,
       classNames: this.classNames,
       leadingCells: this.offset,
+      onOptions: this.rememberOptions,
     });
 
     this.tableEl.insertBefore(newRow.body, this.dataTable.table().body());
@@ -882,6 +1062,14 @@ export class Tadabut<Row extends object> {
         cell.textContent = this.texts.total;
       }
     });
+  };
+
+  /** Keeps the options a select loaded, for `getOptions`. An arrow function, so it can be passed as is. */
+  private readonly rememberOptions = (
+    prop: string,
+    options: readonly SelectOption<unknown>[],
+  ): void => {
+    this.loadedOptions.set(prop, options);
   };
 
   /** Your column's index as DataTables counts it. */

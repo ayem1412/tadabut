@@ -31,6 +31,10 @@ const createBtn = document.querySelector<HTMLButtonElement>('#create');
 const destroyBtn = document.querySelector<HTMLButtonElement>('#destroy');
 const randomDataBtn = document.querySelector<HTMLButtonElement>('#random-data');
 const addBtn = document.querySelector<HTMLButtonElement>('#add');
+const insertRowBtn = document.querySelector<HTMLButtonElement>('#insert-row');
+const updateRowBtn = document.querySelector<HTMLButtonElement>('#update-row');
+const removeRowBtn = document.querySelector<HTMLButtonElement>('#remove-row');
+const logTotalsBtn = document.querySelector<HTMLButtonElement>('#log-totals');
 const modeSelect = document.querySelector<HTMLSelectElement>('#mode');
 const buttonsCheckbox = document.querySelector<HTMLInputElement>('#buttons');
 const frenchCheckbox = document.querySelector<HTMLInputElement>('#french');
@@ -50,6 +54,10 @@ if (
   !destroyBtn ||
   !randomDataBtn ||
   !addBtn ||
+  !insertRowBtn ||
+  !updateRowBtn ||
+  !removeRowBtn ||
+  !logTotalsBtn ||
   !modeSelect ||
   !buttonsCheckbox ||
   !frenchCheckbox ||
@@ -176,6 +184,10 @@ const updateStatus = (): void => {
   destroyBtn.disabled = table === null;
   randomDataBtn.disabled = table === null;
   addBtn.disabled = table === null;
+
+  for (const button of [insertRowBtn, updateRowBtn, removeRowBtn, logTotalsBtn]) {
+    button.disabled = table === null;
+  }
   status.textContent = `Elements inside container: ${container.childElementCount}`;
 };
 
@@ -209,6 +221,67 @@ randomDataBtn.addEventListener('click', () => {
 // Starts in Morocco, so the cities load right away.
 addBtn.addEventListener('click', () => {
   table?.add({ country: 'MA' });
+});
+
+/** Ids for rows inserted from code, far from the real ones. */
+let insertedId = 100;
+
+// Like a row the server pushed: no onAdd, and the page doesn't move.
+insertRowBtn.addEventListener('click', () => {
+  if (table === null) {
+    return;
+  }
+
+  const [first] = table.getData();
+
+  if (first === undefined) {
+    return;
+  }
+
+  insertedId += 1;
+  table.insertRow({
+    ...first,
+    id: insertedId,
+    code: `EMP-${insertedId}`,
+    name: `Inserted ${insertedId}`,
+  });
+  log(`insertRow: Inserted ${insertedId}`);
+});
+
+updateRowBtn.addEventListener('click', () => {
+  const [first] = table?.getData('page') ?? [];
+
+  if (table === null || first === undefined) {
+    return;
+  }
+
+  // Like the server telling us about a raise: the cell and the total both follow.
+  const salary = (first.salary ?? 0) + 1000;
+  const updated = table.updateRow({ ...first, salary });
+
+  log(
+    updated
+      ? `updateRow: ${first.name} now earns ${salary}`
+      : 'updateRow: refused, the row is being edited',
+  );
+});
+
+removeRowBtn.addEventListener('click', () => {
+  const last = table?.getData('page').at(-1);
+
+  if (table === null || last === undefined) {
+    return;
+  }
+
+  log(
+    table.removeRow(last.id)
+      ? `removeRow: ${last.name}`
+      : 'removeRow: refused, the row is being edited',
+  );
+});
+
+logTotalsBtn.addEventListener('click', () => {
+  log(`getTotals: ${JSON.stringify(table?.getTotals() ?? {})}`);
 });
 
 modeSelect.addEventListener('change', recreate);

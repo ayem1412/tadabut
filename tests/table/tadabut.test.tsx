@@ -885,3 +885,68 @@ describe('React Tadabut details', () => {
     expect(container.querySelector('.open')).toBeNull();
   });
 });
+
+describe('React Tadabut reading and changing rows', () => {
+  beforeEach(() => {
+    container = mountPoint();
+    root = createRoot(container);
+  });
+
+  afterEach(async () => {
+    await act(async () => {
+      root.unmount();
+    });
+  });
+
+  it('reads rows through the ref', async () => {
+    const ref = createRef<TadabutHandle<Row>>();
+    await renderWith({ ref });
+
+    expect(ref.current?.getData()).toHaveLength(rows.length);
+    expect(ref.current?.getRow(1)).toEqual(rows[0]);
+    expect(ref.current?.getApi()?.rows().count()).toBe(rows.length);
+  });
+
+  it('changes rows through the ref', async () => {
+    const ref = createRef<TadabutHandle<Row>>();
+    await renderWith({ ref });
+
+    act(() => {
+      ref.current?.insertRow({ ...(rows[0] as Row), id: 99 });
+    });
+
+    expect(ref.current?.getRow(99)).toBeDefined();
+
+    act(() => {
+      ref.current?.updateRow({ ...(rows[0] as Row), name: 'Nadia' });
+      ref.current?.removeRow(99);
+    });
+
+    expect(ref.current?.getRow(1)?.name).toBe('Nadia');
+    expect(ref.current?.getRow(99)).toBeUndefined();
+  });
+
+  it('gives the totals and options through the ref', async () => {
+    const ref = createRef<TadabutHandle<Row>>();
+    await renderWith({ ref, columns: [{ title: 'Name', prop: 'name', total: 'count' }] });
+
+    expect(ref.current?.getTotals()).toEqual({ name: rows.length });
+    expect(ref.current?.getOptions('name')).toBeUndefined();
+  });
+
+  it('gives empty answers once the table is gone', async () => {
+    const ref = createRef<TadabutHandle<Row>>();
+    await renderWith({ ref });
+    const handle = ref.current;
+
+    await act(async () => {
+      root.unmount();
+    });
+    root = createRoot(container);
+
+    expect(handle?.getData()).toEqual([]);
+    expect(handle?.getApi()).toBeUndefined();
+    expect(handle?.updateRow(rows[0] as Row)).toBe(false);
+    expect(handle?.getTotals()).toEqual({});
+  });
+});

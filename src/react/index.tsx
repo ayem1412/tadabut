@@ -12,6 +12,7 @@
  * ```
  */
 
+import type { Api } from 'datatables.net';
 import {
   type ReactElement,
   type ReactNode,
@@ -25,7 +26,10 @@ import { createPortal } from 'react-dom';
 
 import { Tadabut as Core, type DetailContext, type TadabutOptions } from '../index';
 
-/** What the `ref` gets. No `setData`: change the `data` prop instead. */
+/**
+ * What the `ref` gets. No `setData`: change the `data` prop instead. Before
+ * the table is built, `getApi` gives `undefined`.
+ */
 export type TadabutHandle<Row extends object> = Pick<
   Core<Row>,
   | 'edit'
@@ -46,7 +50,17 @@ export type TadabutHandle<Row extends object> = Pick<
   | 'closeDetail'
   | 'toggleDetail'
   | 'isDetailOpen'
->;
+  | 'getData'
+  | 'getRow'
+  | 'insertRow'
+  | 'updateRow'
+  | 'removeRow'
+  | 'getTotals'
+  | 'getOptions'
+> & {
+  /** The DataTables API, or `undefined` before the table is built. */
+  readonly getApi: () => Api<Row> | undefined;
+};
 
 /** The core options, with `detail` returning JSX, plus `ref`. */
 export type TadabutProps<Row extends object> = Omit<TadabutOptions<Row>, 'detail'> & {
@@ -65,7 +79,9 @@ export type TadabutProps<Row extends object> = Omit<TadabutOptions<Row>, 'detail
    * Gives you the same methods as the core table: `edit`, `save`, `cancel`,
    * `delete`, `add`, `saveNew`, `cancelNew`, `isEditing`, `isAdding`,
    * `getSelected`, `isSelected`, `select`, `deselect`, `clearSelection`,
-   * `openDetail`, `closeDetail`, `toggleDetail` and `isDetailOpen`.
+   * `openDetail`, `closeDetail`, `toggleDetail`, `isDetailOpen`, `getData`,
+   * `getRow`, `getApi`, `insertRow`, `updateRow`, `removeRow`, `getTotals`
+   * and `getOptions`.
    */
   readonly ref?: Ref<TadabutHandle<Row>>;
 };
@@ -321,6 +337,15 @@ export function Tadabut<Row extends object>({
       closeDetail: (id) => tableRef.current?.closeDetail(id),
       toggleDetail: (id) => tableRef.current?.toggleDetail(id),
       isDetailOpen: (id) => tableRef.current?.isDetailOpen(id) ?? false,
+      getData: (scope) => tableRef.current?.getData(scope) ?? [],
+      getRow: (id) => tableRef.current?.getRow(id),
+      getApi: () => tableRef.current?.getApi(),
+      // Nothing to put it in yet: the `data` prop is the way in before that.
+      insertRow: (rows) => tableRef.current?.insertRow(rows),
+      updateRow: (row) => tableRef.current?.updateRow(row) ?? false,
+      removeRow: (id) => tableRef.current?.removeRow(id) ?? false,
+      getTotals: () => tableRef.current?.getTotals() ?? {},
+      getOptions: (prop) => tableRef.current?.getOptions(prop),
     }),
     [],
   );
