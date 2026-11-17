@@ -85,6 +85,11 @@ export class EditSession<Row extends object> {
     const row = { ...this.originalData } as Record<string, unknown>;
 
     for (const [prop, { editor, config }] of this.fields) {
+      // Locked, so it keeps the value it had, even one the input can't show.
+      if (config.readOnly) {
+        continue;
+      }
+
       row[prop] = editor.getValue();
 
       // `undefined` means the options are still loading. The value hasn't
@@ -107,6 +112,11 @@ export class EditSession<Row extends object> {
     const errors = new Map<keyof Row & string, string>();
 
     for (const [prop, { editor, config }] of this.fields) {
+      // Locked: the user couldn't fix it anyway.
+      if (config.readOnly) {
+        continue;
+      }
+
       // If the options didn't load, there was nothing to pick from.
       const message = this.loadErrors.has(prop)
         ? this.texts.loadFailed

@@ -58,6 +58,7 @@ export function createMoneyEditor(
   input.type = 'text';
   input.inputMode = 'decimal';
   input.autocomplete = 'off';
+  input.disabled = context.readOnly ?? false;
   addClasses(input, ['tdb-input', 'tdb-input-money'], context.className);
 
   /** Read from the text every time, so there's no copy to get out of sync. */

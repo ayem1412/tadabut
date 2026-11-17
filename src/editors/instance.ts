@@ -4,6 +4,8 @@ export type EditorContext<Value> = {
   readonly value: Value;
   /** The `className` from the editor config. Put it on your element. */
   readonly className?: string;
+  /** Whether the field is locked. With `true`, disable your input. */
+  readonly readOnly?: boolean;
   /** Call it when the user changes the value. */
   readonly onChange: (value: Value) => void;
 };

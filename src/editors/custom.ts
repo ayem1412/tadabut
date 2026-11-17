@@ -26,6 +26,9 @@ import type { EditorContext, EditorInstance } from './instance';
 export type CustomEditor<Value> = BaseEditor & {
   /** Picks this editor. */
   readonly type: 'custom';
-  /** Builds your editor. Runs every time a row opens. */
+  /**
+   * Builds your editor. Runs every time a row opens. With `readOnly`,
+   * `context.readOnly` is `true`: disable your input.
+   */
   readonly create: (context: EditorContext<Value>) => EditorInstance<Value>;
 };

@@ -175,7 +175,7 @@ A select's values must have the same type as the column. `countryId` is a number
 | `checkbox` | `boolean`, or `values` | never empty | `values`                                       |
 | `select`   | same as the column     | `null`      | `options`, `dependsOn`, `labelProp`            |
 
-Every editor also takes `className`, for your own CSS classes.
+Every editor also takes `className`, for your own CSS classes, and `readOnly`. See [Read-only fields](#read-only-fields).
 
 A few things to know:
 
@@ -183,6 +183,21 @@ A few things to know:
 - A checkbox shows `null` as unchecked, but keeps it: an untouched `null` is still `null` after saving. It only becomes `true` or `false` once the user clicks it.
 - A `string | null` column gets the same editors as a `string` column. `null` shows as an empty input.
 - Date columns hold `'YYYY-MM-DD'` unless you give a `format`. See [Dates](#dates).
+
+#### Read-only fields
+
+Add `readOnly: true` to any editor, and the field shows in a locked input while the row is edited:
+
+```ts
+{ prop: 'code', title: 'Code', editor: { type: 'text', readOnly: true } }
+```
+
+- The user sees the value but can't change it. The browser greys the input out, and Tab skips it.
+- Saving keeps the value the row had, even one the input can't show, like a date with a time.
+- It's never checked: `required`, `min`, `validate` and the others are skipped, since the user couldn't fix it anyway.
+- In the new row from `add()`, it shows the value you passed to `add()`, or nothing, and stays locked. Good for fields your server fills in, like a reference number. The cursor starts in the first field that isn't read-only.
+- It works on every editor, `custom` too: your `create` gets `context.readOnly`, and should disable its input.
+- The cell keeps the editor's format, so a read-only `date` or `money` column still shows and sorts like the others.
 
 #### Checkboxes with your own values
 

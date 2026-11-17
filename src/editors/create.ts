@@ -26,7 +26,11 @@ export function createEditor(
   context: EditorContext<unknown>,
   texts: Texts = en,
 ): AnyEditorInstance {
-  const fullContext = { ...context, className: config.className };
+  const fullContext: EditorContext<unknown> = {
+    ...context,
+    className: config.className,
+    readOnly: config.readOnly,
+  };
 
   switch (config.type) {
     case 'text':

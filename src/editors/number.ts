@@ -27,6 +27,7 @@ export function createNumberEditor(
 ): EditorInstance<number | null> {
   const input = document.createElement('input');
   input.type = 'number';
+  input.disabled = context.readOnly ?? false;
   addClasses(input, ['tdb-input', 'tdb-input-number'], context.className);
 
   if (config.min !== undefined) {

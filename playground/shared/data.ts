@@ -2,6 +2,8 @@ import type { Column, DataTablesSettings } from '../../src/index';
 
 export type Row = {
   id: number;
+  /** Given by the server, like 'EMP-0001'. Read-only in the table. */
+  code: string;
   name: string;
   /** 'MA', 'FR'… */
   country: string;
@@ -19,6 +21,7 @@ export type Row = {
 export const rows: Row[] = [
   {
     id: 1,
+    code: 'EMP-0001',
     name: 'Amina Benali',
     country: 'MA',
     cityId: 8,
@@ -30,6 +33,7 @@ export const rows: Row[] = [
   },
   {
     id: 2,
+    code: 'EMP-0002',
     name: 'Youness Idrissi',
     country: 'MA',
     cityId: 2,
@@ -41,6 +45,7 @@ export const rows: Row[] = [
   },
   {
     id: 3,
+    code: 'EMP-0003',
     name: 'Salma Ait Ouahmane',
     country: 'MA',
     cityId: 1,
@@ -52,6 +57,7 @@ export const rows: Row[] = [
   },
   {
     id: 4,
+    code: 'EMP-0004',
     name: 'Karim El Fassi',
     country: 'MA',
     cityId: 3,
@@ -63,6 +69,7 @@ export const rows: Row[] = [
   },
   {
     id: 5,
+    code: 'EMP-0005',
     name: 'Nadia Amrani',
     country: 'MA',
     cityId: 9,
@@ -74,6 +81,7 @@ export const rows: Row[] = [
   },
   {
     id: 6,
+    code: 'EMP-0006',
     name: 'Hamza Ouchen',
     country: 'MA',
     cityId: 5,
@@ -85,6 +93,7 @@ export const rows: Row[] = [
   },
   {
     id: 7,
+    code: 'EMP-0007',
     name: 'Leila Berrada',
     country: 'MA',
     cityId: 6,
@@ -96,6 +105,7 @@ export const rows: Row[] = [
   },
   {
     id: 8,
+    code: 'EMP-0008',
     name: 'Omar Tazi',
     country: 'MA',
     cityId: 7,
@@ -107,6 +117,7 @@ export const rows: Row[] = [
   },
   {
     id: 9,
+    code: 'EMP-0009',
     name: 'Ilham Zerouali',
     country: 'MA',
     cityId: 10,
@@ -118,6 +129,7 @@ export const rows: Row[] = [
   },
   {
     id: 10,
+    code: 'EMP-0010',
     name: 'Mehdi Alaoui',
     country: 'MA',
     cityId: 4,
@@ -129,6 +141,7 @@ export const rows: Row[] = [
   },
   {
     id: 11,
+    code: 'EMP-0011',
     name: 'Sara Lahlou',
     country: 'FR',
     cityId: 13,
@@ -140,6 +153,7 @@ export const rows: Row[] = [
   },
   {
     id: 12,
+    code: 'EMP-0012',
     name: 'Anass Bennani',
     country: 'ES',
     cityId: 16,
@@ -225,6 +239,12 @@ export type InputClasses = {
 export function makeColumns(classes: InputClasses = {}): Column<Row>[] {
   return [
     { title: 'ID', prop: 'id', width: '60px', className: 'dt-center' },
+    {
+      title: 'Code',
+      prop: 'code',
+      // The server sets it: shown while editing, but locked.
+      editor: { type: 'text', readOnly: true, className: classes.input },
+    },
     {
       title: 'Name',
       prop: 'name',
@@ -316,6 +336,7 @@ export async function fakeAdd(row: Partial<Row>): Promise<Row> {
 
   return {
     id: nextId,
+    code: `EMP-${String(nextId).padStart(4, '0')}`,
     name: row.name ?? '',
     country: row.country ?? '',
     cityId: row.cityId ?? null,
@@ -361,7 +382,8 @@ export async function fetchDetails(row: Row, signal: AbortSignal): Promise<Detai
 }
 
 export const settings: DataTablesSettings = {
-  order: [[1, 'asc']],
+  // By Name.
+  order: [[2, 'asc']],
   lengthMenu: [5, 10, 20, -1],
 };
 
