@@ -1,5 +1,15 @@
 # Changelog
 
+## [0.7.0](https://github.com/ayem1412/tadabut/compare/v0.6.0...v0.7.0) (2026-11-17)
+
+
+### Features
+
+* detail rows that open under a row ([#56](https://github.com/ayem1412/tadabut/issues/56)) ([b23453d](https://github.com/ayem1412/tadabut/commit/b23453d410871ab175635bcde076607dff802dea))
+* read and change rows from code ([#62](https://github.com/ayem1412/tadabut/issues/62)) ([4443e6e](https://github.com/ayem1412/tadabut/commit/4443e6e51549ed929246c08a016b1d7dd709384a))
+* read-only inputs ([#60](https://github.com/ayem1412/tadabut/issues/60)) ([7154e23](https://github.com/ayem1412/tadabut/commit/7154e239028c6a5bc7a56bed3d01657b76997599))
+* time and date-time inputs ([#61](https://github.com/ayem1412/tadabut/issues/61)) ([5a8ebc7](https://github.com/ayem1412/tadabut/commit/5a8ebc70c440dafa7919bf33209893c017dbfd89))
+
 ## [0.6.0](https://github.com/ayem1412/tadabut/compare/v0.5.0...v0.6.0) (2026-11-10)
 
 ### Features
