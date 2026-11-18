@@ -45,6 +45,7 @@ export type EditingOptions = {
  *   confirm: 'btn-danger',
  *   keep: 'btn-outline-secondary',
  *   select: 'form-check-input',
+ *   current: 'table-active',
  * }
  */
 export type TableClassNames = {
@@ -68,6 +69,8 @@ export type TableClassNames = {
   readonly select?: string;
   /** The button that opens and closes a detail. */
   readonly detail?: string;
+  /** On the highlighted row, with `currentRow`. */
+  readonly current?: string;
 };
 
 /**
@@ -148,6 +151,19 @@ export type TadabutOptions<Row extends object> = {
    * click or from code.
    */
   readonly onSelect?: (rows: readonly Row[]) => void;
+  /**
+   * Clicking a row highlights it, one row at a time. Clicking it again
+   * removes the highlight. The same clicks count as for `onRowClick`. The
+   * row gets the `tdb-row-current` class and `classNames.current`. Needs
+   * `rowId`.
+   */
+  readonly currentRow?: boolean;
+  /**
+   * Called each time the highlight moves, by a click or from code, with the
+   * highlighted row. `null` when no row is highlighted anymore, also when it
+   * left the table.
+   */
+  readonly onCurrentChange?: (row: Row | null) => void;
   /**
    * Adds a ▸ button at the start of each row. It opens a line under the row
    * with what this returns. May be async: "Loading…" shows while it waits,

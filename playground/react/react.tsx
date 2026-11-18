@@ -106,6 +106,10 @@ function App() {
         onRowClick={(row) => setStatus(`Clicked ${row.name}`)}
         onSaved={(row, { previous }) => setStatus(`Saved ${previous.name} → ${row.name}`)}
         selection
+        currentRow
+        onCurrentChange={(row) =>
+          setStatus(row === null ? 'No current row' : `Current: ${row.name}`)
+        }
         detail={async (row, { signal }) => (
           <DetailsList details={await fetchDetails(row, signal)} />
         )}

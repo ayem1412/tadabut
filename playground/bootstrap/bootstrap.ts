@@ -41,6 +41,7 @@ const buttonsCheckbox = document.querySelector<HTMLInputElement>('#buttons');
 const frenchCheckbox = document.querySelector<HTMLInputElement>('#french');
 const doubleClickCheckbox = document.querySelector<HTMLInputElement>('#double-click');
 const detailsCheckbox = document.querySelector<HTMLInputElement>('#details');
+const currentRowCheckbox = document.querySelector<HTMLInputElement>('#current-row');
 const lockCheckbox = document.querySelector<HTMLInputElement>('#lock');
 const confirmSelect = document.querySelector<HTMLSelectElement>('#confirm');
 const totalRowsSelect = document.querySelector<HTMLSelectElement>('#total-rows');
@@ -64,6 +65,7 @@ if (
   !frenchCheckbox ||
   !doubleClickCheckbox ||
   !detailsCheckbox ||
+  !currentRowCheckbox ||
   !lockCheckbox ||
   !confirmSelect ||
   !totalRowsSelect ||
@@ -86,6 +88,7 @@ const classNames: TableClassNames = {
   keep: 'btn-outline-secondary',
   select: 'form-check-input',
   detail: 'text-body-secondary',
+  current: 'table-active',
 };
 
 const columns = makeColumns({
@@ -169,6 +172,8 @@ const createTable = (): Tadabut<Row> => {
     onSaved: (row, { previous }) => log(`onSaved: ${previous.name} → ${row.name}`),
     onAdded: (row) => log(`onAdded: ${row.name} (id ${row.id})`),
     onDeleted: (row) => log(`onDeleted: ${row.name}`),
+    currentRow: currentRowCheckbox.checked,
+    onCurrentChange: (row) => log(`onCurrentChange: ${row?.name ?? 'none'}`),
     onRowClick: (row) => log(`onRowClick: ${row.name}`),
     onRowDoubleClick: (row) => log(`onRowDoubleClick: ${row.name}`),
     detail: detailsCheckbox.checked
@@ -290,6 +295,7 @@ buttonsCheckbox.addEventListener('change', recreate);
 frenchCheckbox.addEventListener('change', recreate);
 doubleClickCheckbox.addEventListener('change', recreate);
 detailsCheckbox.addEventListener('change', recreate);
+currentRowCheckbox.addEventListener('change', recreate);
 confirmSelect.addEventListener('change', recreate);
 /**
  * "The ticked rows" needs the checkboxes, or Tadabut throws. So that choice
