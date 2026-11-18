@@ -390,6 +390,24 @@ const columns: Column<Employee>[] = [
 | `'searched'` (default) | every row that matches the search, on every page |
 | `'all'`                | every row, whatever the search                   |
 | `'page'`               | only the rows on the page shown                  |
+| `'selected'`           | only the ticked rows, wherever they are          |
+
+`'selected'` needs the checkbox column (`selection`), and Tadabut throws an error without it. The totals follow each tick, and ticked rows still count when the search hides them or they're on another page. With nothing ticked, a sum is `0`.
+
+```ts
+const table = new Tadabut(container, {
+  data: invoices,
+  rowId: 'id',
+  columns: [
+    { prop: 'number', title: 'Invoice' },
+    { prop: 'amount', title: 'Amount', total: 'sum' },
+  ],
+  selection: true,
+  totalRows: 'selected',
+});
+```
+
+In TypeScript, the type of `totalRows` is `TotalScope`.
 
 ### Column options
 
@@ -1382,10 +1400,10 @@ Done:
 - [x] Detail rows that open under a row, async and with JSX in React
 - [x] Read-only, time and date-with-time inputs
 - [x] Reading and changing rows from code: `getData`, `getRow`, `insertRow`, `updateRow`, `removeRow`, `getTotals`, `getOptions` and the DataTables API
+- [x] Totals of the ticked rows only (`totalRows: 'selected'`)
 
 Next, roughly in this order:
 
-- [ ] Totals of the ticked rows only (`totalRows: 'selected'`)
 - [ ] A current row: clicking a row highlights it, one at a time, apart from the checkboxes
 - [ ] Turning editing on and off while the table is shown
 - [ ] A new row that opens by itself after each `setData`, and a new row that starts with what's typed in the search box

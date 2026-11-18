@@ -16,7 +16,7 @@ import type {
   TadabutOptions,
 } from './options';
 import { RowLines } from './row-lines';
-import type { RowScope } from './scope';
+import type { RowScope, TotalScope } from './scope';
 import { Selection } from './selection';
 import { footerFor, rowsFor, totalText, totalValue } from './totals';
 
@@ -71,7 +71,7 @@ export class Tadabut<Row extends object> {
   /** Whether any column has a `total`, so the table has a footer. */
   private readonly hasTotals: boolean;
   /** Which rows the totals count, with its default filled in. */
-  private readonly totalRows: RowScope;
+  private readonly totalRows: TotalScope;
   /** How many columns Tadabut adds before yours: the checkboxes and the ▸ button. */
   private readonly offset: number;
   /** The ticked rows. Only with `selection`. */
@@ -100,6 +100,7 @@ export class Tadabut<Row extends object> {
    * @throws If `onDelete` is set and there's no `rowId`.
    * @throws If `selection` is on and there's no `rowId`.
    * @throws If `detail` is set and there's no `rowId`.
+   * @throws If `totalRows` is `'selected'` without `selection`.
    * @throws If a hidden column (`visible: false`) has an `editor`.
    * @throws If a select's `labelProp` is its own column.
    * @throws If a money editor's `separator` and `point` are the same.
@@ -185,7 +186,14 @@ export class Tadabut<Row extends object> {
           typeof options.selection === 'object'
             ? (options.selection.checkAll ?? 'searched')
             : 'searched',
-        onSelect: options.onSelect,
+        onSelect: (rows) => {
+          // Ticking doesn't redraw, so the totals wouldn't follow by themselves.
+          if (this.hasTotals && this.totalRows === 'selected') {
+            this.updateTotals();
+          }
+
+          options.onSelect?.(rows);
+        },
       });
       this.dataTable.on('draw', () => this.selection?.sync());
       this.selection.sync();
@@ -367,7 +375,7 @@ export class Tadabut<Row extends object> {
    * table.getTotals().salary; // 176651.5
    */
   public getTotals(): Partial<Record<keyof Row & string, number | string>> {
-    const rows = this.dataTable.rows(rowsFor(this.totalRows)).data().toArray();
+    const rows = this.countedRows();
     const totals: Partial<Record<keyof Row & string, number | string>> = {};
 
     for (const column of this.columns) {
@@ -1048,10 +1056,10 @@ export class Tadabut<Row extends object> {
 
   /**
    * Writes every total. Runs after each redraw: search, paging, save, add,
-   * delete and `setData` all redraw.
+   * delete and `setData` all redraw. With `'selected'`, also after each tick.
    */
   private readonly updateTotals = (): void => {
-    const rows = this.dataTable.rows(rowsFor(this.totalRows)).data().toArray();
+    const rows = this.countedRows();
 
     this.columns.forEach((column, index) => {
       const cell = this.dataTable.column(this.dtIndex(index)).footer();
@@ -1115,6 +1123,15 @@ export class Tadabut<Row extends object> {
     // The header and footer aren't rows. A detail or error line is a child row,
     // which DataTables maps back to its parent row, so its `<tr>` isn't the row's.
     return row.any() && row.node() === tr ? row : undefined;
+  }
+
+  /** The rows the totals count: the ticked ones with `'selected'`, otherwise the ones `totalRows` picks. */
+  private countedRows(): Row[] {
+    if (this.totalRows === 'selected') {
+      return this.selection?.selected() ?? [];
+    }
+
+    return this.dataTable.rows(rowsFor(this.totalRows)).data().toArray();
   }
 
   /**

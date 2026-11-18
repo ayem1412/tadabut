@@ -1,7 +1,7 @@
 import type { Config } from 'datatables.net';
 import type { Column } from '../columns/column';
 import type { Texts } from '../texts/texts';
-import type { RowScope } from './scope';
+import type { RowScope, TotalScope } from './scope';
 
 /** The second argument of `onSave`. */
 export type SaveContext<Row extends object> = {
@@ -129,11 +129,12 @@ export type TadabutOptions<Row extends object> = {
   /**
    * Which rows the totals count: `'searched'` (default) is every row that
    * matches the search, on every page. `'all'` ignores the search. `'page'`
-   * is only the rows shown.
+   * is only the rows shown. `'selected'` is only the ticked rows, even ones
+   * the search hides or on other pages: it needs `selection`.
    *
    * Does nothing unless a column has `total`.
    */
-  readonly totalRows?: RowScope;
+  readonly totalRows?: TotalScope;
   /**
    * Adds a first column with a checkbox on each row, and one in the header to
    * check them all. `true` uses the defaults. Needs `rowId`.
