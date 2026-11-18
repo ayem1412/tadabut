@@ -12,6 +12,7 @@ import {
   type TableClassNames,
   Tadabut,
   type TadabutOptions,
+  type TotalScope,
 } from '../../src/index';
 import {
   type Details,
@@ -154,7 +155,7 @@ const createTable = (): Tadabut<Row> => {
     onAdd: fakeAdd,
     onDelete: fakeDelete,
     confirmDelete: confirmDelete(),
-    totalRows: totalRowsSelect.value as RowScope,
+    totalRows: totalRowsSelect.value as TotalScope,
     selection: selection(),
     onSelect: (picked) => {
       selected.textContent = `Selected: ${picked.map((row) => row.name).join(', ') || 'none'}`;
@@ -290,8 +291,31 @@ frenchCheckbox.addEventListener('change', recreate);
 doubleClickCheckbox.addEventListener('change', recreate);
 detailsCheckbox.addEventListener('change', recreate);
 confirmSelect.addEventListener('change', recreate);
+/**
+ * "The ticked rows" needs the checkboxes, or Tadabut throws. So that choice
+ * is only offered while they're on, and turning them off falls back to the
+ * searched rows.
+ */
+const fitTotalsToCheckboxes = (): void => {
+  const off = selectionSelect.value === 'off';
+  const ticked = totalRowsSelect.querySelector<HTMLOptionElement>('option[value="selected"]');
+
+  if (ticked !== null) {
+    ticked.disabled = off;
+  }
+
+  if (off && totalRowsSelect.value === 'selected') {
+    totalRowsSelect.value = 'searched';
+  }
+};
+
+fitTotalsToCheckboxes();
+
 totalRowsSelect.addEventListener('change', recreate);
-selectionSelect.addEventListener('change', recreate);
+selectionSelect.addEventListener('change', () => {
+  fitTotalsToCheckboxes();
+  recreate();
+});
 
 table = createTable();
 updateStatus();

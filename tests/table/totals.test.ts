@@ -1,6 +1,7 @@
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 
 import { type Column, fr, Tadabut, type TadabutOptions } from '../../src/index';
+import { goToPage, mountPoint, search, type } from '../helpers';
 
 type Row = { id: number; name: string; city: string; age: number; salary: number | null };
 
@@ -23,8 +24,7 @@ const salarySum: Column<Row> = {
 };
 
 function setup(columns: Column<Row>[], options: Partial<TadabutOptions<Row>> = {}) {
-  const container = document.createElement('div');
-  document.body.appendChild(container);
+  const container = mountPoint();
   const table = new Tadabut(container, {
     data: rows(),
     rowId: 'id',
@@ -35,20 +35,15 @@ function setup(columns: Column<Row>[], options: Partial<TadabutOptions<Row>> = {
   });
 
   const footer = () => [...container.querySelectorAll('tfoot th')].map((th) => th.textContent);
-  const search = (text: string) => {
-    const input = container.querySelector<HTMLInputElement>('.dt-search input') as HTMLInputElement;
-    input.value = text;
-    input.dispatchEvent(new Event('input', { bubbles: true }));
+
+  return {
+    container,
+    table,
+    footer,
+    search: (text: string) => search(container, text),
+    goToPage: (index: number) => goToPage(container, index),
   };
-  const goToPage = (index: number) =>
-    container.querySelector<HTMLElement>(`.dt-paging [data-dt-idx="${index}"]`)?.click();
-
-  return { container, table, footer, search, goToPage };
 }
-
-afterEach(() => {
-  document.body.innerHTML = '';
-});
 
 describe('the footer', () => {
   it('only exists when a column has a total', () => {
@@ -218,15 +213,126 @@ describe('which rows count', () => {
   });
 });
 
+describe('counting the ticked rows', () => {
+  const columns: Column<Row>[] = [{ title: 'Name', prop: 'name' }, salarySum];
+
+  function ticked(options: Partial<TadabutOptions<Row>> = {}) {
+    const result = setup(columns, { selection: true, totalRows: 'selected', ...options });
+
+    /** Clicks the checkbox of the nth row shown, from 0. The rows keep data order. */
+    const tick = (index: number): void => {
+      result.container.querySelectorAll<HTMLInputElement>('tbody .tdb-select-row')[index]?.click();
+    };
+
+    return { ...result, tick };
+  }
+
+  it('needs selection', () => {
+    expect(() => setup(columns, { totalRows: 'selected' })).toThrow(
+      "Tadabut: totalRows: 'selected' needs selection.",
+    );
+  });
+
+  it('counts nothing until a row is ticked', () => {
+    const { footer } = ticked();
+
+    expect(footer()[2]).toBe('0.00');
+  });
+
+  it('follows each tick, without a redraw', () => {
+    const { footer, tick } = ticked();
+
+    // Rows 1 and 3.
+    tick(0);
+    tick(2);
+
+    expect(footer()[2]).toBe('4 000.00');
+
+    tick(0);
+
+    expect(footer()[2]).toBe('3 000.00');
+  });
+
+  it('follows the selection from code', () => {
+    const { table, footer } = ticked();
+
+    table.select([24, 25]);
+
+    expect(footer()[2]).toBe('49 000.00');
+
+    table.deselect([24]);
+
+    expect(footer()[2]).toBe('25 000.00');
+
+    table.clearSelection();
+
+    expect(footer()[2]).toBe('0.00');
+  });
+
+  it('still counts ticked rows the search hides or that are on another page', () => {
+    const { table, footer, search, goToPage } = ticked({
+      dataTables: { order: [], pageLength: 5 },
+    });
+
+    table.select([1, 25]);
+    search('N00');
+
+    expect(footer()[2]).toBe('26 000.00');
+
+    search('');
+    goToPage(2);
+
+    expect(footer()[2]).toBe('26 000.00');
+  });
+
+  it('uses the saved value of a ticked row', async () => {
+    const { table, container, footer } = ticked();
+    table.select([1]);
+    table.edit(1);
+    type(container.querySelector<HTMLInputElement>('.tdb-input-money') as HTMLInputElement, '7000');
+
+    await table.save(1);
+
+    expect(footer()[2]).toBe('7 000.00');
+  });
+
+  it('drops a ticked row once it is deleted', async () => {
+    const { table, footer } = ticked();
+    table.select([1, 2]);
+
+    await table.delete(2);
+
+    expect(footer()[2]).toBe('1 000.00');
+  });
+
+  it('drops ticked rows that setData removed', () => {
+    const { table, footer } = ticked();
+    table.select([1, 25]);
+
+    table.setData(rows().slice(0, 2));
+
+    expect(footer()[2]).toBe('1 000.00');
+  });
+
+  it('gives getTotals the same rows', () => {
+    const { table } = ticked();
+
+    table.select([2, 3]);
+
+    expect(table.getTotals()).toEqual({ salary: 5000 });
+  });
+});
+
 describe('keeping totals up to date', () => {
   const columns: Column<Row>[] = [{ title: 'Name', prop: 'name' }, salarySum];
 
   it('after a save', async () => {
     const { table, container, footer } = setup(columns);
     table.edit(1);
-    const input = container.querySelector<HTMLInputElement>('.tdb-input-money') as HTMLInputElement;
-    input.value = '101000';
-    input.dispatchEvent(new Event('input', { bubbles: true }));
+    type(
+      container.querySelector<HTMLInputElement>('.tdb-input-money') as HTMLInputElement,
+      '101000',
+    );
 
     await table.save(1);
 
@@ -236,9 +342,12 @@ describe('keeping totals up to date', () => {
   it('after an add', async () => {
     const { table, container, footer } = setup(columns);
     table.add({ id: 99, name: 'New' });
-    const input = container.querySelector<HTMLInputElement>('.tdb-row-new .tdb-input-money');
-    (input as HTMLInputElement).value = '5000';
-    input?.dispatchEvent(new Event('input', { bubbles: true }));
+    type(
+      container.querySelector<HTMLInputElement>(
+        '.tdb-row-new .tdb-input-money',
+      ) as HTMLInputElement,
+      '5000',
+    );
 
     await table.saveNew();
 

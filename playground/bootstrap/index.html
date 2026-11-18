@@ -71,6 +71,7 @@
             <option value="searched">the searched rows</option>
             <option value="all">every row</option>
             <option value="page">this page</option>
+            <option value="selected">the ticked rows</option>
           </select>
         </label>
         <label class="d-flex align-items-center gap-2">
@@ -103,9 +104,10 @@
         <code>onEditStart</code>. The Code column is <code>readOnly</code>: it shows while editing
         but can't be changed, and the server fills it in for new rows. Starts is a time between
         07:00 and 20:00, and Last login a locked date-time: sort by either to see them sort by the
-        real time. Every event shows up under the table. Click ▸ to open a row's details, loaded
-        from a slow fake server: Omar's fail, and editing a row reloads them. Tick rows, change page
-        and search, then try <code>table.select([1, 2])</code> and
+        real time. Set "Totals count" to "the ticked rows", then tick rows: the footer adds up only
+        those, even when the search hides them. Every event shows up under the table. Click ▸ to
+        open a row's details, loaded from a slow fake server: Omar's fail, and editing a row reloads
+        them. Tick rows, change page and search, then try <code>table.select([1, 2])</code> and
         <code>table.getSelected()</code> in the console.
       </p>
 
