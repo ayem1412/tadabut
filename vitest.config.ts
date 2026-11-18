@@ -1,3 +1,5 @@
+/// <reference types="node" />
+
 import { defineConfig } from 'vitest/config';
 
 export default defineConfig({
@@ -10,6 +12,6 @@ export default defineConfig({
     // Files share globals as a result: tests/setup.ts cleans the page, the
     // rest is up to each test.
     isolate: false,
-    maxWorkers: 2,
+    maxWorkers: process.env.CI ? 4 : 2,
   },
 });
