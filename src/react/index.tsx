@@ -46,6 +46,9 @@ export type TadabutHandle<Row extends object> = Pick<
   | 'select'
   | 'deselect'
   | 'clearSelection'
+  | 'setCurrent'
+  | 'getCurrent'
+  | 'isCurrent'
   | 'openDetail'
   | 'closeDetail'
   | 'toggleDetail'
@@ -79,7 +82,7 @@ export type TadabutProps<Row extends object> = Omit<TadabutOptions<Row>, 'detail
    * Gives you the same methods as the core table: `edit`, `save`, `cancel`,
    * `delete`, `add`, `saveNew`, `cancelNew`, `isEditing`, `isAdding`,
    * `getSelected`, `isSelected`, `select`, `deselect`, `clearSelection`,
-   * `openDetail`, `closeDetail`, `toggleDetail`, `isDetailOpen`, `getData`,
+   * `setCurrent`, `getCurrent`, `isCurrent`, `openDetail`, `closeDetail`, `toggleDetail`, `isDetailOpen`, `getData`,
    * `getRow`, `getApi`, `insertRow`, `updateRow`, `removeRow`, `getTotals`
    * and `getOptions`.
    */
@@ -96,8 +99,9 @@ type Detail = {
 
 /**
  * New `data` updates the table in place. Changing `columns`, `rowId`,
- * `dataTables`, `texts`, `totalRows` or `selection` rebuilds it (and closes
- * open rows and details, and clears the selection), so keep the objects
+ * `dataTables`, `texts`, `totalRows`, `selection` or `currentRow` rebuilds it
+ * (and closes open rows and details, and clears the selection and the
+ * highlight), so keep the objects
  * stable with a constant or `useMemo`. `editing`, `selection`, `classNames`,
  * `detail` and every `on…` callback (and `confirmDelete`) can be inline:
  * they're compared by value or read through a ref.
@@ -113,6 +117,8 @@ export function Tadabut<Row extends object>({
   totalRows,
   selection,
   onSelect,
+  currentRow,
+  onCurrentChange,
   onSave,
   onAdd,
   onDelete,
@@ -142,6 +148,8 @@ export function Tadabut<Row extends object>({
   const confirmDeleteRef = useRef(confirmDelete);
   /** The latest `onSelect`, so a new one doesn't rebuild the table. */
   const onSelectRef = useRef(onSelect);
+  /** The latest `onCurrentChange`, so a new one doesn't rebuild the table. */
+  const onCurrentChangeRef = useRef(onCurrentChange);
   /** The latest `onEditStart`, so a new one doesn't rebuild the table. */
   const onEditStartRef = useRef(onEditStart);
   /** The latest `onSaved`, so a new one doesn't rebuild the table. */
@@ -174,6 +182,8 @@ export function Tadabut<Row extends object>({
   const confirmClass = classNames?.confirm;
   const keepClass = classNames?.keep;
   const selectClass = classNames?.select;
+  const detailClass = classNames?.detail;
+  const currentClass = classNames?.current;
   const selectionOn = Boolean(selection);
   const checkAll = typeof selection === 'object' ? selection.checkAll : undefined;
   // Only whether they're set changes the buttons, not which function it is.
@@ -211,6 +221,7 @@ export function Tadabut<Row extends object>({
       texts,
       totalRows,
       selection: selectionOn && { checkAll },
+      currentRow,
       classNames: {
         table: tableClass,
         button: buttonClass,
@@ -221,12 +232,15 @@ export function Tadabut<Row extends object>({
         confirm: confirmClass,
         keep: keepClass,
         select: selectClass,
+        detail: detailClass,
+        current: currentClass,
       },
       onSave: (row, context) => onSaveRef.current?.(row, context),
       onAdd: (row) => onAddRef.current?.(row),
       onDelete: hasDelete ? (row) => onDeleteRef.current?.(row) : undefined,
       confirmDelete: confirm,
       onSelect: (rows) => onSelectRef.current?.(rows),
+      onCurrentChange: (row) => onCurrentChangeRef.current?.(row),
       onEditStart: (row) => onEditStartRef.current?.(row),
       onSaved: (row, context) => onSavedRef.current?.(row, context),
       onAdded: (row) => onAddedRef.current?.(row),
@@ -289,7 +303,10 @@ export function Tadabut<Row extends object>({
     confirmClass,
     keepClass,
     selectClass,
+    detailClass,
+    currentClass,
     selectionOn,
+    currentRow,
     checkAll,
     hasDelete,
     confirmWith,
@@ -307,6 +324,7 @@ export function Tadabut<Row extends object>({
     onDeleteRef.current = onDelete;
     confirmDeleteRef.current = confirmDelete;
     onSelectRef.current = onSelect;
+    onCurrentChangeRef.current = onCurrentChange;
     onEditStartRef.current = onEditStart;
     onSavedRef.current = onSaved;
     onAddedRef.current = onAdded;
@@ -333,6 +351,9 @@ export function Tadabut<Row extends object>({
       select: (ids) => tableRef.current?.select(ids),
       deselect: (ids) => tableRef.current?.deselect(ids),
       clearSelection: () => tableRef.current?.clearSelection(),
+      setCurrent: (id) => tableRef.current?.setCurrent(id) ?? false,
+      getCurrent: () => tableRef.current?.getCurrent(),
+      isCurrent: (id) => tableRef.current?.isCurrent(id) ?? false,
       openDetail: (id) => tableRef.current?.openDetail(id),
       closeDetail: (id) => tableRef.current?.closeDetail(id),
       toggleDetail: (id) => tableRef.current?.toggleDetail(id),

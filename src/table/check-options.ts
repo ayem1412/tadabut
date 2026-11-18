@@ -10,6 +10,7 @@ import type { TadabutOptions } from './options';
  * @throws If a column has an `editor` and there's no `rowId`.
  * @throws If `onDelete` is set and there's no `rowId`.
  * @throws If `selection` is on and there's no `rowId`.
+ * @throws If `currentRow` is on and there's no `rowId`.
  * @throws If `detail` is set and there's no `rowId`.
  * @throws If `totalRows` is `'selected'` without `selection`.
  * @throws If a hidden column (`visible: false`) has an `editor`.
@@ -31,6 +32,10 @@ export function checkOptions<Row extends object>(options: TadabutOptions<Row>): 
 
     if (options.selection) {
       throw new Error('Tadabut: rowId is required with selection.');
+    }
+
+    if (options.currentRow) {
+      throw new Error('Tadabut: rowId is required with currentRow.');
     }
 
     if (options.detail !== undefined) {

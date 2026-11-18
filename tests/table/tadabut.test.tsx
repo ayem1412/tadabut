@@ -950,3 +950,73 @@ describe('React Tadabut reading and changing rows', () => {
     expect(handle?.getTotals()).toEqual({});
   });
 });
+
+describe('React Tadabut current row', () => {
+  beforeEach(() => {
+    container = mountPoint();
+    root = createRoot(container);
+  });
+
+  afterEach(async () => {
+    await act(async () => {
+      root.unmount();
+    });
+  });
+
+  /** Clicks the name cell of the nth row shown, from 0. */
+  const clickRow = (index: number): void => {
+    act(() => {
+      container.querySelectorAll('tbody tr')[index]?.querySelectorAll('td')[1]?.click();
+    });
+  };
+
+  it('highlights a clicked row with your class, and calls the latest onCurrentChange', async () => {
+    const first = vi.fn();
+    const second = vi.fn();
+    await renderWith({
+      currentRow: true,
+      classNames: { current: 'table-active' },
+      onCurrentChange: first,
+    });
+    const table = container.querySelector('table');
+    await renderWith({
+      currentRow: true,
+      classNames: { current: 'table-active' },
+      onCurrentChange: second,
+    });
+
+    clickRow(1);
+
+    expect(container.querySelector('table')).toBe(table);
+    expect(container.querySelector('tr.tdb-row-current.table-active td')?.textContent).toBe('2');
+    expect(first).not.toHaveBeenCalled();
+    expect(second).toHaveBeenCalledWith(rows[1]);
+  });
+
+  it('highlights through the ref', async () => {
+    const ref = createRef<TadabutHandle<Row>>();
+    await renderWith({ ref, currentRow: true });
+
+    act(() => {
+      ref.current?.setCurrent(3);
+    });
+
+    expect(ref.current?.getCurrent()).toEqual(rows[2]);
+    expect(ref.current?.isCurrent(3)).toBe(true);
+  });
+
+  it('rebuilds the table when currentRow is turned off', async () => {
+    await renderWith({ currentRow: true });
+    await renderWith({ currentRow: false });
+
+    clickRow(0);
+
+    expect(container.querySelector('.tdb-row-current')).toBeNull();
+  });
+
+  it('passes the detail class too', async () => {
+    await renderWith({ detail: () => 'More', classNames: { detail: 'text-muted' } });
+
+    expect(container.querySelector('.tdb-detail-toggle.text-muted')).not.toBeNull();
+  });
+});

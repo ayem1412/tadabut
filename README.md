@@ -603,6 +603,7 @@ const table = new Tadabut(container, {
 | `keep`           | the "No" button only          |
 | `select`         | the selection checkboxes      |
 | `detail`         | the ▸ button                  |
+| `current`        | the highlighted row           |
 
 All of them are optional. Tadabut doesn't know any CSS framework: it adds the classes you give it, and nothing else. If you use Tailwind: it only keeps classes it finds in your own files. Classes in your column config count, so they work.
 
@@ -662,6 +663,7 @@ const table = new Tadabut(container, {
     delete: 'btn-outline-danger',
     confirm: 'btn-danger',
     keep: 'btn-outline-secondary',
+    current: 'table-active',
   },
 });
 ```
@@ -1054,6 +1056,29 @@ Rows you ticked that "check all" doesn't take stay ticked: unticking it only uns
 
 Your `order` in `dataTables` still counts your own columns: `[[0, 'asc']]` is your first column, not the checkboxes.
 
+### The current row
+
+```ts
+const table = new Tadabut(container, {
+  data: employees,
+  rowId: 'id',
+  columns,
+  currentRow: true,
+  onCurrentChange: (row) => showDetails(row), // null when nothing is highlighted
+});
+
+table.getCurrent(); // the highlighted row
+```
+
+- Clicking a row highlights it. Only one row is highlighted at a time, and clicking it again removes the highlight.
+- The same clicks count as for `onRowClick`: see [Events](#events). A double click leaves the row highlighted.
+- The highlighted row gets the `tdb-row-current` class, `aria-current="true"`, and your `classNames.current`. Tadabut doesn't color it: with Bootstrap, `current: 'table-active'` does it.
+- It's not the same as the checkboxes: a row can be ticked, highlighted, or both.
+- It's kept by row id, so it stays when you change page, sort or search, and after the row is saved.
+- When the row leaves the table, after a delete, `removeRow` or `setData`, nothing is highlighted anymore, and `onCurrentChange` gets `null`.
+- In `onRowClick`, `table.isCurrent(row.id)` already tells you if that click turned the highlight on.
+- `currentRow` needs a `rowId`, and Tadabut throws an error without one.
+
 ### Detail rows
 
 Give `detail` a function, and each row gets a ▸ button at the start. Clicking it opens a line under the row with what the function returns:
@@ -1103,16 +1128,17 @@ onRowClick: (row) => table.toggleDetail(row.id),
 
 ### Events
 
-Six callbacks tell you what happened. Each one gets the row:
+Seven callbacks tell you what happened. Each one gets the row:
 
-| Option             | When                                   | Gets                  |
-| ------------------ | -------------------------------------- | --------------------- |
-| `onEditStart`      | a row opens for editing                | `(row)`               |
-| `onSaved`          | after a save worked and the row closed | `(row, { previous })` |
-| `onAdded`          | after a new row joined the table       | `(row)`               |
-| `onDeleted`        | after a row left the table             | `(row)`               |
-| `onRowClick`       | a row is clicked                       | `(row, event)`        |
-| `onRowDoubleClick` | a row is double-clicked                | `(row, event)`        |
+| Option             | When                                            | Gets                  |
+| ------------------ | ----------------------------------------------- | --------------------- |
+| `onEditStart`      | a row opens for editing                         | `(row)`               |
+| `onSaved`          | after a save worked and the row closed          | `(row, { previous })` |
+| `onAdded`          | after a new row joined the table                | `(row)`               |
+| `onDeleted`        | after a row left the table                      | `(row)`               |
+| `onRowClick`       | a row is clicked                                | `(row, event)`        |
+| `onRowDoubleClick` | a row is double-clicked                         | `(row, event)`        |
+| `onCurrentChange`  | the highlighted row changed (with `currentRow`) | `(row)`, or `null`    |
 
 ```ts
 const table = new Tadabut(container, {
@@ -1189,6 +1215,11 @@ table.clearSelection(); // untick every row
 table.isSelected(1); // true while row 1 is ticked
 table.getSelected(); // the ticked rows
 
+table.setCurrent(3); // highlight row 3
+table.setCurrent(null); // highlight nothing
+table.isCurrent(3); // true while row 3 is highlighted
+table.getCurrent(); // the highlighted row, or undefined
+
 table.openDetail(1); // open row 1's detail
 table.closeDetail(1); // close it
 table.toggleDetail(1); // open it if closed, close it if open
@@ -1211,6 +1242,8 @@ See [Reading and changing rows](#reading-and-changing-rows) for `getData`, `inse
 `add` returns `true` if the new row opened, `false` if one is already open, no column has an editor, or a row is being edited in `'single'` mode. `saveNew` works like `save`, and throws if the saved row has no id. `cancelNew` does nothing while `onAdd` runs.
 
 `select` skips ids that aren't in the table. `onSelect` is only called when something really changed. `getSelected` gives the rows in the order they were added, including rows hidden by the search or on other pages. Without `selection`, these do nothing, and `getSelected` gives `[]`. The detail methods do nothing without `detail`, and `isDetailOpen` gives `false`.
+
+`setCurrent` never removes the highlight from the row you give it, unlike a click. It returns `false` if no row has that id, or without `currentRow`. `onCurrentChange` is only called when the highlight really moved. `getCurrent` gives a copy.
 
 `setData` and `destroy` cancel any row being edited, and the new row, first. Unsaved changes are lost.
 
@@ -1361,13 +1394,14 @@ export default function Employees() {
 ```
 
 - When `employees` changes, the table updates in place. It doesn't get rebuilt.
-- `onSave`, `onAdd`, `onDelete`, `confirmDelete`, `onSelect` and the [events](#events) can be new functions on every render. The table always calls the latest ones.
+- `onSave`, `onAdd`, `onDelete`, `confirmDelete`, `onSelect`, `onCurrentChange` and the [events](#events) can be new functions on every render. The table always calls the latest ones.
 - In `onAdd` and `onDelete`, update your state too, like above. Otherwise the next time `data` changes, the new row disappears, or the deleted one comes back.
 - `totalRows` is a plain string, so writing it inline is fine. Changing it rebuilds the table, to count other rows.
 - `selection={{ checkAll: 'page' }}` inline is fine too: only turning it on or off, or changing `checkAll`, rebuilds the table. A rebuild clears the selection.
+- Turning `currentRow` on or off rebuilds the table, and clears the highlight.
 - `detail` can return JSX, async or not: `detail={(row) => <OrderLines orderId={row.id} />}`. React draws it under the row, so your components, hooks and state work inside it, and it's cleaned up when the detail closes. It can be a new function on every render: only turning it on or off rebuilds the table. This needs `react-dom`, which every React app already has.
 - `editing` can be a new object on every render too. The table is only rebuilt when `mode`, `button` or `doubleClick` really change. Changing `columns`, `rowId` or `editing` closes any row being edited.
-- The ref has the same methods as the core: `edit`, `save`, `cancel`, `delete`, `isEditing`, `add`, `saveNew`, `cancelNew`, `isAdding`, `getSelected`, `isSelected`, `select`, `deselect`, `clearSelection`, `openDetail`, `closeDetail`, `toggleDetail`, `isDetailOpen`, `getData`, `getRow`, `getApi`, `insertRow`, `updateRow`, `removeRow`, `getTotals` and `getOptions`. Before the table is built, or after it's gone, the methods that return something give `false`, `[]`, `{}` or `undefined`, and the others do nothing.
+- The ref has the same methods as the core: `edit`, `save`, `cancel`, `delete`, `isEditing`, `add`, `saveNew`, `cancelNew`, `isAdding`, `getSelected`, `isSelected`, `select`, `deselect`, `clearSelection`, `setCurrent`, `getCurrent`, `isCurrent`, `openDetail`, `closeDetail`, `toggleDetail`, `isDetailOpen`, `getData`, `getRow`, `getApi`, `insertRow`, `updateRow`, `removeRow`, `getTotals` and `getOptions`. Before the table is built, or after it's gone, the methods that return something give `false`, `[]`, `{}` or `undefined`, and the others do nothing.
 - `insertRow`, `updateRow` and `removeRow` change the table, but not your `data`. The next time `data` changes, the table shows `data` again. So in React, it's usually better to change your state instead.
 - There is no `setData` on the ref. To change the rows, change `data`.
 
@@ -1401,10 +1435,10 @@ Done:
 - [x] Read-only, time and date-with-time inputs
 - [x] Reading and changing rows from code: `getData`, `getRow`, `insertRow`, `updateRow`, `removeRow`, `getTotals`, `getOptions` and the DataTables API
 - [x] Totals of the ticked rows only (`totalRows: 'selected'`)
+- [x] A current row: clicking a row highlights it, one at a time, apart from the checkboxes
 
 Next, roughly in this order:
 
-- [ ] A current row: clicking a row highlights it, one at a time, apart from the checkboxes
 - [ ] Turning editing on and off while the table is shown
 - [ ] A new row that opens by itself after each `setData`, and a new row that starts with what's typed in the search box
 - [ ] Keyboard navigation and theming

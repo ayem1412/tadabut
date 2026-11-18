@@ -2,11 +2,12 @@ import DataTable, { type Api, type ApiRowMethods } from 'datatables.net';
 import type { Column } from '../columns/column';
 import { toDataTables } from '../columns/to-datatables';
 import { type EditableCell, EditSession } from '../editing/session';
-import { addClasses } from '../editors/classes';
+import { addClasses, splitClasses } from '../editors/classes';
 import type { SelectOption } from '../editors/select';
 import { en } from '../texts/en';
 import type { Texts } from '../texts/texts';
 import { checkOptions } from './check-options';
+import { CurrentRow } from './current-row';
 import { type Action, deleteQuestion, isButtonAction, saveCancelButtons } from './elements';
 import { NewRow } from './new-row';
 import type {
@@ -76,6 +77,8 @@ export class Tadabut<Row extends object> {
   private readonly offset: number;
   /** The ticked rows. Only with `selection`. */
   private readonly selection?: Selection<Row>;
+  /** The highlighted row. Only with `currentRow`. */
+  private readonly currentRow?: CurrentRow<Row>;
   /** Asked before a row opens. */
   private readonly onEditStart: TadabutOptions<Row>['onEditStart'];
   /** The user's after-save callback. */
@@ -99,6 +102,7 @@ export class Tadabut<Row extends object> {
    * @throws If a column has an `editor` and there's no `rowId`.
    * @throws If `onDelete` is set and there's no `rowId`.
    * @throws If `selection` is on and there's no `rowId`.
+   * @throws If `currentRow` is on and there's no `rowId`.
    * @throws If `detail` is set and there's no `rowId`.
    * @throws If `totalRows` is `'selected'` without `selection`.
    * @throws If a hidden column (`visible: false`) has an `editor`.
@@ -199,6 +203,16 @@ export class Tadabut<Row extends object> {
       this.selection.sync();
     }
 
+    if (options.currentRow) {
+      this.currentRow = new CurrentRow({
+        dataTable: this.dataTable,
+        rowId: this.rowId as keyof Row & string,
+        classes: splitClasses(this.classNames.current),
+        onChange: options.onCurrentChange,
+      });
+      this.dataTable.on('draw', () => this.currentRow?.sync());
+    }
+
     // The first draw already happened inside `new DataTable`.
     if (this.hasTotals) {
       this.dataTable.on('draw', this.updateTotals);
@@ -235,6 +249,7 @@ export class Tadabut<Row extends object> {
       .draw(false);
 
     this.selection?.prune();
+    this.currentRow?.prune();
   }
 
   /**
@@ -361,6 +376,7 @@ export class Tadabut<Row extends object> {
     found.remove().draw(false);
     this.rowLines.prune();
     this.selection?.prune();
+    this.currentRow?.prune();
 
     return true;
   }
@@ -537,6 +553,28 @@ export class Tadabut<Row extends object> {
   /** Unselects every row. Does nothing without `selection`. */
   public clearSelection(): void {
     this.selection?.clear();
+  }
+
+  /**
+   * Highlights a row, like clicking it, or removes the highlight with `null`.
+   * Unlike a click, it never takes the highlight off the row it's given.
+   *
+   * @returns `false` if no row has this id, or without `currentRow`.
+   */
+  public setCurrent(id: string | number | null): boolean {
+    return this.currentRow?.set(id) ?? false;
+  }
+
+  /** The highlighted row, as a copy, or `undefined`. Always `undefined` without `currentRow`. */
+  public getCurrent(): Row | undefined {
+    const row = this.currentRow?.get();
+
+    return row === undefined ? undefined : { ...row };
+  }
+
+  /** Whether a row is the highlighted one. Always `false` without `currentRow`. */
+  public isCurrent(id: string | number): boolean {
+    return this.currentRow?.has(id) ?? false;
   }
 
   /**
@@ -817,6 +855,7 @@ export class Tadabut<Row extends object> {
     this.rowLines.prune();
 
     this.selection?.prune();
+    this.currentRow?.prune();
 
     this.onDeleted?.(data);
 
@@ -1135,8 +1174,8 @@ export class Tadabut<Row extends object> {
   }
 
   /**
-   * Row clicks and double clicks. A double click also opens the row with
-   * `editing.doubleClick`. An arrow function, so `destroy` can remove it.
+   * Row clicks and double clicks. A click also moves the highlight with
+   * `currentRow`, and a double click opens the row with `editing.doubleClick`. An arrow function, so `destroy` can remove it.
    */
   private readonly onRowEvent = (event: MouseEvent): void => {
     const row = this.clickedRow(event);
@@ -1146,6 +1185,12 @@ export class Tadabut<Row extends object> {
     }
 
     if (event.type === 'click') {
+      // `detail` is 2 on the second click of a double click, which would undo the first.
+      // Before onRowClick, so isCurrent is already right in it.
+      if (this.currentRow !== undefined && event.detail < 2) {
+        this.currentRow.toggle(row.data()[this.rowId as keyof Row] as string | number);
+      }
+
       this.onRowClick?.(row.data(), event);
       return;
     }
