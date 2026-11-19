@@ -1240,7 +1240,7 @@ export class Tadabut<Row extends object> {
       const cell = this.dataTable.column(this.dtIndex(index)).footer();
 
       if (column.total !== undefined) {
-        cell.textContent = totalText(column, rows);
+        cell.replaceChildren(totalText(column, rows));
       } else if (index === 0) {
         cell.textContent = this.texts.total;
       }

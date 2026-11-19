@@ -120,8 +120,9 @@
         those, even when the search hides them. Every event shows up under the table. With "Current
         row" on, clicking a row highlights it, clicking it again removes the highlight, and
         <code>table.setCurrent(3)</code> works from the console. Turn "Editing" off while a row is
-        open: it's cancelled, and the buttons column hides. With "New row always open" on, a new row
-        waits at the top: add one and the next opens, and in single mode it makes way for Edit.
+        open: it's cancelled, and the buttons column hides. The Active column's pills are elements
+        from <code>render</code>, built with <code>html</code>. With "New row always open" on, a new
+        row waits at the top: add one and the next opens, and in single mode it makes way for Edit.
         Click ▸ to open a row's details, loaded from a slow fake server: Omar's fail, and editing a
         row reloads them. Tick rows, change page and search, then try
         <code>table.select([1, 2])</code> and <code>table.getSelected()</code> in the console.

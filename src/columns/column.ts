@@ -25,14 +25,21 @@ type ColumnFor<Row extends object, Key extends keyof Row & string> = {
   /** Makes the column editable. Leave it out for a read-only column. */
   readonly editor?: EditorFor<Row[Key], Row> & ValidationOptions<Row, Row[Key]>;
   /**
-   * The cell's text when the row isn't open. It's shown as text, not HTML.
-   * Search uses it and the raw value; sorting uses the raw value. Totals go
-   * through it too.
+   * What the cell shows when the row isn't open. Text is shown as text, never
+   * as HTML. An element goes into the cell as it is: build it with `html`, so
+   * the values in it are escaped. Return a new element each time, or it moves
+   * from cell to cell.
+   *
+   * Search uses its visible text and the raw value; sorting uses the raw
+   * value. Totals go through it too.
    *
    * @example
    * render: (value) => `${value} MAD`
+   *
+   * @example
+   * render: (value, row) => html`<span class="badge bg-${row.color}">${value}</span>`
    */
-  readonly render?: (value: Row[Key], row: Row) => string;
+  readonly render?: (value: Row[Key], row: Row) => string | Node;
   /**
    * Adds a footer line with this column's total. It's formatted like the
    * cells: a money column shows `12 500.00`, and a `render` is used too.

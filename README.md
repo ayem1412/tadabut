@@ -339,10 +339,39 @@ When a row isn't being edited, a cell shows its value as text. These change that
 A few things to know:
 
 - The order is: `render`, then the money or date format, then `labelProp`, then the fixed list's label, then the value itself.
-- What `render` returns is shown as plain text, never as HTML. `<b>` shows as `<b>`, so text from a server can't break the page or run code.
+- Text from `render` is shown as plain text, never as HTML. `<b>` shows as `<b>`, so text from a server can't break the page or run code. For HTML, return an element: see [Badges, links and icons](#badges-links-and-icons-html).
 - Searching uses both the text and the raw value, so `12500` finds `12 500.00`, and a country's id finds "Morocco". Sorting uses the raw value, so `200 MAD` comes before `1000 MAD`. Dates and times are the exception: they sort by the real date and time. A city column sorts by id, not by name.
 - An empty value (`null` or `undefined`) shows an empty cell. On a nullable column, `render` gets `null` too.
 - Editors always get the raw value. After saving or cancelling, the text is worked out again.
+
+#### Badges, links and icons: `html`
+
+`render` can also return an element, and it goes into the cell as it is. Build it with `html`: you write the HTML, and every `${…}` value is escaped, so text from a server stays text.
+
+```ts
+import { html } from 'tadabut';
+
+{
+  prop: 'status',
+  title: 'Status',
+  render: (value, row) => html`<span class="badge bg-${row.color}">${value}</span>`,
+}
+```
+
+- If `value` is `<img onerror=…>`, the badge shows those characters, and nothing runs.
+- `html` gives the element when you wrote one, or a fragment holding them all. It works in `detail` too.
+- Return a new element each time. The same element given to two cells moves from one to the other.
+- Search uses the element's visible text and the raw value. Sorting uses the raw value, like any column.
+- Totals go through `render` too, so the footer can show an element.
+
+Escaping doesn't protect everything:
+
+- **Always put attributes in quotes:** `class="${x}"`, never `class=${x}`. Without quotes, a value with a space can add an attribute of its own.
+- **Escaping doesn't check URLs:** `href="${url}"` with a `javascript:` URL from the server still runs when clicked. Check the URLs you put in links yourself.
+
+There's no way to put an HTML string from your data straight into a cell, on purpose. If you really need it, build the element yourself.
+
+In React, `render` returns text or an element too, not JSX: one React root per cell would make big tables slow. `html` works the same there.
 
 ### Totals
 
@@ -1496,6 +1525,7 @@ Done:
 - [x] A current row: clicking a row highlights it, one at a time, apart from the checkboxes
 - [x] Turning editing on and off while the table is shown (`editable`, `setEditable`)
 - [x] A new row that's always open (`autoAdd`)
+- [x] Badges, links and icons in cells: `render` can return an element, built safely with `html`
 
 Next, roughly in this order:
 
