@@ -972,11 +972,34 @@ What happens:
 
 **Starting values:** `table.add({ country: 'MA', active: true })`. Inputs start with them, and columns without an editor show them as text. Those cells don't use the column's `render`.
 
+To start a field with what's typed in the search box: `table.add({ name: table.getApi().search() })`.
+
 **Rules:**
 
 - One new row at a time. `add()` returns `false` if one is already open.
 - In `'single'` mode, the new row counts as the open row: you can't add while a row is edited, and you can't edit while the new row is open. In `'multiple'` mode, both work together.
 - `setData` and `destroy` throw the new row away, like any open row.
+
+#### A new row that's always open: `autoAdd`
+
+For typing many rows one after the other:
+
+```ts
+const table = new Tadabut(container, {
+  data: employees,
+  rowId: 'id',
+  columns,
+  onAdd: addEmployee,
+  autoAdd: { country: 'MA' }, // or true, for no starting values
+});
+```
+
+- The new row opens by itself once the table is built, after each `setData`, after each add, and after `setEditable(true)`.
+- When it opens by itself, the cursor doesn't move, so a `setData` doesn't steal it from your filters. Right after an add, the cursor goes into the next new row, because the user is already typing in the table.
+- After Cancel or <kbd>Escape</kbd>, it stays closed until the next `setData`.
+- In `'single'` mode it makes way for Edit: clicking Edit closes it, losing what was typed, and it comes back once that row is saved or cancelled. A new row opened with `add()` still blocks Edit, as above.
+- It waits while editing is off.
+- `autoAdd` needs a column with an `editor`, and Tadabut throws an error without one.
 
 ### Deleting
 
@@ -1437,6 +1460,7 @@ export default function Employees() {
 - The ref has the same methods as the core: `edit`, `save`, `cancel`, `delete`, `isEditing`, `add`, `saveNew`, `cancelNew`, `isAdding`, `getSelected`, `isSelected`, `select`, `deselect`, `clearSelection`, `setCurrent`, `getCurrent`, `isCurrent`, `openDetail`, `closeDetail`, `toggleDetail`, `isDetailOpen`, `getData`, `getRow`, `getApi`, `insertRow`, `updateRow`, `removeRow`, `getTotals` and `getOptions`. Before the table is built, or after it's gone, the methods that return something give `false`, `[]`, `{}` or `undefined`, and the others do nothing.
 - `insertRow`, `updateRow` and `removeRow` change the table, but not your `data`. The next time `data` changes, the table shows `data` again. So in React, it's usually better to change your state instead.
 - There is no `setData` on the ref. To change the rows, change `data`.
+- `autoAdd={{ country: 'MA' }}` inline is fine: only new values rebuild the table.
 - There is no `setEditable` on the ref either: change `editable`. It doesn't rebuild the table, so ticks, details and the page stay.
 
 ## Roadmap
@@ -1471,12 +1495,12 @@ Done:
 - [x] Totals of the ticked rows only (`totalRows: 'selected'`)
 - [x] A current row: clicking a row highlights it, one at a time, apart from the checkboxes
 - [x] Turning editing on and off while the table is shown (`editable`, `setEditable`)
+- [x] A new row that's always open (`autoAdd`)
 
 Next, roughly in this order:
 
 - [ ] Choosing what turning editing off does: hide the buttons column or grey the buttons out, and cancel open rows or leave them open
 - [ ] Choosing what clicking the current row again does: remove the highlight or keep it
-- [ ] A new row that opens by itself after each `setData`, and a new row that starts with what's typed in the search box
 - [ ] Keyboard navigation and theming
 
 Later: popup editing, changing many rows in one go, server-side mode, Vue and jQuery adapters.

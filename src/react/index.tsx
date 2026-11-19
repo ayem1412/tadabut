@@ -100,10 +100,9 @@ type Detail = {
 
 /**
  * New `data` updates the table in place. Changing `columns`, `rowId`,
- * `dataTables`, `texts`, `totalRows`, `selection` or `currentRow` rebuilds it
- * (and closes open rows and details, and clears the selection and the
- * highlight), so keep the objects
- * stable with a constant or `useMemo`. `editing`, `selection`, `classNames`,
+ * `dataTables`, `texts`, `totalRows`, `selection`, `currentRow` or the values
+ * in `autoAdd` rebuilds it (and closes open rows and details, and clears the
+ * selection and the highlight), so keep the objects stable with a constant or `useMemo`. `editing`, `selection`, `classNames`,
  * `detail` and every `on…` callback (and `confirmDelete`) can be inline:
  * they're compared by value or read through a ref.
  */
@@ -121,6 +120,7 @@ export function Tadabut<Row extends object>({
   currentRow,
   onCurrentChange,
   editable = true,
+  autoAdd,
   onSave,
   onAdd,
   onDelete,
@@ -140,6 +140,9 @@ export function Tadabut<Row extends object>({
   const tableRef = useRef<Core<Row>>(null);
   /** The latest rows, so a rebuild doesn't go back to the first ones. */
   const dataRef = useRef(data);
+  /** The latest `autoAdd`. Its text is what rebuilds, so a Date in it stays a Date. */
+  const autoAddRef = useRef(autoAdd);
+  autoAddRef.current = autoAdd;
   /** The latest `editable`, so a rebuild starts the way it is now. */
   const editableRef = useRef(editable);
   /** The latest `onSave`, so a new one doesn't rebuild the table. */
@@ -195,6 +198,8 @@ export function Tadabut<Row extends object>({
   const confirmWith =
     confirmDelete === false ? 'never' : confirmDelete === undefined ? 'inline' : 'function';
   const hasDetail = detail !== undefined;
+  // As text, so a new object with the same values doesn't rebuild the table.
+  const autoAddKey = autoAdd === undefined ? undefined : JSON.stringify(autoAdd);
 
   useEffect(() => {
     const container = containerRef.current;
@@ -219,6 +224,8 @@ export function Tadabut<Row extends object>({
     const table = new Core(container, {
       data: dataRef.current,
       editable: editableRef.current,
+      // The key says whether it's on, the ref gives the values as they are.
+      autoAdd: autoAddKey === undefined ? undefined : autoAddRef.current,
       columns,
       rowId,
       editing: { mode, button, doubleClick },
@@ -316,6 +323,7 @@ export function Tadabut<Row extends object>({
     hasDelete,
     confirmWith,
     hasDetail,
+    autoAddKey,
   ]);
 
   useEffect(() => {

@@ -97,6 +97,12 @@ export class Tadabut<Row extends object> {
   private readonly rowLines: RowLines<Row>;
   /** The last options each select loaded, by field. */
   private readonly loadedOptions = new Map<string, readonly SelectOption<unknown>[]>();
+  /** The new row's starting values with `autoAdd`, or `undefined` without it. */
+  private readonly autoAdd?: Partial<Row>;
+  /** Whether `autoAdd` opened the new row, rather than `add()`. */
+  private newRowIsAuto = false;
+  /** Whether Edit closed the auto row in `'single'` mode, so it comes back once that row closes. */
+  private autoMadeWay = false;
 
   /**
    * Builds the table inside `container`, which should be empty.
@@ -106,6 +112,7 @@ export class Tadabut<Row extends object> {
    * @throws If `selection` is on and there's no `rowId`.
    * @throws If `currentRow` is on and there's no `rowId`.
    * @throws If `detail` is set and there's no `rowId`.
+   * @throws If `autoAdd` is on and no column has an `editor`.
    * @throws If `totalRows` is `'selected'` without `selection`.
    * @throws If a hidden column (`visible: false`) has an `editor`.
    * @throws If a select's `labelProp` is its own column.
@@ -154,6 +161,12 @@ export class Tadabut<Row extends object> {
     this.hasTotals = options.columns.some((column) => column.total !== undefined);
     this.totalRows = options.totalRows ?? 'searched';
     this.offset = (options.selection ? 1 : 0) + (options.detail !== undefined ? 1 : 0);
+    this.autoAdd =
+      options.autoAdd === true
+        ? {}
+        : typeof options.autoAdd === 'object'
+          ? options.autoAdd
+          : undefined;
 
     this.tableEl = document.createElement('table');
     addClasses(this.tableEl, [], this.classNames.table);
@@ -237,6 +250,8 @@ export class Tadabut<Row extends object> {
 
     this.tableEl.addEventListener('click', this.onRowEvent);
     this.tableEl.addEventListener('dblclick', this.onRowEvent);
+
+    this.autoOpen();
   }
 
   /**
@@ -247,6 +262,7 @@ export class Tadabut<Row extends object> {
    */
   public setData(rows: readonly Row[]): void {
     this.destroySessions();
+    this.autoMadeWay = false;
     this.deleting.clear();
     // Before the draw, so the new rows draw with a closed ▸.
     this.rowLines.destroy();
@@ -258,6 +274,8 @@ export class Tadabut<Row extends object> {
 
     this.selection?.prune();
     this.currentRow?.prune();
+
+    this.autoOpen();
   }
 
   /**
@@ -447,6 +465,30 @@ export class Tadabut<Row extends object> {
    *   displayed yet, or `onEditStart` returned `false`.
    */
   public edit(id: string | number): boolean {
+    const opened = this.openRow(id);
+
+    if (this.autoMadeWay && !opened) {
+      this.autoMadeWay = false;
+      this.autoOpen();
+    }
+
+    return opened;
+  }
+
+  /** What `edit` does, apart from giving the auto row back when it refuses. */
+  private openRow(id: string | number): boolean {
+    // In 'single' mode the auto row would block every Edit.
+    if (
+      this.editable &&
+      this.editing.mode === 'single' &&
+      this.sessions.size === 0 &&
+      this.newRowIsAuto &&
+      this.newRow?.saving === false
+    ) {
+      this.cancelNew();
+      this.autoMadeWay = true;
+    }
+
     if (
       !this.editable ||
       !this.hasEditor ||
@@ -500,6 +542,23 @@ export class Tadabut<Row extends object> {
    * table.add({ country: 'MA' });
    */
   public add(defaults: Partial<Row> = {}): boolean {
+    return this.openNew(defaults, true);
+  }
+
+  /** Opens the new row for `autoAdd`. Does nothing without it, or when `add()` would refuse. */
+  private autoOpen(focus = false): void {
+    if (this.autoAdd === undefined) {
+      return;
+    }
+
+    // A copy, so the user's object is never touched.
+    if (this.openNew({ ...this.autoAdd }, focus)) {
+      this.newRowIsAuto = true;
+    }
+  }
+
+  /** What `add` does, with the cursor moving only when `focus` is on. */
+  private openNew(defaults: Partial<Row>, focus: boolean): boolean {
     if (
       !this.editable ||
       !this.hasEditor ||
@@ -520,8 +579,14 @@ export class Tadabut<Row extends object> {
     });
 
     this.tableEl.insertBefore(newRow.body, this.dataTable.table().body());
-    newRow.focus();
+
+    if (focus) {
+      newRow.focus();
+    }
+
     this.newRow = newRow;
+    // add() is the normal case: autoOpen sets it back right after.
+    this.newRowIsAuto = false;
 
     return true;
   }
@@ -720,6 +785,8 @@ export class Tadabut<Row extends object> {
       this.dataTable.page(Math.floor(position / length)).draw(false);
     }
 
+    // Before onAdded: if it throws, the next row is open anyway.
+    this.autoOpen(true);
     this.onAdded?.(added.data());
 
     return true;
@@ -748,6 +815,7 @@ export class Tadabut<Row extends object> {
 
     // 'data', or DataTables would read the emptied cells back as data.
     this.findRow(id)?.invalidate('data').draw(false);
+    this.giveBackAutoRow();
   }
 
   /** Whether a row is open for editing. */
@@ -827,6 +895,7 @@ export class Tadabut<Row extends object> {
     this.setSaving(id, false);
 
     this.rowLines.reload(id);
+    this.giveBackAutoRow();
     this.onSaved?.(saved, { previous: session.originalData });
 
     return true;
@@ -840,8 +909,8 @@ export class Tadabut<Row extends object> {
    * the error message is shown under it.
    *
    * @returns `true` once the row is removed. `false` if editing is off, the
-   *   row doesn't exist, is open for editing, is already being deleted, or `onDelete`
-   *   threw.
+   *   row doesn't exist, is open for editing, is already being deleted, or
+   *   `onDelete` threw.
    */
   public async delete(id: string | number): Promise<boolean> {
     const row = this.findRow(id);
@@ -915,6 +984,18 @@ export class Tadabut<Row extends object> {
     }
 
     this.applyEditable();
+
+    if (editable) {
+      this.autoOpen();
+    }
+  }
+
+  /** Reopens the auto row once the row that Edit opened in its place closed. */
+  private giveBackAutoRow(): void {
+    if (this.autoMadeWay && this.sessions.size === 0) {
+      this.autoMadeWay = false;
+      this.autoOpen();
+    }
   }
 
   /** Removes the table. Open rows are closed without saving. */

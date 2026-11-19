@@ -124,6 +124,19 @@ export type TadabutOptions<Row extends object> = {
    * later with `setEditable`.
    */
   readonly editable?: boolean;
+  /**
+   * Opens the new row by itself: once the table is built, after each
+   * `setData`, after each add, and after `setEditable(true)`. An object gives
+   * it starting values, like `add()`. After Cancel it stays closed until the
+   * next `setData`.
+   *
+   * When it opens by itself the cursor doesn't move, except right after an
+   * add. In `'single'` mode it makes way for Edit, and comes back after.
+   *
+   * @example
+   * autoAdd: { country: 'MA' }
+   */
+  readonly autoAdd?: boolean | Partial<Row>;
   /** Your classes for the table and buttons. */
   readonly classNames?: TableClassNames;
   /** DataTables' own options, passed through. */
