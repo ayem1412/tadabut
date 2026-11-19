@@ -436,5 +436,12 @@ export const french: DataTablesSettings['language'] = {
   infoFiltered: '(filtré de _MAX_ lignes)',
   zeroRecords: 'Aucune ligne trouvée',
   emptyTable: 'Aucune donnée',
-  paginate: { first: 'Premier', previous: 'Précédent', next: 'Suivant', last: 'Dernier' },
+  aria: {
+    paginate: {
+      first: 'Première page',
+      previous: 'Page précédente',
+      next: 'Page suivante',
+      last: 'Dernière page',
+    },
+  },
 };
