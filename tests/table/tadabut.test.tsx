@@ -1055,3 +1055,33 @@ describe('React Tadabut editable', () => {
     expect(container.querySelector('table')?.classList.contains('tdb-readonly')).toBe(true);
   });
 });
+
+describe('React Tadabut autoAdd', () => {
+  beforeEach(() => {
+    container = mountPoint();
+    root = createRoot(container);
+  });
+
+  afterEach(async () => {
+    await act(async () => {
+      root.unmount();
+    });
+  });
+
+  it("opens the new row, and a new object with the same values doesn't rebuild", async () => {
+    await renderWith({ autoAdd: { name: 'Start' } });
+    const table = container.querySelector('table');
+
+    await renderWith({ autoAdd: { name: 'Start' } });
+
+    expect(container.querySelector('table')).toBe(table);
+    expect(container.querySelector<HTMLInputElement>('.tdb-row-new input')?.value).toBe('Start');
+  });
+
+  it('rebuilds with the new values', async () => {
+    await renderWith({ autoAdd: { name: 'Start' } });
+    await renderWith({ autoAdd: { name: 'Other' } });
+
+    expect(container.querySelector<HTMLInputElement>('.tdb-row-new input')?.value).toBe('Other');
+  });
+});

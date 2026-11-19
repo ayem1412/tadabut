@@ -39,6 +39,7 @@ const logTotalsBtn = document.querySelector<HTMLButtonElement>('#log-totals');
 const modeSelect = document.querySelector<HTMLSelectElement>('#mode');
 const buttonsCheckbox = document.querySelector<HTMLInputElement>('#buttons');
 const editableCheckbox = document.querySelector<HTMLInputElement>('#editable');
+const autoAddCheckbox = document.querySelector<HTMLInputElement>('#auto-add');
 const frenchCheckbox = document.querySelector<HTMLInputElement>('#french');
 const doubleClickCheckbox = document.querySelector<HTMLInputElement>('#double-click');
 const detailsCheckbox = document.querySelector<HTMLInputElement>('#details');
@@ -64,6 +65,7 @@ if (
   !modeSelect ||
   !buttonsCheckbox ||
   !editableCheckbox ||
+  !autoAddCheckbox ||
   !frenchCheckbox ||
   !doubleClickCheckbox ||
   !detailsCheckbox ||
@@ -183,6 +185,8 @@ const createTable = (): Tadabut<Row> => {
       : undefined,
     editing,
     editable: editableCheckbox.checked,
+    // Starts in Morocco, like the Add button, so the cities load right away.
+    autoAdd: autoAddCheckbox.checked && { country: 'MA' },
     dataTables: frenchCheckbox.checked ? { ...settings, language: french } : settings,
     texts: frenchCheckbox.checked ? fr : undefined,
   });
@@ -295,6 +299,7 @@ logTotalsBtn.addEventListener('click', () => {
 
 modeSelect.addEventListener('change', recreate);
 buttonsCheckbox.addEventListener('change', recreate);
+autoAddCheckbox.addEventListener('change', recreate);
 // No rebuild: ticks, details and the page stay.
 editableCheckbox.addEventListener('change', () => {
   table?.setEditable(editableCheckbox.checked);
