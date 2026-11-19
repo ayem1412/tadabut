@@ -452,7 +452,15 @@ const table = new Tadabut(container, {
       lengthMenu: '_MENU_ lignes par page',
       info: 'Lignes _START_ à _END_ sur _TOTAL_',
       zeroRecords: 'Aucune ligne trouvée',
-      paginate: { first: 'Premier', previous: 'Précédent', next: 'Suivant', last: 'Dernier' },
+      // Keeps the « ‹ › » buttons, and only translates what screen readers say.
+      aria: {
+        paginate: {
+          first: 'Première page',
+          previous: 'Page précédente',
+          next: 'Page suivante',
+          last: 'Dernière page',
+        },
+      },
     },
   },
 });
