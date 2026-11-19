@@ -1,5 +1,16 @@
 # Changelog
 
+## [0.8.0](https://github.com/ayem1412/tadabut/compare/v0.7.0...v0.8.0) (2026-11-19)
+
+
+### Features
+
+* a new row that's always open ([#70](https://github.com/ayem1412/tadabut/issues/70)) ([4ef7550](https://github.com/ayem1412/tadabut/commit/4ef7550b0df37d4878a60c8f908f384c0b4d21e5))
+* elements in cells, built safely with html helper ([#71](https://github.com/ayem1412/tadabut/issues/71)) ([9cff5fc](https://github.com/ayem1412/tadabut/commit/9cff5fcd93f293a920b8332b81f009a6b80ddf65))
+* highlight the current row ([#67](https://github.com/ayem1412/tadabut/issues/67)) ([0c41165](https://github.com/ayem1412/tadabut/commit/0c4116517f93f6dfa6aa5eca2ca5d7e475895f4a))
+* totals of the ticked rows only ([#64](https://github.com/ayem1412/tadabut/issues/64)) ([f5554c4](https://github.com/ayem1412/tadabut/commit/f5554c4fe6c5314a3cc6ab38966acb4f8b7b44cd))
+* turn editing on and off ([#68](https://github.com/ayem1412/tadabut/issues/68)) ([388ea2e](https://github.com/ayem1412/tadabut/commit/388ea2e633c195bbdc87ad9e5911af6d30e296d3))
+
 ## [0.7.0](https://github.com/ayem1412/tadabut/compare/v0.6.0...v0.7.0) (2026-11-17)
 
 
