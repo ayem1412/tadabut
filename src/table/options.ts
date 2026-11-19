@@ -118,6 +118,12 @@ export type TadabutOptions<Row extends object> = {
   readonly rowId?: keyof Row & string;
   /** How rows are edited. */
   readonly editing?: EditingOptions;
+  /**
+   * `false` starts the table read-only: nothing can be edited, added or
+   * deleted, and the buttons column is hidden. Defaults to `true`. Change it
+   * later with `setEditable`.
+   */
+  readonly editable?: boolean;
   /** Your classes for the table and buttons. */
   readonly classNames?: TableClassNames;
   /** DataTables' own options, passed through. */

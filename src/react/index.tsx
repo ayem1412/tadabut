@@ -27,7 +27,8 @@ import { createPortal } from 'react-dom';
 import { Tadabut as Core, type DetailContext, type TadabutOptions } from '../index';
 
 /**
- * What the `ref` gets. No `setData`: change the `data` prop instead. Before
+ * What the `ref` gets. No `setData` or `setEditable`: change the `data` and
+ * `editable` props instead. Before
  * the table is built, `getApi` gives `undefined`.
  */
 export type TadabutHandle<Row extends object> = Pick<
@@ -119,6 +120,7 @@ export function Tadabut<Row extends object>({
   onSelect,
   currentRow,
   onCurrentChange,
+  editable = true,
   onSave,
   onAdd,
   onDelete,
@@ -138,6 +140,8 @@ export function Tadabut<Row extends object>({
   const tableRef = useRef<Core<Row>>(null);
   /** The latest rows, so a rebuild doesn't go back to the first ones. */
   const dataRef = useRef(data);
+  /** The latest `editable`, so a rebuild starts the way it is now. */
+  const editableRef = useRef(editable);
   /** The latest `onSave`, so a new one doesn't rebuild the table. */
   const onSaveRef = useRef(onSave);
   /** The latest `onAdd`, so a new one doesn't rebuild the table. */
@@ -214,6 +218,7 @@ export function Tadabut<Row extends object>({
 
     const table = new Core(container, {
       data: dataRef.current,
+      editable: editableRef.current,
       columns,
       rowId,
       editing: { mode, button, doubleClick },
@@ -317,6 +322,12 @@ export function Tadabut<Row extends object>({
     dataRef.current = data;
     tableRef.current?.setData(data);
   }, [data]);
+
+  // Without a rebuild, so ticks, details and sorting stay.
+  useEffect(() => {
+    editableRef.current = editable;
+    tableRef.current?.setEditable(editable);
+  }, [editable]);
 
   useEffect(() => {
     onSaveRef.current = onSave;

@@ -38,6 +38,7 @@ const removeRowBtn = document.querySelector<HTMLButtonElement>('#remove-row');
 const logTotalsBtn = document.querySelector<HTMLButtonElement>('#log-totals');
 const modeSelect = document.querySelector<HTMLSelectElement>('#mode');
 const buttonsCheckbox = document.querySelector<HTMLInputElement>('#buttons');
+const editableCheckbox = document.querySelector<HTMLInputElement>('#editable');
 const frenchCheckbox = document.querySelector<HTMLInputElement>('#french');
 const doubleClickCheckbox = document.querySelector<HTMLInputElement>('#double-click');
 const detailsCheckbox = document.querySelector<HTMLInputElement>('#details');
@@ -62,6 +63,7 @@ if (
   !logTotalsBtn ||
   !modeSelect ||
   !buttonsCheckbox ||
+  !editableCheckbox ||
   !frenchCheckbox ||
   !doubleClickCheckbox ||
   !detailsCheckbox ||
@@ -180,6 +182,7 @@ const createTable = (): Tadabut<Row> => {
       ? async (row, { signal }) => detailsList(await fetchDetails(row, signal))
       : undefined,
     editing,
+    editable: editableCheckbox.checked,
     dataTables: frenchCheckbox.checked ? { ...settings, language: french } : settings,
     texts: frenchCheckbox.checked ? fr : undefined,
   });
@@ -292,6 +295,11 @@ logTotalsBtn.addEventListener('click', () => {
 
 modeSelect.addEventListener('change', recreate);
 buttonsCheckbox.addEventListener('change', recreate);
+// No rebuild: ticks, details and the page stay.
+editableCheckbox.addEventListener('change', () => {
+  table?.setEditable(editableCheckbox.checked);
+  log(`setEditable(${editableCheckbox.checked})`);
+});
 frenchCheckbox.addEventListener('change', recreate);
 doubleClickCheckbox.addEventListener('change', recreate);
 detailsCheckbox.addEventListener('change', recreate);
