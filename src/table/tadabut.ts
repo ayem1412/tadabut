@@ -47,6 +47,8 @@ export class Tadabut<Row extends object> {
   private readonly columns: readonly Column<Row>[];
   /** `editing` with its defaults filled in. */
   private readonly editing: Required<EditingOptions>;
+  /** Whether rows can be edited, added and deleted right now. */
+  private editable: boolean;
   /** The user's classes, or `{}`. */
   private readonly classNames: TableClassNames;
   /** The user's texts over English. */
@@ -124,6 +126,8 @@ export class Tadabut<Row extends object> {
       doubleClick: options.editing?.doubleClick ?? false,
     };
 
+    this.editable = options.editable ?? true;
+
     const actions: Action[] = [];
 
     if (this.hasEditor && this.editing.button) {
@@ -169,6 +173,10 @@ export class Tadabut<Row extends object> {
         detail: options.detail !== undefined,
       }),
     });
+
+    if (!this.editable) {
+      this.applyEditable();
+    }
 
     this.rowLines = new RowLines({
       dataTable: this.dataTable,
@@ -433,13 +441,14 @@ export class Tadabut<Row extends object> {
    * Opens a row for editing.
    *
    * @param id The value of the row's `rowId` field.
-   * @returns `false` if the row doesn't exist, is already open, another row
-   *   or the new row is open in `'single'` mode, nothing is editable, the row
-   *   is being deleted, it's on a page that hasn't been displayed yet, or
-   *   `onEditStart` returned `false`.
+   * @returns `false` if editing is off, the row doesn't exist, is already
+   *   open, another row or the new row is open in `'single'` mode, nothing is
+   *   editable, the row is being deleted, it's on a page that hasn't been
+   *   displayed yet, or `onEditStart` returned `false`.
    */
   public edit(id: string | number): boolean {
     if (
+      !this.editable ||
       !this.hasEditor ||
       this.sessions.has(id) ||
       (this.editing.mode === 'single' && (this.sessions.size > 0 || this.newRow !== undefined)) ||
@@ -484,14 +493,15 @@ export class Tadabut<Row extends object> {
    * Opens an empty row at the top of the table, for a new row. `defaults` are
    * its starting values. The row is only added once Save works.
    *
-   * @returns `false` if no column has an editor, a new row is already open,
-   *   or a row is being edited in `'single'` mode.
+   * @returns `false` if editing is off, no column has an editor, a new row is
+   *   already open, or a row is being edited in `'single'` mode.
    *
    * @example
    * table.add({ country: 'MA' });
    */
   public add(defaults: Partial<Row> = {}): boolean {
     if (
+      !this.editable ||
       !this.hasEditor ||
       this.newRow !== undefined ||
       (this.editing.mode === 'single' && this.sessions.size > 0)
@@ -619,6 +629,11 @@ export class Tadabut<Row extends object> {
     this.newRow = undefined;
   }
 
+  /** Whether rows can be edited, added and deleted right now. */
+  public isEditable(): boolean {
+    return this.editable;
+  }
+
   /**
    * Validates the new row, then calls `onAdd`. On success the row joins the
    * table, and the table shows the page it landed on.
@@ -658,6 +673,13 @@ export class Tadabut<Row extends object> {
       }
 
       newRow.setSaving(false);
+
+      // Editing was turned off while it saved: no Save or Cancel to come back to.
+      if (!this.editable) {
+        this.cancelNew();
+        return false;
+      }
+
       newRow.showError(error instanceof Error ? error.message : this.texts.addFailed);
       return false;
     }
@@ -780,6 +802,12 @@ export class Tadabut<Row extends object> {
       }
 
       this.setSaving(id, false);
+
+      // Editing was turned off while it saved: its Save and Cancel are hidden now.
+      if (!this.editable) {
+        this.cancel(id);
+      }
+
       this.rowLines.showError(id, error instanceof Error ? error.message : this.texts.saveFailed);
       return false;
     }
@@ -811,14 +839,14 @@ export class Tadabut<Row extends object> {
    * While `onDelete` runs the row is locked. If it throws, the row stays and
    * the error message is shown under it.
    *
-   * @returns `true` once the row is removed. `false` if the row doesn't
-   *   exist, is open for editing, is already being deleted, or `onDelete`
+   * @returns `true` once the row is removed. `false` if editing is off, the
+   *   row doesn't exist, is open for editing, is already being deleted, or `onDelete`
    *   threw.
    */
   public async delete(id: string | number): Promise<boolean> {
     const row = this.findRow(id);
 
-    if (row === undefined || this.sessions.has(id) || this.deleting.has(id)) {
+    if (!this.editable || row === undefined || this.sessions.has(id) || this.deleting.has(id)) {
       return false;
     }
 
@@ -860,6 +888,33 @@ export class Tadabut<Row extends object> {
     this.onDeleted?.(data);
 
     return true;
+  }
+
+  /**
+   * Turns editing on or off. Off cancels open rows and the new row, and their
+   * unsaved changes are lost. A row that is saving finishes first, and is
+   * cancelled if its save fails. The buttons column hides while off.
+   *
+   * @example
+   * table.setEditable(user.canEdit);
+   */
+  public setEditable(editable: boolean): void {
+    if (editable === this.editable) {
+      return;
+    }
+
+    this.editable = editable;
+
+    if (!editable) {
+      for (const id of [...this.sessions.keys()]) {
+        this.cancel(id);
+      }
+
+      this.cancelNew();
+      this.forgetDeleteQuestions();
+    }
+
+    this.applyEditable();
   }
 
   /** Removes the table. Open rows are closed without saving. */
@@ -1122,6 +1177,38 @@ export class Tadabut<Row extends object> {
   /** Your column's index as DataTables counts it. */
   private dtIndex(index: number): number {
     return index + this.offset;
+  }
+
+  /** Shows or hides what editing needs, to match `editable`. */
+  private applyEditable(): void {
+    this.tableEl.classList.toggle('tdb-readonly', !this.editable);
+
+    if (this.hasActions) {
+      this.dataTable.column(this.dtIndex(this.columns.length)).visible(this.editable);
+    }
+  }
+
+  /**
+   * Puts Edit and Delete back on rows that were asking "Delete this row?", so
+   * the question isn't still there when editing comes back on.
+   */
+  private forgetDeleteQuestions(): void {
+    if (!this.hasActions) {
+      return;
+    }
+
+    // Every page: paging doesn't redraw a row's cells, so the question stays.
+    for (const node of this.dataTable.rows().nodes().toArray()) {
+      const id = node === null ? undefined : this.rowIdOf(node);
+
+      if (
+        id !== undefined &&
+        !this.deleting.has(id) &&
+        node?.querySelector('.tdb-delete-question')
+      ) {
+        this.keepRow(id);
+      }
+    }
   }
 
   /**

@@ -1195,6 +1195,30 @@ const table = new Tadabut(container, {
 - `doubleClick: true`: double-clicking a row opens it. See [Events](#events).
 - `button: false`: no Edit button. Start edits from your own code, or with `doubleClick`. <kbd>Enter</kbd> and <kbd>Escape</kbd> still work. With `onDelete`, the column stays, with only the Delete button.
 
+#### Turning editing off
+
+```ts
+const table = new Tadabut(container, {
+  data: employees,
+  rowId: 'id',
+  columns,
+  onSave: saveEmployee,
+  editable: user.canEdit, // default: true
+});
+
+table.setEditable(false); // read-only from now on
+table.setEditable(true); // editable again
+table.isEditable(); // false while it's off
+```
+
+While editing is off:
+
+- The buttons column is hidden, and the `<table>` gets the `tdb-readonly` class, for your CSS.
+- `edit`, `add` and `delete` do nothing and give `false`. So the Edit and Delete buttons and the double click do nothing either. `onEditStart` and `onDelete` aren't called.
+- Checkboxes, details, the current row, row clicks, and `insertRow`, `updateRow` and `removeRow` still work.
+
+Turning it off cancels every open row and the new row, and their unsaved changes are lost. A row that is saving, adding or deleting finishes first. If its save fails, the row goes back to its old values and the error shows under it. If the new row's add fails, it's thrown away.
+
 ### Controlling it from code
 
 ```ts
@@ -1225,6 +1249,7 @@ table.closeDetail(1); // close it
 table.toggleDetail(1); // open it if closed, close it if open
 table.isDetailOpen(1); // true while it's open, or loading
 
+table.setEditable(false); // turn editing off, see Turning editing off
 table.setData(newEmployees); // replace all rows, keeps sorting and search
 table.destroy(); // remove everything Tadabut created
 ```
@@ -1404,6 +1429,7 @@ export default function Employees() {
 - The ref has the same methods as the core: `edit`, `save`, `cancel`, `delete`, `isEditing`, `add`, `saveNew`, `cancelNew`, `isAdding`, `getSelected`, `isSelected`, `select`, `deselect`, `clearSelection`, `setCurrent`, `getCurrent`, `isCurrent`, `openDetail`, `closeDetail`, `toggleDetail`, `isDetailOpen`, `getData`, `getRow`, `getApi`, `insertRow`, `updateRow`, `removeRow`, `getTotals` and `getOptions`. Before the table is built, or after it's gone, the methods that return something give `false`, `[]`, `{}` or `undefined`, and the others do nothing.
 - `insertRow`, `updateRow` and `removeRow` change the table, but not your `data`. The next time `data` changes, the table shows `data` again. So in React, it's usually better to change your state instead.
 - There is no `setData` on the ref. To change the rows, change `data`.
+- There is no `setEditable` on the ref either: change `editable`. It doesn't rebuild the table, so ticks, details and the page stay.
 
 ## Roadmap
 
@@ -1436,10 +1462,12 @@ Done:
 - [x] Reading and changing rows from code: `getData`, `getRow`, `insertRow`, `updateRow`, `removeRow`, `getTotals`, `getOptions` and the DataTables API
 - [x] Totals of the ticked rows only (`totalRows: 'selected'`)
 - [x] A current row: clicking a row highlights it, one at a time, apart from the checkboxes
+- [x] Turning editing on and off while the table is shown (`editable`, `setEditable`)
 
 Next, roughly in this order:
 
-- [ ] Turning editing on and off while the table is shown
+- [ ] Choosing what turning editing off does: hide the buttons column or grey the buttons out, and cancel open rows or leave them open
+- [ ] Choosing what clicking the current row again does: remove the highlight or keep it
 - [ ] A new row that opens by itself after each `setData`, and a new row that starts with what's typed in the search box
 - [ ] Keyboard navigation and theming
 

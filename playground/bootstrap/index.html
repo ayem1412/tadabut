@@ -43,6 +43,10 @@
           </select>
         </label>
         <div class="form-check form-switch mb-0">
+          <input id="editable" class="form-check-input" type="checkbox" checked />
+          <label class="form-check-label" for="editable">Editing</label>
+        </div>
+        <div class="form-check form-switch mb-0">
           <input id="buttons" class="form-check-input" type="checkbox" checked />
           <label class="form-check-label" for="buttons">Buttons</label>
         </div>
@@ -111,9 +115,10 @@
         real time. Set "Totals count" to "the ticked rows", then tick rows: the footer adds up only
         those, even when the search hides them. Every event shows up under the table. With "Current
         row" on, clicking a row highlights it, clicking it again removes the highlight, and
-        <code>table.setCurrent(3)</code> works from the console. Click ▸ to open a row's details,
-        loaded from a slow fake server: Omar's fail, and editing a row reloads them. Tick rows,
-        change page and search, then try <code>table.select([1, 2])</code> and
+        <code>table.setCurrent(3)</code> works from the console. Turn "Editing" off while a row is
+        open: it's cancelled, and the buttons column hides. Click ▸ to open a row's details, loaded
+        from a slow fake server: Omar's fail, and editing a row reloads them. Tick rows, change page
+        and search, then try <code>table.select([1, 2])</code> and
         <code>table.getSelected()</code> in the console.
       </p>
 

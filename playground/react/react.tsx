@@ -48,6 +48,7 @@ function App() {
   const [data, setData] = useState(rows);
   const [status, setStatus] = useState('');
   const [selected, setSelected] = useState<string[]>([]);
+  const [editable, setEditable] = useState(true);
   const tableRef = useRef<TadabutHandle<Row>>(null);
 
   return (
@@ -91,6 +92,14 @@ function App() {
         <button type='button' onClick={() => tableRef.current?.clearSelection()}>
           Clear the selection
         </button>
+        <label>
+          <input
+            type='checkbox'
+            checked={editable}
+            onChange={(event) => setEditable(event.target.checked)}
+          />{' '}
+          Editing
+        </label>
         <span className='status'>{status}</span>
       </div>
 
@@ -98,6 +107,7 @@ function App() {
 
       <Tadabut
         ref={tableRef}
+        editable={editable}
         data={data}
         columns={columns}
         rowId='id'

@@ -1020,3 +1020,38 @@ describe('React Tadabut current row', () => {
     expect(container.querySelector('.tdb-detail-toggle.text-muted')).not.toBeNull();
   });
 });
+
+describe('React Tadabut editable', () => {
+  beforeEach(() => {
+    container = mountPoint();
+    root = createRoot(container);
+  });
+
+  afterEach(async () => {
+    await act(async () => {
+      root.unmount();
+    });
+  });
+
+  it('switches editing without rebuilding the table', async () => {
+    const ref = createRef<TadabutHandle<Row>>();
+    await renderWith({ ref, editable: false });
+    const table = container.querySelector('table');
+
+    expect(table?.classList.contains('tdb-readonly')).toBe(true);
+    expect(ref.current?.edit(1)).toBe(false);
+
+    await renderWith({ ref, editable: true });
+
+    expect(container.querySelector('table')).toBe(table);
+    expect(table?.classList.contains('tdb-readonly')).toBe(false);
+    expect(ref.current?.edit(1)).toBe(true);
+  });
+
+  it('keeps editing off after a rebuild', async () => {
+    await renderWith({ editable: false });
+    await renderWith({ editable: false, texts: { save: 'Valider' } });
+
+    expect(container.querySelector('table')?.classList.contains('tdb-readonly')).toBe(true);
+  });
+});
