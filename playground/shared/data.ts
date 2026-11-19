@@ -1,4 +1,4 @@
-import type { Column, DataTablesSettings } from '../../src/index';
+import { type Column, type DataTablesSettings, html } from '../../src/index';
 
 export type Row = {
   id: number;
@@ -321,8 +321,13 @@ export function makeColumns(classes: InputClasses = {}): Column<Row>[] {
         values: { checked: 'O', unchecked: 'N' },
         className: classes.checkbox,
       },
-      // An untouched null stays null, so it shows as "—".
-      render: (value) => (value === 'O' ? 'Yes' : value === 'N' ? 'No' : '—'),
+      // An element, built with html. An untouched null stays null, so it shows as "—".
+      render: (value) =>
+        value === 'O'
+          ? html`<span class="pill pill-yes">Yes</span>`
+          : value === 'N'
+            ? html`<span class="pill pill-no">No</span>`
+            : '—',
     },
     {
       title: 'Hired',

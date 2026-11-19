@@ -72,7 +72,7 @@ function detailColumn(classNames: TableClassNames, texts: Texts): ColumnOptions 
 /** `Column<Row>` is a union per field, which makes `render` uncallable here. */
 type LooseColumn<Row> = {
   /** The column's `render`, with its value type erased. */
-  readonly render?: (value: unknown, row: Row) => string;
+  readonly render?: (value: unknown, row: Row) => string | Node;
   /** The column's editor config. */
   readonly editor?: AnyEditor;
 };
@@ -109,12 +109,16 @@ export function toDataTables<Row extends object>(
       defaultContent: '',
       render: (value: unknown, type: unknown, row: Row) => {
         switch (type) {
-          case 'display':
-            return escapeHtml(label(value, row));
+          case 'display': {
+            const shown = label(value, row);
+
+            // DataTables puts an element in the cell as it is, and a string as HTML.
+            return typeof shown === 'string' ? escapeHtml(shown) : shown;
+          }
 
           case 'filter':
             // Both, so searching "12500" finds "12 500.00".
-            return `${label(value, row)} ${asText(value)}`;
+            return `${textOf(label(value, row))} ${asText(value)}`;
 
           default:
             // sort and type: dates and times as ISO, numbers as numbers
@@ -138,7 +142,7 @@ export function toDataTables<Row extends object>(
  * list's label, then the value. A date or time that isn't valid shows as it
  * is.
  */
-function labelOf<Row>(column: LooseColumn<Row>): (value: unknown, row: Row) => string {
+function labelOf<Row>(column: LooseColumn<Row>): (value: unknown, row: Row) => string | Node {
   const { render, editor } = column;
 
   if (render !== undefined) {
@@ -254,4 +258,9 @@ function sortValueOf<Row>(column: LooseColumn<Row>): (value: unknown) => unknown
   }
 
   return (value) => value;
+}
+
+/** What a cell shows, as text: an element gives its visible text. */
+function textOf(shown: string | Node): string {
+  return typeof shown === 'string' ? shown : (shown.textContent ?? '');
 }

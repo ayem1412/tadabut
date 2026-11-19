@@ -6,6 +6,7 @@
  */
 
 export type { Column } from './columns/column';
+export { html } from './columns/html';
 export type { TotalFunction } from './columns/total';
 export type { CheckboxEditor } from './editors/checkbox';
 export type { CustomEditor } from './editors/custom';

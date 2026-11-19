@@ -47,7 +47,7 @@ type LooseColumn<Row extends object> = {
   /** The column's total, with its value type erased. */
   readonly total?: NumberTotal | 'count' | TotalFunction<Row>;
   /** The column's `render`, with its value type erased. */
-  readonly render?: (value: unknown, row: Row) => string;
+  readonly render?: (value: unknown, row: Row) => string | Node;
   /** The column's editor config. */
   readonly editor?: AnyEditor;
 };
@@ -89,8 +89,14 @@ export function totalValue<Row extends object>(
   return roundTo(result, editor?.type === 'money' ? moneyFormat(editor).decimals : 2);
 }
 
-/** The text under a column: `count` and functions as they are, numbers formatted like the cells. */
-export function totalText<Row extends object>(column: Column<Row>, rows: readonly Row[]): string {
+/**
+ * What goes under a column: `count` and functions as they are, numbers
+ * formatted like the cells, or what `render` returns, element or text.
+ */
+export function totalText<Row extends object>(
+  column: Column<Row>,
+  rows: readonly Row[],
+): string | Node {
   const { total, render, editor } = column as LooseColumn<Row>;
   const value = totalValue(column, rows);
 
