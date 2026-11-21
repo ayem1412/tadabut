@@ -6,6 +6,7 @@ import '../shared/tadabut.css';
 import './bootstrap.css';
 
 import {
+  type ButtonIcons,
   type EditingOptions,
   fr,
   type RowScope,
@@ -40,6 +41,7 @@ const modeSelect = document.querySelector<HTMLSelectElement>('#mode');
 const buttonsCheckbox = document.querySelector<HTMLInputElement>('#buttons');
 const editableCheckbox = document.querySelector<HTMLInputElement>('#editable');
 const autoAddCheckbox = document.querySelector<HTMLInputElement>('#auto-add');
+const iconsCheckbox = document.querySelector<HTMLInputElement>('#icons');
 const frenchCheckbox = document.querySelector<HTMLInputElement>('#french');
 const doubleClickCheckbox = document.querySelector<HTMLInputElement>('#double-click');
 const detailsCheckbox = document.querySelector<HTMLInputElement>('#details');
@@ -66,6 +68,7 @@ if (
   !buttonsCheckbox ||
   !editableCheckbox ||
   !autoAddCheckbox ||
+  !iconsCheckbox ||
   !frenchCheckbox ||
   !doubleClickCheckbox ||
   !detailsCheckbox ||
@@ -93,6 +96,30 @@ const classNames: TableClassNames = {
   select: 'form-check-input',
   detail: 'text-body-secondary',
   current: 'table-active',
+};
+
+/** With icons, the buttons look like plain clickable icons: no frame, just a color. */
+const iconClassNames: TableClassNames = {
+  ...classNames,
+  button: 'btn btn-sm btn-link px-1',
+  edit: 'text-primary',
+  save: 'text-success',
+  cancel: 'text-secondary',
+  delete: 'text-danger',
+  confirm: 'text-danger',
+  keep: 'text-secondary',
+};
+
+/** FontAwesome 6, loaded in index.html. */
+const icons: ButtonIcons = {
+  edit: 'fa-solid fa-pen',
+  delete: 'fa-solid fa-trash',
+  save: 'fa-solid fa-check',
+  cancel: 'fa-solid fa-xmark',
+  confirm: 'fa-solid fa-check',
+  keep: 'fa-solid fa-rotate-left',
+  showDetail: 'fa-solid fa-plus',
+  hideDetail: 'fa-solid fa-minus',
 };
 
 const columns = makeColumns({
@@ -157,7 +184,8 @@ const createTable = (): Tadabut<Row> => {
     data: rows,
     columns,
     rowId: 'id',
-    classNames,
+    classNames: iconsCheckbox.checked ? iconClassNames : classNames,
+    icons: iconsCheckbox.checked ? icons : undefined,
     onSave: fakeSave,
     onAdd: fakeAdd,
     onDelete: fakeDelete,
@@ -300,6 +328,7 @@ logTotalsBtn.addEventListener('click', () => {
 modeSelect.addEventListener('change', recreate);
 buttonsCheckbox.addEventListener('change', recreate);
 autoAddCheckbox.addEventListener('change', recreate);
+iconsCheckbox.addEventListener('change', recreate);
 // No rebuild: ticks, details and the page stay.
 editableCheckbox.addEventListener('change', () => {
   table?.setEditable(editableCheckbox.checked);

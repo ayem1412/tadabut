@@ -102,7 +102,7 @@ type Detail = {
  * New `data` updates the table in place. Changing `columns`, `rowId`,
  * `dataTables`, `texts`, `totalRows`, `selection`, `currentRow` or the values
  * in `autoAdd` rebuilds it (and closes open rows and details, and clears the
- * selection and the highlight), so keep the objects stable with a constant or `useMemo`. `editing`, `selection`, `classNames`,
+ * selection and the highlight), so keep the objects stable with a constant or `useMemo`. `editing`, `selection`, `classNames`, `icons`,
  * `detail` and every `on…` callback (and `confirmDelete`) can be inline:
  * they're compared by value or read through a ref.
  */
@@ -112,6 +112,7 @@ export function Tadabut<Row extends object>({
   rowId,
   editing,
   classNames,
+  icons,
   dataTables,
   texts,
   totalRows,
@@ -191,6 +192,8 @@ export function Tadabut<Row extends object>({
   const selectClass = classNames?.select;
   const detailClass = classNames?.detail;
   const currentClass = classNames?.current;
+  // As text, so `icons={{ edit: 'fa fa-pencil' }}` inline doesn't rebuild the table.
+  const iconsKey = JSON.stringify(icons ?? {});
   const selectionOn = Boolean(selection);
   const checkAll = typeof selection === 'object' ? selection.checkAll : undefined;
   // Only whether they're set changes the buttons, not which function it is.
@@ -247,6 +250,7 @@ export function Tadabut<Row extends object>({
         detail: detailClass,
         current: currentClass,
       },
+      icons: JSON.parse(iconsKey),
       onSave: (row, context) => onSaveRef.current?.(row, context),
       onAdd: (row) => onAddRef.current?.(row),
       onDelete: hasDelete ? (row) => onDeleteRef.current?.(row) : undefined,
@@ -317,6 +321,7 @@ export function Tadabut<Row extends object>({
     selectClass,
     detailClass,
     currentClass,
+    iconsKey,
     selectionOn,
     currentRow,
     checkAll,

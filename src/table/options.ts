@@ -74,6 +74,34 @@ export type TableClassNames = {
 };
 
 /**
+ * Icon classes, one per button, named like its text. The button then shows
+ * only the icon, and its text goes to `aria-label` and `title` (the tooltip).
+ * A button you leave out keeps its text. Class names only, never HTML.
+ *
+ * @example
+ * // FontAwesome
+ * { edit: 'fa fa-pencil', delete: 'fa fa-trash', save: 'fa fa-check', cancel: 'fa fa-times' }
+ */
+export type ButtonIcons = {
+  /** Edit button. */
+  readonly edit?: string;
+  /** Delete button. */
+  readonly delete?: string;
+  /** Save button. */
+  readonly save?: string;
+  /** Cancel button. */
+  readonly cancel?: string;
+  /** The button that confirms a delete. */
+  readonly confirm?: string;
+  /** The button that keeps the row instead. */
+  readonly keep?: string;
+  /** The ▸ button while the detail is closed. */
+  readonly showDetail?: string;
+  /** The ▾ button while the detail is open. */
+  readonly hideDetail?: string;
+};
+
+/**
  * Any {@link https://datatables.net/reference/option/ | DataTables option},
  * extensions included, except the ones Tadabut has to own: `data`,
  * `columns`, `columnDefs` (use the column options), and `ajax`/`serverSide`
@@ -139,6 +167,13 @@ export type TadabutOptions<Row extends object> = {
   readonly autoAdd?: boolean | Partial<Row>;
   /** Your classes for the table and buttons. */
   readonly classNames?: TableClassNames;
+  /**
+   * Icons instead of text on the buttons.
+   *
+   * @example
+   * icons: { edit: 'fa fa-pencil', delete: 'fa fa-trash' }
+   */
+  readonly icons?: ButtonIcons;
   /** DataTables' own options, passed through. */
   readonly dataTables?: DataTablesSettings;
   /**

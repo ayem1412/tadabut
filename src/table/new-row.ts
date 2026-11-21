@@ -3,7 +3,7 @@ import { type EditableCell, EditSession, type OptionsListener } from '../editing
 import { addClasses } from '../editors/classes';
 import type { Texts } from '../texts/texts';
 import { rowErrorMessage, saveCancelButtons } from './elements';
-import type { TableClassNames } from './options';
+import type { ButtonIcons, TableClassNames } from './options';
 
 /** What a new row needs to know about its table. */
 export type NewRowOptions<Row extends object> = {
@@ -17,6 +17,8 @@ export type NewRowOptions<Row extends object> = {
   readonly texts: Texts;
   /** The table's classes. */
   readonly classNames: TableClassNames;
+  /** The user's button icons. */
+  readonly icons: ButtonIcons;
   /** Empty cells before the columns, for the checkbox column. */
   readonly leadingCells: number;
   /** Told each time a select's options load. */
@@ -73,7 +75,9 @@ export class NewRow<Row extends object> {
     if (options.withButtons) {
       const actionsCell = document.createElement('td');
       actionsCell.classList.add('tdb-actions');
-      actionsCell.replaceChildren(...saveCancelButtons(options.texts, options.classNames));
+      actionsCell.replaceChildren(
+        ...saveCancelButtons(options.texts, options.classNames, options.icons),
+      );
       this.tr.append(actionsCell);
     }
 

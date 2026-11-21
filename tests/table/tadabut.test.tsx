@@ -1085,3 +1085,33 @@ describe('React Tadabut autoAdd', () => {
     expect(container.querySelector<HTMLInputElement>('.tdb-row-new input')?.value).toBe('Other');
   });
 });
+
+describe('React Tadabut icons', () => {
+  beforeEach(() => {
+    container = mountPoint();
+    root = createRoot(container);
+  });
+
+  afterEach(async () => {
+    await act(async () => {
+      root.unmount();
+    });
+  });
+
+  it("shows the icons, and the same icons inline don't rebuild", async () => {
+    await renderWith({ icons: { edit: 'fa fa-pencil' } });
+    const table = container.querySelector('table');
+
+    await renderWith({ icons: { edit: 'fa fa-pencil' } });
+
+    expect(container.querySelector('table')).toBe(table);
+    expect(container.querySelector('[data-tdb-action="edit"] i')?.className).toBe('fa fa-pencil');
+  });
+
+  it('rebuilds with new icons', async () => {
+    await renderWith({ icons: { edit: 'fa fa-pencil' } });
+    await renderWith({ icons: { edit: 'bi bi-pencil' } });
+
+    expect(container.querySelector('[data-tdb-action="edit"] i')?.className).toBe('bi bi-pencil');
+  });
+});

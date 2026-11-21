@@ -11,6 +11,7 @@ import { CurrentRow } from './current-row';
 import { type Action, deleteQuestion, isButtonAction, saveCancelButtons } from './elements';
 import { NewRow } from './new-row';
 import type {
+  ButtonIcons,
   DataTablesSettings,
   EditingOptions,
   TableClassNames,
@@ -51,6 +52,8 @@ export class Tadabut<Row extends object> {
   private editable: boolean;
   /** The user's classes, or `{}`. */
   private readonly classNames: TableClassNames;
+  /** The user's button icons, or `{}`. */
+  private readonly icons: ButtonIcons;
   /** The user's texts over English. */
   private readonly texts: Texts;
   /** The user's save callback. */
@@ -157,6 +160,7 @@ export class Tadabut<Row extends object> {
     this.onRowDoubleClick = options.onRowDoubleClick;
     this.confirmDelete = options.confirmDelete;
     this.classNames = options.classNames ?? {};
+    this.icons = options.icons ?? {};
     this.texts = { ...en, ...options.texts };
     this.hasTotals = options.columns.some((column) => column.total !== undefined);
     this.totalRows = options.totalRows ?? 'searched';
@@ -181,7 +185,7 @@ export class Tadabut<Row extends object> {
       ...options.dataTables,
       ...(this.offset > 0 && { order: shiftOrder(options.dataTables?.order, this.offset) }),
       data: [...options.data],
-      columns: toDataTables(options.columns, actions, this.classNames, this.texts, {
+      columns: toDataTables(options.columns, actions, this.classNames, this.texts, this.icons, {
         selection: Boolean(options.selection),
         detail: options.detail !== undefined,
       }),
@@ -196,6 +200,7 @@ export class Tadabut<Row extends object> {
       rowId: this.rowId,
       detail: options.detail,
       texts: this.texts,
+      icons: this.icons,
     });
 
     // Redrawing a row (save, cancel, paging) brings back a closed ▸.
@@ -525,7 +530,9 @@ export class Tadabut<Row extends object> {
 
     // Redrawing the row on save/cancel brings Edit and Delete back.
     if (this.hasActions) {
-      this.actionsCell(row).replaceChildren(...saveCancelButtons(this.texts, this.classNames));
+      this.actionsCell(row).replaceChildren(
+        ...saveCancelButtons(this.texts, this.classNames, this.icons),
+      );
     }
 
     return true;
@@ -574,6 +581,7 @@ export class Tadabut<Row extends object> {
       withButtons: this.hasActions,
       texts: this.texts,
       classNames: this.classNames,
+      icons: this.icons,
       leadingCells: this.offset,
       onOptions: this.rememberOptions,
     });
@@ -1087,7 +1095,7 @@ export class Tadabut<Row extends object> {
       return;
     }
 
-    const { parts, keep } = deleteQuestion(this.texts, this.classNames);
+    const { parts, keep } = deleteQuestion(this.texts, this.classNames, this.icons);
     this.actionsCell(row).replaceChildren(...parts);
 
     // Focus was on the Delete button, which is gone. No is the safe default.

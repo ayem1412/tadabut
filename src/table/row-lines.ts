@@ -1,8 +1,8 @@
 import type { Api, ApiRowMethods } from 'datatables.net';
 
 import type { Texts } from '../texts/texts';
-import { rowErrorMessage } from './elements';
-import type { DetailContent, DetailContext } from './options';
+import { rowErrorMessage, setDetailToggle } from './elements';
+import type { ButtonIcons, DetailContent, DetailContext } from './options';
 
 /** What the lines under the rows need from the table. */
 export type RowLinesParts<Row extends object> = {
@@ -14,6 +14,8 @@ export type RowLinesParts<Row extends object> = {
   readonly detail?: (row: Row, context: DetailContext) => DetailContent | Promise<DetailContent>;
   /** The table's texts. */
   readonly texts: Texts;
+  /** The user's button icons, for the ▸ button. */
+  readonly icons: ButtonIcons;
 };
 
 /** A detail that's open, or loading. */
@@ -124,7 +126,7 @@ export class RowLines<Row extends object> {
       return;
     }
 
-    const { texts } = this.parts;
+    const { texts, icons } = this.parts;
     const rows = this.parts.dataTable.rows({ page: 'current' });
     const data = rows.data().toArray();
 
@@ -145,9 +147,7 @@ export class RowLines<Row extends object> {
         const button = tr.querySelector<HTMLButtonElement>('.tdb-detail-toggle');
 
         if (button !== null) {
-          button.setAttribute('aria-expanded', String(open));
-          button.setAttribute('aria-label', open ? texts.hideDetail : texts.showDetail);
-          button.textContent = open ? '▾' : '▸';
+          setDetailToggle(button, open, texts, icons);
         }
       });
   }

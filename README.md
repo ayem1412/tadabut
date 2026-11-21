@@ -744,6 +744,62 @@ Error messages and the rows being edited need a few lines of your own CSS:
 > [!TIP]
 > Each DataTables styling package needs one exact version of `datatables.net`. Don't add `datatables.net` yourself next to it. If you have to, use the same version as the styling package. Two different versions means two copies of DataTables: the table works, but the Bootstrap look doesn't show up on the search box and the paging buttons.
 
+#### Icons instead of text: `icons`
+
+Give each button the classes of an icon, from any icon font: FontAwesome, Bootstrap Icons, and others. Load the icon font's CSS yourself.
+
+```ts
+const table = new Tadabut(container, {
+  data: employees,
+  rowId: 'id',
+  columns,
+  icons: {
+    edit: 'fa-solid fa-pen',
+    delete: 'fa-solid fa-trash',
+    save: 'fa-solid fa-check',
+    cancel: 'fa-solid fa-xmark',
+    confirm: 'fa-solid fa-check', // "Yes, delete"
+    keep: 'fa-solid fa-rotate-left', // "No"
+    showDetail: 'fa-solid fa-plus', // instead of ▸
+    hideDetail: 'fa-solid fa-minus', // instead of ▾
+  },
+});
+```
+
+- The button shows only the icon: `<i class="fa-solid fa-pen" aria-hidden="true"></i>`. Its text (`texts.edit`, so "Modifier" with `fr`) goes to `aria-label` for screen readers, and `title` for the tooltip on hover.
+- A button you leave out keeps its text, and the ▸ button keeps its arrows.
+- The keys are the same as in `texts`, so `icons.edit` goes with `texts.edit`.
+- Only class names, never HTML: Tadabut builds the `<i>` itself, so there's nothing in it that could run.
+
+With FontAwesome 4, use `'fa fa-pencil'`. With Bootstrap Icons, `'bi bi-pencil'`.
+
+To make them look like plain clickable icons instead of buttons, with Bootstrap 5:
+
+```ts
+classNames: {
+  button: 'btn btn-sm btn-link px-1',
+  edit: 'text-primary',
+  save: 'text-success',
+  cancel: 'text-secondary',
+  delete: 'text-danger',
+  confirm: 'text-danger',
+  keep: 'text-secondary',
+},
+```
+
+Without Bootstrap, leave `classNames.button` out, and remove the button look in your CSS:
+
+```css
+.tdb-button {
+  border: 0;
+  background: none;
+  cursor: pointer;
+  padding: 0.125rem 0.25rem;
+}
+```
+
+In React, `icons={{ edit: 'fa-solid fa-pen' }}` inline is fine: only new icons rebuild the table.
+
 ### Custom editors
 
 If the built-in inputs aren't enough, write your own. Select2, a date picker library, an input for a column that holds an object: anything works, on any column.
@@ -1526,6 +1582,7 @@ Done:
 - [x] Turning editing on and off while the table is shown (`editable`, `setEditable`)
 - [x] A new row that's always open (`autoAdd`)
 - [x] Badges, links and icons in cells: `render` can return an element, built safely with `html`
+- [x] Icons instead of text on the buttons (`icons`)
 
 Next, roughly in this order:
 
