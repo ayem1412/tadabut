@@ -14,7 +14,7 @@ import {
   selectAllHtml,
   selectRowHtml,
 } from '../table/elements';
-import type { TableClassNames } from '../table/options';
+import type { ButtonIcons, TableClassNames } from '../table/options';
 import type { Texts } from '../texts/texts';
 import type { Column } from './column';
 import { escapeHtml } from './escape';
@@ -27,9 +27,15 @@ function actionsColumn(
   actions: readonly Action[],
   classNames: TableClassNames,
   texts: Texts,
+  icons: ButtonIcons,
 ): ColumnOptions {
   const buttons = actions.map((action) =>
-    buttonHtml(action, texts[action], splitClasses(classNames.button, classNames[action])),
+    buttonHtml(
+      action,
+      texts[action],
+      splitClasses(classNames.button, classNames[action]),
+      icons[action],
+    ),
   );
 
   return {
@@ -58,14 +64,18 @@ function selectColumn(classNames: TableClassNames, texts: Texts): ColumnOptions 
 }
 
 /** The column with the ▸ button. Which ones are open is set after each draw. */
-function detailColumn(classNames: TableClassNames, texts: Texts): ColumnOptions {
+function detailColumn(
+  classNames: TableClassNames,
+  texts: Texts,
+  icons: ButtonIcons,
+): ColumnOptions {
   return {
     title: '',
     data: null,
     className: 'tdb-detail',
     orderable: false,
     searchable: false,
-    defaultContent: detailToggleHtml(texts, classNames),
+    defaultContent: detailToggleHtml(texts, classNames, icons),
   };
 }
 
@@ -87,6 +97,7 @@ export function toDataTables<Row extends object>(
   actions: readonly Action[],
   classNames: TableClassNames,
   texts: Texts,
+  icons: ButtonIcons,
   leading: { readonly selection: boolean; readonly detail: boolean },
 ): ColumnOptions[] {
   const converted = columns.map((column): ColumnOptions => {
@@ -130,9 +141,9 @@ export function toDataTables<Row extends object>(
 
   const first = [
     ...(leading.selection ? [selectColumn(classNames, texts)] : []),
-    ...(leading.detail ? [detailColumn(classNames, texts)] : []),
+    ...(leading.detail ? [detailColumn(classNames, texts, icons)] : []),
   ];
-  const last = actions.length > 0 ? [actionsColumn(actions, classNames, texts)] : [];
+  const last = actions.length > 0 ? [actionsColumn(actions, classNames, texts, icons)] : [];
 
   return [...first, ...converted, ...last];
 }
