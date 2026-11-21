@@ -28,6 +28,7 @@ export type {
 export type { TextEditor } from './editors/text';
 export type { TimeEditor } from './editors/time';
 export { formatTime, parseTime } from './editors/time-format';
+export type { DefaultOptions } from './table/defaults';
 export type {
   ButtonIcons,
   DataTablesSettings,
@@ -40,6 +41,7 @@ export type {
   TadabutOptions,
 } from './table/options';
 export type { RowScope, TotalScope } from './table/scope';
+export type { TadabutClass } from './table/tadabut';
 export { Tadabut } from './table/tadabut';
 export { en } from './texts/en';
 export { fr } from './texts/fr';

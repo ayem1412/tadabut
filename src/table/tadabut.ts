@@ -8,6 +8,7 @@ import { en } from '../texts/en';
 import type { Texts } from '../texts/texts';
 import { checkOptions } from './check-options';
 import { CurrentRow } from './current-row';
+import { type DefaultOptions, mergeOptions } from './defaults';
 import { type Action, deleteQuestion, isButtonAction, saveCancelButtons } from './elements';
 import { NewRow } from './new-row';
 import type {
@@ -38,6 +39,27 @@ import { footerFor, rowsFor, totalText, totalValue } from './totals';
  * });
  */
 export class Tadabut<Row extends object> {
+  /** The options every table of this class starts with. Set with `extend`, never changed after. */
+  public static readonly defaults: DefaultOptions = Object.freeze({});
+
+  /**
+   * A new table class that starts with these options. Pages can override any
+   * of them, and `AppTable.extend({…})` builds on `AppTable`'s.
+   *
+   * @example
+   * export const AppTable = Tadabut.extend({ texts: fr, classNames: bootstrapClasses });
+   *
+   * const table = new AppTable(container, { data, columns, rowId: 'id' });
+   */
+  public static extend(defaults: DefaultOptions): TadabutClass {
+    // biome-ignore lint/complexity/noThisInStatic: `this` is the class extend is called on, so AppTable.extend builds on AppTable's defaults. Tadabut.defaults would forget them.
+    const merged = Object.freeze(mergeOptions(this.defaults, defaults));
+
+    return class<Row extends object> extends Tadabut<Row> {
+      public static override readonly defaults: DefaultOptions = merged;
+    };
+  }
+
   /** The DataTables instance. */
   private readonly dataTable: Api<Row>;
   /** The `<table>` Tadabut created. */
@@ -124,7 +146,11 @@ export class Tadabut<Row extends object> {
    * @throws If a time editor's `min` or `max` isn't a real time.
    * @throws If a datetime editor's `min` or `max` isn't a real date and time in its `format`.
    */
-  public constructor(container: HTMLElement, options: TadabutOptions<Row>) {
+  public constructor(container: HTMLElement, given: TadabutOptions<Row>) {
+    // new.target: the class the page used, so AppTable's defaults are read here.
+    // Before checkOptions, so it checks what the table really gets.
+    const options = mergeOptions((new.target as typeof Tadabut).defaults, given);
+
     checkOptions(options);
 
     this.hasEditor = options.columns.some((column) => column.editor !== undefined);
@@ -1379,6 +1405,19 @@ export class Tadabut<Row extends object> {
     this.onRowDoubleClick?.(row.data(), event);
   };
 }
+
+/**
+ * What `extend` returns: a table class like `Tadabut`, with its own defaults.
+ * Written out because TypeScript can't describe the class `extend` builds.
+ */
+export type TadabutClass = {
+  /** Builds a table with the class's defaults under `options`. */
+  new <Row extends object>(container: HTMLElement, options: TadabutOptions<Row>): Tadabut<Row>;
+  /** The options every table of this class starts with. */
+  readonly defaults: DefaultOptions;
+  /** A new class that builds on this one's defaults. */
+  extend(defaults: DefaultOptions): TadabutClass;
+};
 
 /**
  * DataTables counts the checkbox column too, so `[[1, 'asc']]` from you means

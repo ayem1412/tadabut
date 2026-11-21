@@ -14,17 +14,53 @@
 
 import type { Api } from 'datatables.net';
 import {
+  createContext,
   type ReactElement,
   type ReactNode,
   type Ref,
+  useContext,
   useEffect,
   useImperativeHandle,
+  useMemo,
   useRef,
   useState,
 } from 'react';
 import { createPortal } from 'react-dom';
 
-import { Tadabut as Core, type DetailContext, type TadabutOptions } from '../index';
+import {
+  Tadabut as Core,
+  type DefaultOptions,
+  type DetailContext,
+  type TadabutOptions,
+} from '../index';
+
+/** The defaults of the nearest `<TadabutDefaults>`, or none. */
+const DefaultsContext = createContext<DefaultOptions>({});
+
+/** The props of `<TadabutDefaults>`. */
+export type TadabutDefaultsProps = {
+  /** The options every `<Tadabut>` inside starts with. Keep it stable: a new object rebuilds every table. */
+  readonly value: DefaultOptions;
+  /** Your app, or the part of it that uses these defaults. */
+  readonly children?: ReactNode;
+};
+
+/**
+ * Shared options for every `<Tadabut>` inside, like `Tadabut.extend` without
+ * React. A table's own props win, and the objects combine key by key. An inner
+ * `<TadabutDefaults>` builds on the outer one.
+ *
+ * @example
+ * <TadabutDefaults value={appDefaults}>
+ *   <App />
+ * </TadabutDefaults>
+ */
+export function TadabutDefaults({ value, children }: TadabutDefaultsProps): ReactElement {
+  const outer = useContext(DefaultsContext);
+  const merged = useMemo(() => Core.extend(outer).extend(value).defaults, [outer, value]);
+
+  return <DefaultsContext.Provider value={merged}>{children}</DefaultsContext.Provider>;
+}
 
 /**
  * What the `ref` gets. No `setData` or `setEditable`: change the `data` and
@@ -120,7 +156,7 @@ export function Tadabut<Row extends object>({
   onSelect,
   currentRow,
   onCurrentChange,
-  editable = true,
+  editable,
   autoAdd,
   onSave,
   onAdd,
@@ -135,6 +171,9 @@ export function Tadabut<Row extends object>({
   detail,
   ref,
 }: TadabutProps<Row>): ReactElement {
+  const defaults = useContext(DefaultsContext);
+  // A class per defaults object, so a new one rebuilds the table, and nothing else does.
+  const Table = useMemo(() => Core.extend(defaults), [defaults]);
   /** The `<div>` the core builds the table in. */
   const containerRef = useRef<HTMLDivElement>(null);
   /** The core table. `null` before the first build and after unmount. */
@@ -194,7 +233,8 @@ export function Tadabut<Row extends object>({
   const currentClass = classNames?.current;
   // As text, so `icons={{ edit: 'fa fa-pencil' }}` inline doesn't rebuild the table.
   const iconsKey = JSON.stringify(icons ?? {});
-  const selectionOn = Boolean(selection);
+  // `undefined` when not given, so the defaults' `selection` still counts.
+  const selectionOn = selection === undefined ? undefined : Boolean(selection);
   const checkAll = typeof selection === 'object' ? selection.checkAll : undefined;
   // Only whether they're set changes the buttons, not which function it is.
   const hasDelete = onDelete !== undefined;
@@ -224,7 +264,7 @@ export function Tadabut<Row extends object>({
       };
     }
 
-    const table = new Core(container, {
+    const table = new Table(container, {
       data: dataRef.current,
       editable: editableRef.current,
       // The key says whether it's on, the ref gives the values as they are.
@@ -235,7 +275,7 @@ export function Tadabut<Row extends object>({
       dataTables,
       texts,
       totalRows,
-      selection: selectionOn && { checkAll },
+      selection: selectionOn === undefined ? undefined : selectionOn && { checkAll },
       currentRow,
       classNames: {
         table: tableClass,
@@ -329,6 +369,7 @@ export function Tadabut<Row extends object>({
     confirmWith,
     hasDetail,
     autoAddKey,
+    Table,
   ]);
 
   useEffect(() => {
@@ -339,8 +380,9 @@ export function Tadabut<Row extends object>({
   // Without a rebuild, so ticks, details and sorting stay.
   useEffect(() => {
     editableRef.current = editable;
-    tableRef.current?.setEditable(editable);
-  }, [editable]);
+    // Not given: what the table started with, from the defaults or `true`.
+    tableRef.current?.setEditable(editable ?? Table.defaults.editable ?? true);
+  }, [editable, Table]);
 
   useEffect(() => {
     onSaveRef.current = onSave;

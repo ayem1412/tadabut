@@ -3,7 +3,13 @@ import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { type Column, fr } from '../../src/index';
-import { Tadabut, type TadabutHandle, type TadabutProps } from '../../src/react/index';
+import {
+  Tadabut,
+  TadabutDefaults,
+  type TadabutDefaultsProps,
+  type TadabutHandle,
+  type TadabutProps,
+} from '../../src/react/index';
 import { mountPoint, type } from '../helpers';
 
 type Row = { id: number; name: string; city: string };
@@ -1113,5 +1119,76 @@ describe('React Tadabut icons', () => {
     await renderWith({ icons: { edit: 'bi bi-pencil' } });
 
     expect(container.querySelector('[data-tdb-action="edit"] i')?.className).toBe('bi bi-pencil');
+  });
+});
+
+describe('React TadabutDefaults', () => {
+  beforeEach(() => {
+    container = mountPoint();
+    root = createRoot(container);
+  });
+
+  afterEach(async () => {
+    await act(async () => {
+      root.unmount();
+    });
+  });
+
+  type Defaults = TadabutDefaultsProps['value'];
+
+  /** Renders a table inside `outer`, and inside `inner` too when given. */
+  async function renderIn(
+    outer: Defaults,
+    props: Partial<TadabutProps<Row>> = {},
+    inner?: Defaults,
+  ): Promise<void> {
+    const table = <Tadabut data={rows} columns={editable} rowId='id' {...props} />;
+
+    await act(async () => {
+      root.render(
+        <StrictMode>
+          <TadabutDefaults value={outer}>
+            {inner === undefined ? table : <TadabutDefaults value={inner}>{table}</TadabutDefaults>}
+          </TadabutDefaults>
+        </StrictMode>,
+      );
+    });
+  }
+
+  const appDefaults = { texts: fr, classNames: { button: 'btn' } };
+
+  it('gives every table inside the defaults, under its own props', async () => {
+    await renderIn(appDefaults, { texts: { edit: 'Changer' } });
+
+    const edit = container.querySelector<HTMLButtonElement>('[data-tdb-action="edit"]');
+
+    expect(edit?.textContent).toBe('Changer');
+    expect(edit?.classList.contains('btn')).toBe(true);
+  });
+
+  it('builds an inner TadabutDefaults on the outer one', async () => {
+    await renderIn(appDefaults, {}, { icons: { edit: 'fa fa-pencil' } });
+
+    const edit = container.querySelector<HTMLButtonElement>('[data-tdb-action="edit"]');
+
+    expect(edit?.querySelector('i')?.className).toBe('fa fa-pencil');
+    expect(edit?.getAttribute('aria-label')).toBe(fr.edit);
+  });
+
+  it('keeps the defaults for props left out: editable and selection', async () => {
+    const ref = createRef<TadabutHandle<Row>>();
+    await renderIn({ editable: false, selection: true }, { ref });
+
+    expect(ref.current?.edit(1)).toBe(false);
+    expect(container.querySelector('.tdb-select-row')).not.toBeNull();
+  });
+
+  it("doesn't rebuild when the same defaults object renders again", async () => {
+    await renderIn(appDefaults);
+    const table = container.querySelector('table');
+
+    await renderIn(appDefaults);
+
+    expect(container.querySelector('table')).toBe(table);
   });
 });

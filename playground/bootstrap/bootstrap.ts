@@ -110,6 +110,9 @@ const iconClassNames: TableClassNames = {
   keep: 'text-secondary',
 };
 
+/** Every table on this page looks like Bootstrap, without repeating it: that's `extend`. */
+const BootstrapTable = Tadabut.extend({ classNames });
+
 /** FontAwesome 6, loaded in index.html. */
 const icons: ButtonIcons = {
   edit: 'fa-solid fa-pen',
@@ -180,11 +183,12 @@ const createTable = (): Tadabut<Row> => {
     doubleClick: doubleClickCheckbox.checked,
   };
 
-  return new Tadabut(container, {
+  return new BootstrapTable(container, {
     data: rows,
     columns,
     rowId: 'id',
-    classNames: iconsCheckbox.checked ? iconClassNames : classNames,
+    // Only with icons: otherwise BootstrapTable's own classNames apply.
+    classNames: iconsCheckbox.checked ? iconClassNames : undefined,
     icons: iconsCheckbox.checked ? icons : undefined,
     onSave: fakeSave,
     onAdd: fakeAdd,

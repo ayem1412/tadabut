@@ -6,7 +6,7 @@ import '../shared/plain.css';
 import { StrictMode, useRef, useState } from 'react';
 import { createRoot } from 'react-dom/client';
 
-import { Tadabut, type TadabutHandle } from '../../src/react/index';
+import { Tadabut, TadabutDefaults, type TadabutHandle } from '../../src/react/index';
 import {
   columns,
   type Details,
@@ -111,7 +111,6 @@ function App() {
         data={data}
         columns={columns}
         rowId='id'
-        dataTables={settings}
         editing={{ doubleClick: true }}
         onRowClick={(row) => setStatus(`Clicked ${row.name}`)}
         onSaved={(row, { previous }) => setStatus(`Saved ${previous.name} → ${row.name}`)}
@@ -153,8 +152,14 @@ if (!root) {
   throw new Error('Playground: missing #root in react/index.html');
 }
 
+// Outside App, so it's the same object on every render and never rebuilds the table.
+const appDefaults = { dataTables: settings };
+
 createRoot(root).render(
   <StrictMode>
-    <App />
+    {/* Every <Tadabut> inside gets these, like Tadabut.extend without React. */}
+    <TadabutDefaults value={appDefaults}>
+      <App />
+    </TadabutDefaults>
   </StrictMode>,
 );
