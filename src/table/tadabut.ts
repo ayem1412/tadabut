@@ -10,6 +10,7 @@ import { checkOptions } from './check-options';
 import { CurrentRow } from './current-row';
 import { type DefaultOptions, mergeOptions } from './defaults';
 import { type Action, deleteQuestion, isButtonAction, saveCancelButtons } from './elements';
+import { Listeners, type TadabutEventName, type TadabutListener } from './events';
 import { NewRow } from './new-row';
 import type {
   ButtonIcons,
@@ -108,22 +109,14 @@ export class Tadabut<Row extends object> {
   private readonly currentRow?: CurrentRow<Row>;
   /** Asked before a row opens. */
   private readonly onEditStart: TadabutOptions<Row>['onEditStart'];
-  /** The user's after-save callback. */
-  private readonly onSaved: TadabutOptions<Row>['onSaved'];
-  /** The user's after-add callback. */
-  private readonly onAdded: TadabutOptions<Row>['onAdded'];
-  /** The user's after-delete callback. */
-  private readonly onDeleted: TadabutOptions<Row>['onDeleted'];
-  /** The user's row click callback. */
-  private readonly onRowClick: TadabutOptions<Row>['onRowClick'];
-  /** The user's row double click callback. */
-  private readonly onRowDoubleClick: TadabutOptions<Row>['onRowDoubleClick'];
   /** The lines under each row: details and errors. */
   private readonly rowLines: RowLines<Row>;
   /** The last options each select loaded, by field. */
   private readonly loadedOptions = new Map<string, readonly SelectOption<unknown>[]>();
   /** The new row's starting values with `autoAdd`, or `undefined` without it. */
   private readonly autoAdd?: Partial<Row>;
+  /** Who listens to what: the `on…` options first, then `on()`. */
+  private readonly listeners = new Listeners<Row>();
   /** Whether `autoAdd` opened the new row, rather than `add()`. */
   private newRowIsAuto = false;
   /** Whether Edit closed the auto row in `'single'` mode, so it comes back once that row closes. */
@@ -179,11 +172,35 @@ export class Tadabut<Row extends object> {
     this.onAdd = options.onAdd;
     this.onDelete = options.onDelete;
     this.onEditStart = options.onEditStart;
-    this.onSaved = options.onSaved;
-    this.onAdded = options.onAdded;
-    this.onDeleted = options.onDeleted;
-    this.onRowClick = options.onRowClick;
-    this.onRowDoubleClick = options.onRowDoubleClick;
+
+    if (options.onSaved !== undefined) {
+      this.listeners.on('saved', options.onSaved);
+    }
+
+    if (options.onAdded !== undefined) {
+      this.listeners.on('added', options.onAdded);
+    }
+
+    if (options.onDeleted !== undefined) {
+      this.listeners.on('deleted', options.onDeleted);
+    }
+
+    if (options.onSelect !== undefined) {
+      this.listeners.on('select', options.onSelect);
+    }
+
+    if (options.onCurrentChange !== undefined) {
+      this.listeners.on('currentChange', options.onCurrentChange);
+    }
+
+    if (options.onRowClick !== undefined) {
+      this.listeners.on('rowClick', options.onRowClick);
+    }
+
+    if (options.onRowDoubleClick !== undefined) {
+      this.listeners.on('rowDoubleClick', options.onRowDoubleClick);
+    }
+
     this.confirmDelete = options.confirmDelete;
     this.classNames = options.classNames ?? {};
     this.icons = options.icons ?? {};
@@ -248,7 +265,7 @@ export class Tadabut<Row extends object> {
             this.updateTotals();
           }
 
-          options.onSelect?.(rows);
+          this.listeners.emit('select', rows);
         },
       });
       this.dataTable.on('draw', () => this.selection?.sync());
@@ -260,7 +277,7 @@ export class Tadabut<Row extends object> {
         dataTable: this.dataTable,
         rowId: this.rowId as keyof Row & string,
         classes: splitClasses(this.classNames.current),
-        onChange: options.onCurrentChange,
+        onChange: (row) => this.listeners.emit('currentChange', row),
       });
       this.dataTable.on('draw', () => this.currentRow?.sync());
     }
@@ -821,7 +838,7 @@ export class Tadabut<Row extends object> {
 
     // Before onAdded: if it throws, the next row is open anyway.
     this.autoOpen(true);
-    this.onAdded?.(added.data());
+    this.listeners.emit('added', added.data());
 
     return true;
   }
@@ -930,7 +947,7 @@ export class Tadabut<Row extends object> {
 
     this.rowLines.reload(id);
     this.giveBackAutoRow();
-    this.onSaved?.(saved, { previous: session.originalData });
+    this.listeners.emit('saved', saved, { previous: session.originalData });
 
     return true;
   }
@@ -988,7 +1005,7 @@ export class Tadabut<Row extends object> {
     this.selection?.prune();
     this.currentRow?.prune();
 
-    this.onDeleted?.(data);
+    this.listeners.emit('deleted', data);
 
     return true;
   }
@@ -1024,6 +1041,32 @@ export class Tadabut<Row extends object> {
     }
   }
 
+  /**
+   * Listens to an event, after the matching `on…` option and the listeners
+   * added before. A listener that throws doesn't stop the others: its error
+   * shows in the console.
+   *
+   * @returns A function that stops listening.
+   *
+   * @example
+   * const stop = table.on('saved', (row, { previous }) => console.log(previous.name, '→', row.name));
+   * stop();
+   */
+  public on<Name extends TadabutEventName>(
+    name: Name,
+    listener: TadabutListener<Row, Name>,
+  ): () => void {
+    return this.listeners.on(name, listener);
+  }
+
+  /** Stops a listener added with `on`. It must be the same function. */
+  public off<Name extends TadabutEventName>(
+    name: Name,
+    listener: TadabutListener<Row, Name>,
+  ): void {
+    this.listeners.off(name, listener);
+  }
+
   /** Reopens the auto row once the row that Edit opened in its place closed. */
   private giveBackAutoRow(): void {
     if (this.autoMadeWay && this.sessions.size === 0) {
@@ -1045,6 +1088,8 @@ export class Tadabut<Row extends object> {
     this.rowLines.destroy();
     this.dataTable.destroy();
     this.tableEl.remove();
+
+    this.listeners.clear();
   }
 
   /** The row with this id, or `undefined`. */
@@ -1393,7 +1438,7 @@ export class Tadabut<Row extends object> {
         this.currentRow.toggle(row.data()[this.rowId as keyof Row] as string | number);
       }
 
-      this.onRowClick?.(row.data(), event);
+      this.listeners.emit('rowClick', row.data(), event);
       return;
     }
 
@@ -1402,7 +1447,7 @@ export class Tadabut<Row extends object> {
       this.edit(row.data()[this.rowId] as string | number);
     }
 
-    this.onRowDoubleClick?.(row.data(), event);
+    this.listeners.emit('rowDoubleClick', row.data(), event);
   };
 }
 

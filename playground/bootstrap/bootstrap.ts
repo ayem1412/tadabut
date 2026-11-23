@@ -183,7 +183,7 @@ const createTable = (): Tadabut<Row> => {
     doubleClick: doubleClickCheckbox.checked,
   };
 
-  return new BootstrapTable(container, {
+  const created = new BootstrapTable(container, {
     data: rows,
     columns,
     rowId: 'id',
@@ -222,6 +222,11 @@ const createTable = (): Tadabut<Row> => {
     dataTables: frenchCheckbox.checked ? { ...settings, language: french } : settings,
     texts: frenchCheckbox.checked ? fr : undefined,
   });
+
+  // Like another script on the page would: from outside the options.
+  created.on('saved', (row) => log(`table.on('saved'): ${row.name}`));
+
+  return created;
 };
 
 const updateStatus = (): void => {
