@@ -1,5 +1,19 @@
 # Changelog
 
+## [1.0.0](https://github.com/ayem1412/tadabut/compare/v0.8.0...v1.0.0) (2026-11-23)
+
+
+### Features
+
+* icons instead of text on the buttons ([#72](https://github.com/ayem1412/tadabut/issues/72)) ([ad81912](https://github.com/ayem1412/tadabut/commit/ad819127dfebaca9b9d7ec1bbefd9f79441cb147))
+* listen to events with table.on() ([#75](https://github.com/ayem1412/tadabut/issues/75)) ([5b20b64](https://github.com/ayem1412/tadabut/commit/5b20b64f27c15ebfbb82d061f499d32e85b4b09b))
+* shared settings for many tables ([#74](https://github.com/ayem1412/tadabut/issues/74)) ([5a6ae2d](https://github.com/ayem1412/tadabut/commit/5a6ae2d9d42a06d7b3609d526647d70ac022e9f2))
+
+
+### Documentation
+
+* ready for 1.0 ([#76](https://github.com/ayem1412/tadabut/issues/76)) ([41c9d31](https://github.com/ayem1412/tadabut/commit/41c9d319c5fd1c4fefbbf0708740dbfbfa980492))
+
 ## [0.8.0](https://github.com/ayem1412/tadabut/compare/v0.7.0...v0.8.0) (2026-11-19)
 
 
