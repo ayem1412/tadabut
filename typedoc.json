@@ -4,10 +4,20 @@
   "entryPoints": ["src/index.ts", "src/react/index.tsx"],
   "out": "docs-site",
   "readme": "README.md",
+  "projectDocuments": [
+    "docs/columns.md",
+    "docs/editing.md",
+    "docs/rows.md",
+    "docs/events.md",
+    "docs/styling.md",
+    "docs/shared-defaults.md",
+    "docs/react.md",
+    "docs/roadmap.md"
+  ],
   "includeVersion": true,
   "excludePrivate": true,
   "excludeInternal": true,
-  "sort": ["kind", "alphabetical"],
+  "sort": ["kind", "alphabetical-ignoring-documents"],
   "navigationLinks": {
     "GitHub": "https://github.com/ayem1412/tadabut",
     "npm": "https://www.npmjs.com/package/tadabut"
