@@ -13,9 +13,6 @@ Tadabut wraps [DataTables](https://datatables.net) and adds what it doesn't give
 
 📖 [API reference](https://ayem1412.github.io/tadabut/): every option and type, from the code's own comments.
 
-> [!WARNING]
-> Tadabut is new. Until 1.0, the API can change between `0.x` versions, so pin the version you use and read the changelog before you update.
-
 ## Why
 
 DataTables is great for showing data. Editing that data inside the table is a different story: you either buy the Editor extension or write a lot of code yourself. Tadabut is that code, written once.
