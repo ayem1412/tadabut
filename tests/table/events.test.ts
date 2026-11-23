@@ -192,7 +192,8 @@ describe('onSaved, onAdded and onDeleted', () => {
     expect(onDeleted).not.toHaveBeenCalled();
   });
 
-  it('a throwing callback leaves the table done', async () => {
+  it('a throwing callback leaves the table done, and shows its error in the console', async () => {
+    const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {});
     const { table, container, cell } = setup({
       onSaved: () => {
         throw new Error('Bug in onSaved');
@@ -202,9 +203,11 @@ describe('onSaved, onAdded and onDeleted', () => {
     table.edit(1);
     type(nameInput(container), 'Nadia');
 
-    await expect(table.save(1)).rejects.toThrow('Bug in onSaved');
+    expect(await table.save(1)).toBe(true);
     expect(table.isEditing(1)).toBe(false);
     expect(cell(0, 1).textContent).toBe('Nadia');
+    expect(consoleError).toHaveBeenCalledWith(new Error('Bug in onSaved'));
+    consoleError.mockRestore();
   });
 });
 

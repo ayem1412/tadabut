@@ -29,6 +29,7 @@ export type { TextEditor } from './editors/text';
 export type { TimeEditor } from './editors/time';
 export { formatTime, parseTime } from './editors/time-format';
 export type { DefaultOptions } from './table/defaults';
+export type { TadabutEventName, TadabutEvents, TadabutListener } from './table/events';
 export type {
   ButtonIcons,
   DataTablesSettings,
