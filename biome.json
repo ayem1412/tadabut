@@ -7,7 +7,13 @@
   },
   "files": {
     "ignoreUnknown": false,
-    "includes": ["**", "!CHANGELOG.md"]
+    "includes": [
+      "**",
+      "!CHANGELOG.md",
+      "!docs/src/content/docs/**/*.md",
+      "!docs/src/content/docs/**/*.mdx",
+      "!docs/src/icons"
+    ]
   },
   "formatter": {
     "enabled": true,
@@ -33,5 +39,18 @@
         "organizeImports": "on"
       }
     }
-  }
+  },
+  "overrides": [
+    {
+      "includes": ["**/*.astro"],
+      "linter": {
+        "rules": {
+          "correctness": {
+            "noUnusedImports": "off",
+            "noUnusedVariables": "off"
+          }
+        }
+      }
+    }
+  ]
 }

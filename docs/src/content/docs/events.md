@@ -1,12 +1,11 @@
 ---
-
-## title: Events
-
-# Events
+title: 'Events'
+description: 'Knowing when something happened: the on… options and table.on().'
+---
 
 Knowing when something happened: the `on…` options and `table.on()`.
 
-The examples use the `Employee` type from the [quick start](../README.md#quick-start).
+The examples use the `Employee` type from the [quick start](getting-started.mdx#quick-start).
 
 Seven callbacks tell you what happened. Each one gets the row:
 
@@ -77,7 +76,3 @@ stop(); // or table.off('saved', sameFunction)
 - Only for things that happened. The callbacks that decide something stay options: `onSave`, `onAdd`, `onDelete`, `onEditStart` and `confirmDelete`. With many listeners, there'd be no clear answer to "which one decides?"
 - In TypeScript, a wrong event name is an error, and each listener knows its arguments.
 - In React, use the props: listeners added to the ref's table would be lost each time it's rebuilt.
-
----
-
-← [Rows](rows.md) · [All guides](../README.md#guides) · [Styling and texts](styling.md) →

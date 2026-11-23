@@ -38,12 +38,21 @@ Both pages share the same rows and columns, from `makeColumns()` in `shared/data
 | `pnpm lint`      | Checks formatting and lint rules       |
 | `pnpm format`    | Fixes formatting and sorts imports     |
 | `pnpm build`     | Builds the library into `dist/`        |
-| `pnpm run docs`  | Builds the API docs into `docs-site/`  |
+| `pnpm docs:dev`  | Opens the website, and reloads on save |
+| `pnpm run docs`  | Builds the website into `docs/dist/`   |
 | `pnpm check`     | Runs everything once                   |
 
 Run `pnpm check` before you push. CI runs the same thing.
 
-`pnpm run docs` (with `run`: `pnpm docs` alone is a pnpm command that opens a package's website) uses TypeScript 6 on purpose: TypeDoc can't read TypeScript 7 yet. It downloads both by itself the first time, so there's nothing to install.
+The website is made with [Starlight](https://starlight.astro.build) and the [Ion theme](https://louisescher.github.io/starlight-ion-theme/). The guides are in `docs/src/content/docs/`. The API pages come from the code's `/** */` comments: `pnpm docs:api` turns them into Markdown in `docs/src/content/docs/api/`, which isn't committed. `pnpm docs:dev` and `pnpm run docs` run it first.
+
+Link guides to each other with their file name, like `[Editing](editing.md#dates)`, so the links work on GitHub too. The website turns them into its own links.
+
+`pnpm run docs` needs `run`: `pnpm docs` alone is a pnpm command that opens a package's website. TypeDoc runs with TypeScript 6 on purpose, because it can't read TypeScript 7 yet. It downloads by itself the first time, so there's nothing to install.
+
+A live demo goes under an example with `<div data-demo="name"></div>`, for the file `docs/src/demos/name.ts`. It's a plain div, so GitHub shows nothing. If you change an example, change its demo too.
+
+Biome skips the guides: it would flatten the settings block at the top of each one, which Starlight needs.
 
 Formatting is done by [Biome](https://biomejs.dev). Set your editor to use it. Please don't add Prettier or ESLint.
 
@@ -61,7 +70,12 @@ src/
   react/        the React adapter
 tests/          same folders as src/
 playground/     pages to try things by hand, one folder each
-typedoc.json    settings for the API docs
+docs/           the website
+  src/content/docs/  the guides, one file each
+  src/demos/         the live demos, one file each
+  src/components/    what puts the demos in the pages
+  src/icons/         the sidebar icons, from Lucide (ISC license)
+typedoc.json    settings for the API pages
 ```
 
 Code is grouped by feature. A new feature gets its own folder. If you add one, add it to this list too.
@@ -155,7 +169,7 @@ The pull request template has a short checklist. In short:
 - You tried your change in the playground, if it changes something you can see.
 - New code has tests, and you checked they can fail.
 - New exports have a `/** */` comment.
-- The guide in `docs/` is updated if users would notice the change. The README only changes for installation, the quick start, or a new guide.
+- The guide in `docs/src/content/docs/` is updated if users would notice the change. The README only changes for installation, the quick start, or a new guide.
 
 Say what you changed and why. Link the issue if there is one. CI has to pass before merging. Pull requests are squash-merged, so your branch turns into one commit on `master`.
 

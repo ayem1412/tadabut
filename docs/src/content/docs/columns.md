@@ -1,12 +1,11 @@
 ---
-
-## title: Columns and cells
-
-# Columns and cells
+title: 'Columns and cells'
+description: 'What cells show, totals, and every column option.'
+---
 
 What cells show, totals, and every column option.
 
-The examples use the `Employee` type from the [quick start](../README.md#quick-start).
+The examples use the `Employee` type from the [quick start](getting-started.mdx#quick-start).
 
 ## What cells show
 
@@ -45,6 +44,8 @@ import { html } from 'tadabut';
 }
 ```
 
+<div data-demo="badges"></div>
+
 - If `value` is `<img onerror=…>`, the badge shows those characters, and nothing runs.
 - `html` gives the element when you wrote one, or a fragment holding them all. It works in `detail` too.
 - Return a new element each time. The same element given to two cells moves from one to the other.
@@ -71,6 +72,8 @@ const columns: Column<Employee>[] = [
   { prop: 'salary', title: 'Salary', editor: { type: 'money' }, total: 'sum' },
 ];
 ```
+
+<div data-demo="totals"></div>
 
 | Name  | Age        | Salary     |
 | ----- | ---------- | ---------- |
@@ -149,7 +152,3 @@ const columns: Column<Employee>[] = [
 `className` here is for the cells. The input's classes go in the editor's `className`.
 
 A hidden column can't have an `editor`: nobody could see the input. Tadabut throws an error when you try.
-
----
-
-[All guides](../README.md#guides) · [Editing](editing.md) →

@@ -1,0 +1,117 @@
+---
+title: "Getting started"
+description: "Install Tadabut, then build your first table."
+---
+
+import { TabItem, Tabs } from '@astrojs/starlight/components';
+
+Install Tadabut, then build your first table.
+
+## Requirements
+
+- DataTables 3: `datatables.net`, or one of its styling packages like `datatables.net-dt`
+- React 19 and `react-dom`, only if you use the React adapter
+- A modern browser
+
+## Installation
+
+Install Tadabut with DataTables. `datatables.net-dt` is DataTables with its default look:
+
+<Tabs syncKey="package-manager">
+  <TabItem label="npm" icon="seti:npm">
+    ```sh
+    npm install tadabut datatables.net-dt
+    ```
+  </TabItem>
+  <TabItem label="pnpm" icon="pnpm">
+    ```sh
+    pnpm add tadabut datatables.net-dt
+    ```
+  </TabItem>
+  <TabItem label="Yarn" icon="seti:yarn">
+    ```sh
+    yarn add tadabut datatables.net-dt
+    ```
+  </TabItem>
+  <TabItem label="Bun" icon="bun">
+    ```sh
+    bun add tadabut datatables.net-dt
+    ```
+  </TabItem>
+  <TabItem label="Deno" icon="deno">
+    ```sh
+    deno add npm:tadabut npm:datatables.net-dt
+    ```
+  </TabItem>
+</Tabs>
+
+For the React adapter, you also need React 19 and `react-dom`, which your app most likely has already.
+
+Then import DataTables and its CSS once, before you create a table:
+
+```ts
+import 'datatables.net-dt';
+import 'datatables.net-dt/css';
+```
+
+Tadabut works with any DataTables 3 styling package: `datatables.net-bs5` for Bootstrap 5, and so on.
+
+## Quick start
+
+Give Tadabut the type of your rows. Every column's `prop` is checked against it.
+
+The other guides all use this `Employee` type.
+
+```ts
+import 'datatables.net-dt';
+import 'datatables.net-dt/css';
+import { Tadabut, type Column } from 'tadabut';
+
+type Employee = {
+  id: number;
+  name: string;
+  age: number;
+  salary: number;
+  hiredAt: string; // 'YYYY-MM-DD'
+  active: boolean;
+  countryId: number | null;
+  countryCode: string | null;
+  cityId: number | null;
+  cityName: string;
+};
+
+const employees: Employee[] = [
+  {
+    id: 1,
+    name: 'Amina',
+    age: 29,
+    salary: 12000,
+    hiredAt: '2024-01-05',
+    active: true,
+    countryId: 1,
+    countryCode: 'MA',
+    cityId: 10,
+    cityName: 'Rabat',
+  },
+];
+
+const columns: Column<Employee>[] = [
+  { prop: 'id', title: 'ID' },
+  { prop: 'name', title: 'Name' },
+  { prop: 'age', title: 'Age' },
+];
+
+const container = document.querySelector<HTMLElement>('#employees')!;
+
+const table = new Tadabut(container, {
+  data: employees,
+  rowId: 'id',
+  columns,
+});
+```
+
+- The first argument is an empty element. Tadabut builds the table inside it.
+- `rowId` is the property that identifies a row. Methods like `edit(id)` use it.
+- A column without an `editor` can't be edited.
+
+Next: make some columns editable, in [Editing](editing.md).

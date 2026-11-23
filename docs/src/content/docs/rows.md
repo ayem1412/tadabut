@@ -1,12 +1,11 @@
 ---
-
-## title: Rows
-
-# Rows
+title: 'Rows'
+description: 'Selecting rows, the current row, detail rows, and working with rows from code.'
+---
 
 Selecting rows, the current row, detail rows, and working with rows from code.
 
-The examples use the `Employee` type from the [quick start](../README.md#quick-start).
+The examples use the `Employee` type from the [quick start](getting-started.mdx#quick-start).
 
 ## Selecting rows
 
@@ -218,7 +217,3 @@ When they can't:
 **DataTables itself**
 
 `getApi` gives the DataTables API, for anything Tadabut doesn't do, like `table.getApi().order([2, 'desc']).draw()`. Don't add or remove rows through it: that skips Tadabut, so the selection, details and open rows won't know. Use the methods above, or `setData`.
-
----
-
-← [Editing](editing.md) · [All guides](../README.md#guides) · [Events](events.md) →

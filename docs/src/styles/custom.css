@@ -1,0 +1,205 @@
+/*
+ * The live demos. They have `not-content`, so Starlight leaves it alone, and these
+ * use Starlight's colors, so it follows the theme and dark mode.
+ */
+
+.live-demo {
+  margin-block: 2rem;
+  padding: 1rem 1.5rem;
+  border: 1px solid var(--sl-color-hairline);
+  border-radius: 0.75rem;
+  background: var(--sl-color-bg-nav);
+  overflow-x: auto;
+}
+
+.live-demo-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 1rem;
+  margin-bottom: 0.75rem;
+}
+
+.live-demo-label {
+  padding: 0.125rem 0.5rem;
+  border-radius: 999px;
+  background: var(--sl-color-text-accent);
+  color: var(--sl-color-black);
+  font-size: var(--sl-text-xs);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.live-demo-status,
+.live-demo-hint {
+  color: var(--sl-color-gray-3);
+  font-size: var(--sl-text-sm);
+}
+
+.live-demo-hint {
+  margin: 0.75rem 0 0;
+}
+
+.live-demo table.dataTable {
+  width: 100%;
+  margin: 0;
+  border-collapse: collapse;
+  color: var(--sl-color-white);
+}
+
+.live-demo table.dataTable td,
+.live-demo table.dataTable th {
+  padding: 0.5rem 0.625rem;
+  border-bottom: 1px solid var(--sl-color-hairline);
+  font-size: var(--sl-text-sm);
+}
+
+.live-demo table.dataTable thead th {
+  color: var(--sl-color-gray-2);
+  font-weight: 600;
+}
+
+.live-demo table.dataTable tfoot th {
+  border-bottom: 0;
+}
+
+/* The checkbox and ▸ columns take only the room they need. */
+.live-demo .tdb-select,
+.live-demo .tdb-detail {
+  width: 1%;
+}
+
+/* DataTables puts the sort arrows of number columns on the left, where they look like the previous column's. */
+.live-demo table.dataTable th.dt-type-numeric div.dt-column-header,
+.live-demo table.dataTable th.dt-type-date div.dt-column-header {
+  flex-direction: row;
+  justify-content: flex-end;
+}
+
+/* So numbers like the total never wrap. */
+.live-demo td.dt-type-numeric,
+.live-demo th.dt-type-numeric {
+  white-space: nowrap;
+}
+
+.live-demo input:not([type="checkbox"]),
+.live-demo select {
+  width: 100%;
+  min-width: 4.5rem;
+  padding: 0.25rem 0.5rem;
+  border: 1px solid var(--sl-color-gray-5);
+  border-radius: 0.375rem;
+  background: var(--sl-color-bg);
+  color: var(--sl-color-white);
+  font: inherit;
+}
+
+.live-demo button {
+  padding: 0.25rem 0.75rem;
+  border: 1px solid var(--sl-color-gray-5);
+  border-radius: 0.375rem;
+  background: var(--sl-color-bg);
+  color: var(--sl-color-white);
+  font: inherit;
+  font-size: var(--sl-text-sm);
+  cursor: pointer;
+}
+
+.live-demo button:hover {
+  border-color: var(--sl-color-text-accent);
+}
+
+/* Like Starlight's own main buttons, so the text stays readable in every theme. */
+.live-demo .live-demo-action,
+.live-demo .tdb-button-save {
+  border-color: var(--sl-color-text-accent);
+  background: var(--sl-color-text-accent);
+  color: var(--sl-color-black);
+}
+
+.live-demo .tdb-actions {
+  white-space: nowrap;
+}
+
+.live-demo .tdb-button + .tdb-button {
+  margin-left: 0.25rem;
+}
+
+.live-demo .tdb-input-money {
+  text-align: right;
+}
+
+.live-demo .tdb-row-saving {
+  opacity: 0.5;
+}
+
+.live-demo .tdb-error,
+.live-demo .tdb-row-error-message {
+  color: var(--sl-color-red);
+  font-size: var(--sl-text-xs);
+}
+
+.live-demo .tdb-delete-question {
+  margin-right: 0.5rem;
+}
+
+/* Tadabut leaves these colors to the page. */
+.live-demo tr.tdb-row-selected > td {
+  background: var(--sl-color-gray-6);
+}
+
+.live-demo tr.tdb-row-current > td {
+  background: var(--sl-color-accent-low);
+}
+
+.live-demo tr.tdb-row-current > td:first-child {
+  box-shadow: inset 3px 0 0 var(--sl-color-text-accent);
+}
+
+.live-demo tr.tdb-row-current {
+  cursor: pointer;
+}
+
+.live-demo .tdb-row-detail ul {
+  margin: 0;
+  padding-left: 1.25rem;
+}
+
+.demo-badge {
+  padding: 0.125rem 0.5rem;
+  border-radius: 999px;
+  font-size: var(--sl-text-xs);
+  font-weight: 600;
+}
+
+.demo-badge-on {
+  background: var(--sl-color-green-low);
+  color: var(--sl-color-green-high);
+}
+
+.demo-badge-off {
+  background: var(--sl-color-orange-low);
+  color: var(--sl-color-orange-high);
+}
+
+/* Room for the longest country. */
+.live-demo select {
+  min-width: 7rem;
+}
+
+/* Ion only pads "Edit page" on the right, so it sat on the sidebar's border. */
+.meta {
+  padding-inline-start: var(--sl-content-pad-x);
+}
+
+/* A bigger sidebar than Ion's. */
+@media (min-width: 50rem) {
+  #starlight__sidebar a {
+    font-size: var(--sl-text-base);
+  }
+
+  #starlight__sidebar .large {
+    font-size: var(--sl-text-lg);
+  }
+}

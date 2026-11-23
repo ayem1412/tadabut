@@ -1,12 +1,11 @@
 ---
-
-## title: Editing
-
-# Editing
+title: 'Editing'
+description: 'The editors, validation, chained selects, and saving, adding and deleting rows.'
+---
 
 The editors, validation, chained selects, and saving, adding and deleting rows.
 
-The examples use the `Employee` type from the [quick start](../README.md#quick-start).
+The examples use the `Employee` type from the [quick start](getting-started.mdx#quick-start).
 
 ## Editable columns
 
@@ -32,6 +31,8 @@ const columns: Column<Employee>[] = [
   },
 ];
 ```
+
+<div data-demo="editors"></div>
 
 A select's values must have the same type as the column. `countryId` is a number, so `value: '1'` is a type error.
 
@@ -174,6 +175,8 @@ A column you can't edit has no date editor, so for now, show its dates with `ren
 }
 ```
 
+<div data-demo="dates"></div>
+
 - The rows hold the date in `format`, a space, then the time: `'05/01/2024 14:30'`. With the default ISO `format`, a `T` goes between them instead, as servers send it: `'2024-01-05T14:30'`.
 - `format`, `display` and `seconds` work like for [dates](#dates) and [times](#times). The cells always use a space: `05/01/2024 14:30`.
 - When reading, a `T` and a space both work, and a date with no time counts as midnight.
@@ -275,6 +278,8 @@ Select2 needs jQuery. Tadabut doesn't, so install jQuery yourself if you use Sel
 }
 ```
 
+<div data-demo="validation"></div>
+
 Built-in rules:
 
 | Editor   | Rules                               |
@@ -333,6 +338,8 @@ const columns: Column<Employee>[] = [
   },
 ];
 ```
+
+<div data-demo="chained-selects"></div>
 
 How it works:
 
@@ -469,6 +476,8 @@ const table = new Tadabut(container, {
 });
 ```
 
+<div data-demo="auto-add"></div>
+
 - The new row opens by itself once the table is built, after each `setData`, after each add, and after `setEditable(true)`.
 - When it opens by itself, the cursor doesn't move, so a `setData` doesn't steal it from your filters. Right after an add, the cursor goes into the next new row, because the user is already typing in the table.
 - After Cancel or <kbd>Escape</kbd>, it stays closed until the next `setData`.
@@ -563,6 +572,8 @@ table.setEditable(true); // editable again
 table.isEditable(); // false while it's off
 ```
 
+<div data-demo="editable"></div>
+
 While editing is off:
 
 - The buttons column is hidden, and the `<table>` gets the `tdb-readonly` class, for your CSS.
@@ -570,7 +581,3 @@ While editing is off:
 - Checkboxes, details, the current row, row clicks, and `insertRow`, `updateRow` and `removeRow` still work.
 
 Turning it off cancels every open row and the new row, and their unsaved changes are lost. A row that is saving, adding or deleting finishes first. If its save fails, the row goes back to its old values and the error shows under it. If the new row's add fails, it's thrown away.
-
----
-
-← [Columns and cells](columns.md) · [All guides](../README.md#guides) · [Rows](rows.md) →

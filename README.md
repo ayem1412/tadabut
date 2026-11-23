@@ -4,14 +4,14 @@
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](./LICENSE)
 [![TypeScript](https://img.shields.io/badge/TypeScript-strict-3178c6?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
 [![DataTables 3](https://img.shields.io/badge/DataTables-3.x-0d6efd)](https://datatables.net)
-[![Status](https://img.shields.io/badge/status-stable-brightgreen)](https://github.com/ayem1412/tadabut/blob/master/docs/roadmap.md)
+[![Status](https://img.shields.io/badge/status-stable-brightgreen)](https://ayem1412.github.io/tadabut/roadmap/)
 [![npm](https://img.shields.io/npm/v/tadabut)](https://www.npmjs.com/package/tadabut)
-[![Docs](https://img.shields.io/badge/docs-API%20reference-blue)](https://ayem1412.github.io/tadabut/)
+[![Docs](https://img.shields.io/badge/docs-website-blue)](https://ayem1412.github.io/tadabut/)
 [![PRs welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](./CONTRIBUTING.md)
 
 Tadabut wraps [DataTables](https://datatables.net) and adds what it doesn't give you for free: editing rows, real inputs in the cells, and selects that depend on each other.
 
-📖 [Guides](#guides) for every feature, and the [API reference](https://ayem1412.github.io/tadabut/) for every option and type, from the code's own comments.
+📖 [The website](https://ayem1412.github.io/tadabut/) has a live demo, a guide for every feature, and the [API reference](https://ayem1412.github.io/tadabut/api/) for every option and type.
 
 ## Why
 
@@ -136,14 +136,16 @@ const table = new Tadabut(container, {
 
 ## Guides
 
-- [Columns and cells](https://github.com/ayem1412/tadabut/blob/master/docs/columns.md): What cells show, totals, and every column option.
-- [Editing](https://github.com/ayem1412/tadabut/blob/master/docs/editing.md): The editors, validation, chained selects, and saving, adding and deleting rows.
-- [Rows](https://github.com/ayem1412/tadabut/blob/master/docs/rows.md): Selecting rows, the current row, detail rows, and working with rows from code.
-- [Events](https://github.com/ayem1412/tadabut/blob/master/docs/events.md): Knowing when something happened: the `on…` options and `table.on()`.
-- [Styling and texts](https://github.com/ayem1412/tadabut/blob/master/docs/styling.md): DataTables settings, translations, classes, Bootstrap and icons.
-- [Sharing settings between tables](https://github.com/ayem1412/tadabut/blob/master/docs/shared-defaults.md): Write the common options once, with `Tadabut.extend` or `<TadabutDefaults>`.
-- [React](https://github.com/ayem1412/tadabut/blob/master/docs/react.md): The `<Tadabut>` component from `tadabut/react`.
-- [Roadmap](https://github.com/ayem1412/tadabut/blob/master/docs/roadmap.md): What's done, and what comes next.
+Everything is also on [the website](https://ayem1412.github.io/tadabut/), with search and a live demo.
+
+- [Columns and cells](https://ayem1412.github.io/tadabut/columns/): What cells show, totals, and every column option.
+- [Editing](https://ayem1412.github.io/tadabut/editing/): The editors, validation, chained selects, and saving, adding and deleting rows.
+- [Rows](https://ayem1412.github.io/tadabut/rows/): Selecting rows, the current row, detail rows, and working with rows from code.
+- [Events](https://ayem1412.github.io/tadabut/events/): Knowing when something happened: the `on…` options and `table.on()`.
+- [Styling and texts](https://ayem1412.github.io/tadabut/styling/): DataTables settings, translations, classes, Bootstrap and icons.
+- [Sharing settings between tables](https://ayem1412.github.io/tadabut/shared-defaults/): Write the common options once, with `Tadabut.extend` or `<TadabutDefaults>`.
+- [React](https://ayem1412.github.io/tadabut/react/): The `<Tadabut>` component from `tadabut/react`.
+- [Roadmap](https://ayem1412.github.io/tadabut/roadmap/): What's done, and what comes next.
 
 ## Contributing
 

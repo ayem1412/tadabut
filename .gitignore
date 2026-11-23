@@ -15,4 +15,6 @@ pnpm-debug.log*
 !.vscode/settings.json
 .DS_Store
 Thumbs.db
-docs-site/
+docs/dist/
+docs/.astro/
+docs/src/content/docs/api/

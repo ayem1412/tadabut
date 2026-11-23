@@ -1,12 +1,11 @@
 ---
-
-## title: React
-
-# React
+title: 'React'
+description: 'The <Tadabut> component from tadabut/react.'
+---
 
 The `<Tadabut>` component from `tadabut/react`.
 
-The examples use the `Employee` type from the [quick start](../README.md#quick-start).
+The examples use the `Employee` type from the [quick start](getting-started.mdx#quick-start).
 
 Same options, as props. Keep `columns` outside your component, or in a `useMemo`, so it doesn't change on every render.
 
@@ -75,17 +74,17 @@ export default function Employees() {
 
   return (
     <>
-      <button type='button' onClick={() => tableRef.current?.edit(1)}>
+      <button type="button" onClick={() => tableRef.current?.edit(1)}>
         Edit Amina
       </button>
-      <button type='button' onClick={() => tableRef.current?.add()}>
+      <button type="button" onClick={() => tableRef.current?.add()}>
         Add an employee
       </button>
 
       <Tadabut
         ref={tableRef}
         data={employees}
-        rowId='id'
+        rowId="id"
         columns={columns}
         editing={{ mode: 'multiple' }}
         onSave={(row) => saveEmployee(row)}
@@ -117,7 +116,3 @@ export default function Employees() {
 - There is no `setData` on the ref. To change the rows, change `data`.
 - `autoAdd={{ country: 'MA' }}` inline is fine: only new values rebuild the table.
 - There is no `setEditable` on the ref either: change `editable`. It doesn't rebuild the table, so ticks, details and the page stay.
-
----
-
-← [Sharing settings between tables](shared-defaults.md) · [All guides](../README.md#guides) · [Roadmap](roadmap.md) →
