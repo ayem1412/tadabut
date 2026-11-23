@@ -155,7 +155,7 @@ The pull request template has a short checklist. In short:
 - You tried your change in the playground, if it changes something you can see.
 - New code has tests, and you checked they can fail.
 - New exports have a `/** */` comment.
-- The README is updated if users would notice the change.
+- The guide in `docs/` is updated if users would notice the change. The README only changes for installation, the quick start, or a new guide.
 
 Say what you changed and why. Link the issue if there is one. CI has to pass before merging. Pull requests are squash-merged, so your branch turns into one commit on `master`.
 
