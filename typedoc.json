@@ -2,26 +2,17 @@
   "$schema": "https://typedoc.org/schema.json",
   "name": "Tadabut",
   "entryPoints": ["src/index.ts", "src/react/index.tsx"],
-  "out": "docs-site",
-  "readme": "README.md",
-  "projectDocuments": [
-    "docs/columns.md",
-    "docs/editing.md",
-    "docs/rows.md",
-    "docs/events.md",
-    "docs/styling.md",
-    "docs/shared-defaults.md",
-    "docs/react.md",
-    "docs/roadmap.md"
-  ],
-  "includeVersion": true,
+  "plugin": ["typedoc-plugin-markdown", "./docs/typedoc-titles.mjs"],
+  "out": "docs/src/content/docs/api",
+  "readme": "none",
+  "entryFileName": "index",
+  "outputFileStrategy": "modules",
+  "hidePageTitle": true,
+  "hideBreadcrumbs": true,
+  "hidePageHeader": true,
   "excludePrivate": true,
   "excludeInternal": true,
-  "sort": ["kind", "alphabetical-ignoring-documents"],
-  "navigationLinks": {
-    "GitHub": "https://github.com/ayem1412/tadabut",
-    "npm": "https://www.npmjs.com/package/tadabut"
-  },
+  "sort": ["kind", "alphabetical"],
   "validation": {
     "notExported": false
   }

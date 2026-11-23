@@ -1,12 +1,11 @@
 ---
-
-## title: Styling and texts
-
-# Styling and texts
+title: 'Styling and texts'
+description: 'DataTables settings, translations, classes, Bootstrap and icons.'
+---
 
 DataTables settings, translations, classes, Bootstrap and icons.
 
-The examples use the `Employee` type from the [quick start](../README.md#quick-start).
+The examples use the `Employee` type from the [quick start](getting-started.mdx#quick-start).
 
 ## DataTables settings
 
@@ -344,7 +343,3 @@ Without Bootstrap, leave `classNames.button` out, and remove the button look in 
 ```
 
 In React, `icons={{ edit: 'fa-solid fa-pen' }}` inline is fine: only new icons rebuild the table.
-
----
-
-← [Events](events.md) · [All guides](../README.md#guides) · [Sharing settings between tables](shared-defaults.md) →

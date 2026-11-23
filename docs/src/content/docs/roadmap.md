@@ -1,8 +1,7 @@
 ---
-
-## title: Roadmap
-
-# Roadmap
+title: 'Roadmap'
+description: "What's done, and what comes next."
+---
 
 What's done, and what comes next.
 
@@ -49,7 +48,3 @@ Next, roughly in this order:
 - [ ] Keyboard navigation and theming
 
 Later: popup editing, changing many rows in one go, server-side mode, Vue and jQuery adapters.
-
----
-
-← [React](react.md) · [All guides](../README.md#guides)

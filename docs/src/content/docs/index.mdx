@@ -1,0 +1,50 @@
+---
+title: 'ⵜⴰⴷⴰⴱⵓⵜ · Tadabut'
+description: 'Editable, typed DataTables: edit rows in place, with real inputs in the cells, validation, and selects that depend on each other.'
+template: splash
+hero:
+  tagline: 'Edit rows in place, with real inputs in the cells, validation, and selects that depend on each other. No jQuery.'
+  actions:
+    - text: 'Get started'
+      link: '/tadabut/getting-started/'
+      icon: right-arrow
+    - text: 'API reference'
+      link: '/tadabut/api/'
+      variant: minimal
+    - text: 'GitHub'
+      link: 'https://github.com/ayem1412/tadabut'
+      icon: external
+      variant: minimal
+---
+
+import { Card, CardGrid } from '@astrojs/starlight/components';
+
+## Try it
+
+<div data-demo="home"></div>
+
+## What it does
+
+<CardGrid>
+  <Card title="Edit in place" icon="pencil">
+    Edit a row, then save or cancel. Saving can be async. If it fails, the row stays open with what
+    the user typed.
+  </Card>
+  <Card title="Add and delete" icon="add-document">
+    New rows open at the top with the same inputs and validation. Deleting asks first, or uses your
+    own popup.
+  </Card>
+  <Card title="Real inputs" icon="list-format">
+    Text, number, money, date, time, checkbox and select, with validation, in the user's own
+    formats.
+  </Card>
+  <Card title="Chained selects" icon="random">
+    Country, then city. Old requests are cancelled when the user changes their mind.
+  </Card>
+  <Card title="Fully typed" icon="seti:typescript">
+    The table knows what your rows look like, so a typo in a column name is a type error.
+  </Card>
+  <Card title="Works anywhere" icon="puzzle">
+    Plain TypeScript or JavaScript, with or without a bundler, and a React component.
+  </Card>
+</CardGrid>

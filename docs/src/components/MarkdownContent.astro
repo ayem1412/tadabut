@@ -1,0 +1,74 @@
+---
+/**
+ * Starlight's page content, plus live demos: every `<div data-demo="name">`
+ * in a guide becomes the demo in `src/demos/name.ts`. A plain div, so the
+ * guides stay `.md` and GitHub shows nothing in its place.
+ */
+import Default from '@astrojs/starlight/components/MarkdownContent.astro';
+---
+
+<Default><slot /></Default>
+
+<script>
+  import type { Demo, DemoBox } from '../demos/shared';
+
+  // Loaded only when a page has that demo, so pages without one never load DataTables.
+  const demos = import.meta.glob<{ default: Demo }>('../demos/*.ts');
+
+  /** Fills `slot` with the box: buttons and status, the table, and the hint. */
+  function makeBox(slot: HTMLElement): DemoBox {
+    slot.classList.add('live-demo', 'not-content');
+
+    const bar = document.createElement('div');
+    bar.className = 'live-demo-bar';
+
+    const label = document.createElement('span');
+    label.className = 'live-demo-label';
+    label.textContent = 'Live';
+
+    const status = document.createElement('span');
+    status.className = 'live-demo-status';
+
+    const table = document.createElement('div');
+    const hint = document.createElement('p');
+    hint.className = 'live-demo-hint';
+
+    bar.append(label, status);
+    slot.replaceChildren(bar, table, hint);
+
+    return {
+      table,
+      status: (text) => {
+        status.textContent = text;
+      },
+      button: (text, onClick) => {
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.className = 'live-demo-action';
+        button.textContent = text;
+        button.addEventListener('click', onClick);
+        status.before(button);
+        return button;
+      },
+      hint: (text) => {
+        hint.textContent = text;
+      },
+    };
+  }
+
+  for (const slot of document.querySelectorAll<HTMLElement>('[data-demo]')) {
+    const load = demos[`../demos/${slot.dataset.demo}.ts`];
+
+    if (load === undefined) {
+      slot.textContent = `No demo called "${slot.dataset.demo}".`;
+      continue;
+    }
+
+    load()
+      .then((module) => module.default(makeBox(slot)))
+      .catch((error: unknown) => {
+        console.error(error);
+        slot.textContent = "Couldn't load this demo.";
+      });
+  }
+</script>

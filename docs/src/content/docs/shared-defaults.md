@@ -1,12 +1,11 @@
 ---
-
-## title: Sharing settings between tables
-
-# Sharing settings between tables
+title: 'Sharing settings between tables'
+description: 'Write the common options once, with Tadabut.extend or <TadabutDefaults>.'
+---
 
 Write the common options once, with `Tadabut.extend` or `<TadabutDefaults>`.
 
-The examples use the `Employee` type from the [quick start](../README.md#quick-start).
+The examples use the `Employee` type from the [quick start](getting-started.mdx#quick-start).
 
 Most tables in an app repeat the same lines: the texts, the DataTables language, the classes, the icons. Write them once with `Tadabut.extend`, like `axios.create`:
 
@@ -57,7 +56,3 @@ const appDefaults = { texts: fr, classNames: bootstrapClasses }; // outside the 
 ```
 
 Keep `value` the same object, as a constant or in a `useMemo`: a new object rebuilds every table inside. An inner `<TadabutDefaults>` builds on the outer one.
-
----
-
-← [Styling and texts](styling.md) · [All guides](../README.md#guides) · [React](react.md) →
