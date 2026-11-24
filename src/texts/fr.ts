@@ -22,6 +22,7 @@ export const fr: Texts = {
   saveFailed: "Impossible d'enregistrer.",
   addFailed: "Impossible d'ajouter.",
   loadFailed: 'Impossible de charger les options.',
+  rowsFailed: 'Impossible de charger les lignes.',
   required: 'Ce champ est obligatoire.',
   patternMismatch: 'Format incorrect.',
   tooShort: (min) => `Au moins ${min} caractères.`,

@@ -73,3 +73,9 @@ tr.tdb-row-editing > td {
   background: rgb(220 53 69 / 0.12);
   color: rgb(132 32 41);
 }
+
+/* The line above the table when the server failed. */
+.tdb-load-error {
+  margin-bottom: 0.5rem;
+  color: #c62828;
+}

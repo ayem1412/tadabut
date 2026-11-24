@@ -7,6 +7,7 @@ import type { TadabutOptions } from './options';
 /**
  * Throws on options that can't work together, before anything is built.
  *
+ * @throws If both `data` and `server` are given.
  * @throws If a column has an `editor` and there's no `rowId`.
  * @throws If `onDelete` is set and there's no `rowId`.
  * @throws If `selection` is on and there's no `rowId`.
@@ -22,6 +23,10 @@ import type { TadabutOptions } from './options';
  * @throws If a datetime editor's `min` or `max` isn't a real date and time in its `format`.
  */
 export function checkOptions<Row extends object>(options: TadabutOptions<Row>): void {
+  if (options.data !== undefined && options.server !== undefined) {
+    throw new Error('Tadabut: use data or server, not both.');
+  }
+
   if (options.rowId === undefined) {
     if (options.columns.some((column) => column.editor !== undefined)) {
       throw new Error('Tadabut: rowId is required when a column has an editor.');

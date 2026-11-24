@@ -36,6 +36,8 @@ export type Texts = {
   readonly addFailed: string;
   /** Under a select whose options failed to load. */
   readonly loadFailed: string;
+  /** Above the table when `server` throws something that isn't an `Error`. */
+  readonly rowsFailed: string;
   /** An empty field with `required`. */
   readonly required: string;
   /** A text that doesn't match `pattern`. */

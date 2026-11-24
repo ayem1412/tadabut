@@ -8,6 +8,29 @@ import { formatMoney } from '../editors/money-format';
 import type { RowScope } from './scope';
 
 /**
+ * What the footer shows for a total: text and counts as they are, numbers
+ * formatted like the cells, or what `render` returns, element or text.
+ */
+export function formatTotal<Row extends object>(
+  column: Column<Row>,
+  value: number | string,
+): string | Node {
+  const { total, render, editor } = column as LooseColumn<Row>;
+
+  // A count is never money, and never goes through render.
+  if (typeof value === 'string' || total === 'count') {
+    return String(value);
+  }
+
+  if (editor?.type === 'money' && render === undefined) {
+    return formatMoney(value, moneyFormat(editor));
+  }
+
+  // A total isn't a row, so render gets an empty one.
+  return render === undefined ? String(value) : render(value, {} as Row);
+}
+
+/**
  * An empty footer, one cell per column. It must be in the table before
  * DataTables starts, or DataTables won't manage it.
  */
@@ -89,32 +112,18 @@ export function totalValue<Row extends object>(
   return roundTo(result, editor?.type === 'money' ? moneyFormat(editor).decimals : 2);
 }
 
-/**
- * What goes under a column: `count` and functions as they are, numbers
- * formatted like the cells, or what `render` returns, element or text.
- */
+/** What goes under a column, counted from these rows. */
 export function totalText<Row extends object>(
   column: Column<Row>,
   rows: readonly Row[],
 ): string | Node {
-  const { total, render, editor } = column as LooseColumn<Row>;
   const value = totalValue(column, rows);
 
   if (value === undefined) {
     return '';
   }
 
-  // A count is never money, and never goes through render.
-  if (typeof value === 'string' || total === 'count') {
-    return String(value);
-  }
-
-  if (editor?.type === 'money' && render === undefined) {
-    return formatMoney(value, moneyFormat(editor));
-  }
-
-  // A total isn't a row, so render gets an empty one.
-  return render === undefined ? String(value) : render(value, {} as Row);
+  return formatTotal(column, value);
 }
 
 /** Rounds to this many decimals. */

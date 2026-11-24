@@ -1192,3 +1192,70 @@ describe('React TadabutDefaults', () => {
     expect(container.querySelector('table')).toBe(table);
   });
 });
+
+describe('React Tadabut with server', () => {
+  beforeAll(() => {
+    (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
+  });
+
+  beforeEach(() => {
+    container = mountPoint();
+    root = createRoot(container);
+  });
+
+  afterEach(async () => {
+    await act(async () => {
+      root.unmount();
+    });
+  });
+
+  /** A server that answers with `rows`, whatever the request. */
+  function serverOf(list: readonly Row[]) {
+    return vi.fn(async () => ({ rows: list, count: list.length }));
+  }
+
+  it('loads the rows from server', async () => {
+    const server = serverOf(rows);
+
+    await act(async () => {
+      root.render(<Tadabut server={server} columns={columns} rowId='id' />);
+    });
+
+    expect(namesShown()).toEqual(['Amina', 'Youness', 'Salma']);
+  });
+
+  it('reloads through the ref, with the latest server function, without rebuilding', async () => {
+    const ref = createRef<TadabutHandle<Row>>();
+    const first = serverOf(rows);
+    const second = serverOf([rows[2] as Row]);
+
+    await act(async () => {
+      root.render(<Tadabut ref={ref} server={first} columns={columns} rowId='id' />);
+    });
+
+    const table = container.querySelector('table');
+
+    await act(async () => {
+      root.render(<Tadabut ref={ref} server={second} columns={columns} rowId='id' />);
+    });
+    await act(async () => {
+      ref.current?.reload();
+    });
+
+    expect(container.querySelector('table')).toBe(table);
+    expect(second).toHaveBeenCalledTimes(1);
+    expect(namesShown()).toEqual(['Salma']);
+  });
+
+  it('rebuilds when switching from data to server', async () => {
+    await render(rows);
+    const table = container.querySelector('table');
+
+    await act(async () => {
+      root.render(<Tadabut server={serverOf([rows[0] as Row])} columns={columns} rowId='id' />);
+    });
+
+    expect(container.querySelector('table')).not.toBe(table);
+    expect(namesShown()).toEqual(['Amina']);
+  });
+});

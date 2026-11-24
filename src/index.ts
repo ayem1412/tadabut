@@ -38,6 +38,9 @@ export type {
   EditingOptions,
   SaveContext,
   SelectionOptions,
+  ServerFunction,
+  ServerRequest,
+  ServerResponse,
   TableClassNames,
   TadabutOptions,
 } from './table/options';
