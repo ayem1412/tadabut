@@ -21,6 +21,7 @@ export const en: Texts = {
   saveFailed: 'Could not save.',
   addFailed: 'Could not add.',
   loadFailed: 'Could not load the options.',
+  rowsFailed: 'Could not load the rows.',
   required: 'This field is required.',
   patternMismatch: 'Wrong format.',
   tooShort: (min) => `Must be at least ${min} characters.`,

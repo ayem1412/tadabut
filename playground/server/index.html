@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Tadabut · Server</title>
+    <link rel="stylesheet" href="../shared/plain.css" />
+  </head>
+  <body>
+    <h1>Tadabut · Server-side</h1>
+
+    <p>
+      208 users from <a href="https://dummyjson.com/docs/users">DummyJSON</a>, loaded one page at a
+      time. Paging, sorting and search each ask DummyJSON again. It answers saves, adds and deletes,
+      but doesn't keep them: the next load shows the old rows again.
+    </p>
+
+    <div class="toolbar">
+      <button id="add" type="button">Add a user</button>
+      <label>
+        Gender
+        <select id="gender">
+          <option value="">Everyone</option>
+          <option value="female">Female</option>
+          <option value="male">Male</option>
+        </select>
+      </label>
+      <button id="fail" type="button">Fail the next load</button>
+      <span id="status" class="status"></span>
+    </div>
+
+    <div id="table"></div>
+
+    <p class="status">
+      Tick users on different pages: the age total counts them all (<code
+        >totalRows: 'selected'</code
+      >). The gender filter uses DummyJSON's <code>/users/filter</code>, which can't search at the
+      same time, so the search box is ignored while it's set.
+    </p>
+
+    <h2>Events</h2>
+    <ol id="log" class="status"></ol>
+
+    <script type="module" src="./server.ts"></script>
+  </body>
+</html>

@@ -10,17 +10,22 @@ export type SelectionParts<Row extends object> = {
   readonly rowId: keyof Row & string;
   /** Which rows "check all" takes. */
   readonly scope: RowScope;
+  /**
+   * Rows come one page at a time, so ticked rows on other pages are kept as
+   * copies, and leaving the page doesn't unselect them.
+   */
+  readonly server: boolean;
   /** Called with the selected rows each time the selection changes. */
   readonly onSelect?: (rows: readonly Row[]) => void;
 };
 
 /**
- * Which rows are ticked. The ids are the truth; the checkboxes on the page
- * are redrawn from them after every draw, since DataTables rebuilds rows.
+ * Which rows are ticked. The map is the truth; the checkboxes on the page
+ * are redrawn from it after every draw, since DataTables rebuilds rows.
  */
 export class Selection<Row extends object> {
-  /** The selected row ids. */
-  private readonly ids = new Set<string | number>();
+  /** The ticked rows by id, as copies. */
+  private readonly rows = new Map<string | number, Row>();
   /** What the selection needs from the table. */
   private readonly parts: SelectionParts<Row>;
 
@@ -48,7 +53,7 @@ export class Selection<Row extends object> {
           return;
         }
 
-        const selected = this.ids.has(this.idFor(row));
+        const selected = this.rows.has(this.idFor(row));
         node.classList.toggle('tdb-row-selected', selected);
 
         const checkbox = node.querySelector<HTMLInputElement>('.tdb-select-row');
@@ -67,28 +72,33 @@ export class Selection<Row extends object> {
       return;
     }
 
-    const scope = this.scopeIds();
-    const count = scope.filter((id) => this.ids.has(id)).length;
+    const scope = this.scopeRows();
+    const count = scope.filter((row) => this.rows.has(this.idFor(row))).length;
 
     all.checked = count > 0 && count === scope.length;
     all.indeterminate = count > 0 && count < scope.length;
   }
 
   /**
-   * The selected rows, in the order they were added to the table. Rows the
-   * search hides, or on other pages, are in it too.
+   * The selected rows. Rows the search hides, or on other pages, are in it
+   * too. In the order they were added to the table, or with `server`, in the
+   * order they were ticked.
    */
   public selected(): Row[] {
+    if (this.parts.server) {
+      return [...this.rows.values()];
+    }
+
     return this.parts.dataTable
       .rows()
       .data()
       .toArray()
-      .filter((row) => this.ids.has(this.idFor(row)));
+      .filter((row) => this.rows.has(this.idFor(row)));
   }
 
   /** Whether the row with this id is selected. */
   public has(id: string | number): boolean {
-    return this.ids.has(id);
+    return this.rows.has(id);
   }
 
   /**
@@ -96,24 +106,26 @@ export class Selection<Row extends object> {
    * skipped. `onSelect` is only called if something changed.
    */
   public set(ids: readonly (string | number)[], selected: boolean): void {
-    const before = this.ids.size;
+    const before = this.rows.size;
 
     if (selected) {
-      const existing = this.allIds();
+      const loaded = this.loadedRows();
 
       for (const id of ids) {
-        if (existing.has(id)) {
-          this.ids.add(id);
+        const row = loaded.get(id);
+
+        if (row !== undefined) {
+          this.rows.set(id, { ...row });
         }
       }
     } else {
       for (const id of ids) {
-        this.ids.delete(id);
+        this.rows.delete(id);
       }
     }
 
     // Only adds or only removes, so the same size means nothing changed.
-    if (this.ids.size !== before) {
+    if (this.rows.size !== before) {
       this.sync();
       this.changed();
     }
@@ -121,29 +133,56 @@ export class Selection<Row extends object> {
 
   /** Unselects every row. */
   public clear(): void {
-    if (this.ids.size === 0) {
+    if (this.rows.size === 0) {
       return;
     }
 
-    this.ids.clear();
+    this.rows.clear();
     this.sync();
     this.changed();
   }
 
-  /** Forgets the ids of rows that left the table, after `setData` or a delete. */
+  /**
+   * Forgets rows that left the table, after `setData` or a delete. Not with
+   * `server`, where a row missing from the page is only on another page.
+   */
   public prune(): void {
-    const existing = this.allIds();
-    const before = this.ids.size;
+    if (this.parts.server) {
+      return;
+    }
 
-    for (const id of this.ids) {
-      if (!existing.has(id)) {
-        this.ids.delete(id);
+    const loaded = this.loadedRows();
+    const before = this.rows.size;
+
+    for (const id of [...this.rows.keys()]) {
+      if (!loaded.has(id)) {
+        this.rows.delete(id);
       }
     }
 
-    if (this.ids.size !== before) {
+    if (this.rows.size !== before) {
       this.sync();
       this.changed();
+    }
+  }
+
+  /** Unselects a deleted row. */
+  public forget(id: string | number): void {
+    if (this.rows.delete(id)) {
+      this.sync();
+      this.changed();
+    }
+  }
+
+  /**
+   * Keeps a selected row's copy up to date after a save. The ticks don't
+   * change, so `onSelect` isn't called.
+   */
+  public update(row: Row): void {
+    const id = this.idFor(row);
+
+    if (this.rows.has(id)) {
+      this.rows.set(id, { ...row });
     }
   }
 
@@ -162,19 +201,15 @@ export class Selection<Row extends object> {
     return row[this.parts.rowId] as string | number;
   }
 
-  /** The ids of every row in the table. */
-  private allIds(): Set<string | number> {
-    return new Set(
-      this.parts.dataTable
-        .rows()
-        .data()
-        .toArray()
-        .map((row) => this.idFor(row)),
-    );
+  /** Every row DataTables has, by id. With `server`, only the page. */
+  private loadedRows(): Map<string | number, Row> {
+    const rows = this.parts.dataTable.rows().data().toArray();
+
+    return new Map(rows.map((row) => [this.idFor(row), row]));
   }
 
-  /** The id of the row an element is in, or `undefined` outside DataTables' rows. */
-  private idOf(element: Element): string | number | undefined {
+  /** The row an element is in, or `undefined` outside DataTables' rows. */
+  private rowOf(element: Element): Row | undefined {
     const tr = element.closest('tr');
 
     if (tr === null) {
@@ -183,16 +218,21 @@ export class Selection<Row extends object> {
 
     const row = this.parts.dataTable.row(tr);
 
-    return row.any() ? this.idFor(row.data()) : undefined;
+    return row.any() ? row.data() : undefined;
   }
 
-  /** The ids of the rows in `scope`. */
-  private scopeIds(): (string | number)[] {
-    return this.parts.dataTable
-      .rows(rowsFor(this.parts.scope))
-      .data()
-      .toArray()
-      .map((row) => this.idFor(row));
+  /** The rows in `scope`. */
+  private scopeRows(): Row[] {
+    return this.parts.dataTable.rows(rowsFor(this.parts.scope)).data().toArray();
+  }
+
+  /** Ticks or unticks one row. */
+  private toggle(row: Row, selected: boolean): void {
+    if (selected) {
+      this.rows.set(this.idFor(row), { ...row });
+    } else {
+      this.rows.delete(this.idFor(row));
+    }
   }
 
   /**
@@ -207,24 +247,16 @@ export class Selection<Row extends object> {
     }
 
     if (target.classList.contains('tdb-select-row')) {
-      const id = this.idOf(target);
+      const row = this.rowOf(target);
 
-      if (id === undefined) {
+      if (row === undefined) {
         return;
       }
 
-      if (target.checked) {
-        this.ids.add(id);
-      } else {
-        this.ids.delete(id);
-      }
+      this.toggle(row, target.checked);
     } else if (target.classList.contains('tdb-select-all')) {
-      for (const id of this.scopeIds()) {
-        if (target.checked) {
-          this.ids.add(id);
-        } else {
-          this.ids.delete(id);
-        }
+      for (const row of this.scopeRows()) {
+        this.toggle(row, target.checked);
       }
     } else {
       // An editor's input in an edited row.

@@ -31,6 +31,7 @@ import {
   Tadabut as Core,
   type DefaultOptions,
   type DetailContext,
+  type ServerFunction,
   type TadabutOptions,
 } from '../index';
 
@@ -97,6 +98,7 @@ export type TadabutHandle<Row extends object> = Pick<
   | 'removeRow'
   | 'getTotals'
   | 'getOptions'
+  | 'reload'
 > & {
   /** The DataTables API, or `undefined` before the table is built. */
   readonly getApi: () => Api<Row> | undefined;
@@ -120,8 +122,8 @@ export type TadabutProps<Row extends object> = Omit<TadabutOptions<Row>, 'detail
    * `delete`, `add`, `saveNew`, `cancelNew`, `isEditing`, `isAdding`,
    * `getSelected`, `isSelected`, `select`, `deselect`, `clearSelection`,
    * `setCurrent`, `getCurrent`, `isCurrent`, `openDetail`, `closeDetail`, `toggleDetail`, `isDetailOpen`, `getData`,
-   * `getRow`, `getApi`, `insertRow`, `updateRow`, `removeRow`, `getTotals`
-   * and `getOptions`.
+   * `getRow`, `getApi`, `insertRow`, `updateRow`, `removeRow`, `getTotals`,
+   * `getOptions` and `reload`.
    */
   readonly ref?: Ref<TadabutHandle<Row>>;
 };
@@ -135,7 +137,8 @@ type Detail = {
 };
 
 /**
- * New `data` updates the table in place. Changing `columns`, `rowId`,
+ * New `data` updates the table in place. With `server`, call `reload()` on
+ * the ref when something it reads changes. Changing `columns`, `rowId`,
  * `dataTables`, `texts`, `totalRows`, `selection`, `currentRow` or the values
  * in `autoAdd` rebuilds it (and closes open rows and details, and clears the
  * selection and the highlight), so keep the objects stable with a constant or `useMemo`. `editing`, `selection`, `classNames`, `icons`,
@@ -144,6 +147,7 @@ type Detail = {
  */
 export function Tadabut<Row extends object>({
   data,
+  server,
   columns,
   rowId,
   editing,
@@ -199,6 +203,8 @@ export function Tadabut<Row extends object>({
   const onCurrentChangeRef = useRef(onCurrentChange);
   /** The latest `onEditStart`, so a new one doesn't rebuild the table. */
   const onEditStartRef = useRef(onEditStart);
+  /** The latest `server`, so an inline function doesn't rebuild the table. */
+  const serverRef = useRef(server);
   /** The latest `onSaved`, so a new one doesn't rebuild the table. */
   const onSavedRef = useRef(onSaved);
   /** The latest `onAdded`, so a new one doesn't rebuild the table. */
@@ -238,6 +244,8 @@ export function Tadabut<Row extends object>({
   const checkAll = typeof selection === 'object' ? selection.checkAll : undefined;
   // Only whether they're set changes the buttons, not which function it is.
   const hasDelete = onDelete !== undefined;
+  /** Switching between `data` and `server` rebuilds; a new `server` function doesn't. */
+  const hasServer = server !== undefined;
   const confirmWith =
     confirmDelete === false ? 'never' : confirmDelete === undefined ? 'inline' : 'function';
   const hasDetail = detail !== undefined;
@@ -265,7 +273,11 @@ export function Tadabut<Row extends object>({
     }
 
     const table = new Table(container, {
-      data: dataRef.current,
+      data: hasServer ? undefined : dataRef.current,
+      // Always set here: removing `server` rebuilds.
+      server: hasServer
+        ? (request, context) => (serverRef.current as ServerFunction<Row>)(request, context)
+        : undefined,
       editable: editableRef.current,
       // The key says whether it's on, the ref gives the values as they are.
       autoAdd: autoAddKey === undefined ? undefined : autoAddRef.current,
@@ -366,6 +378,7 @@ export function Tadabut<Row extends object>({
     currentRow,
     checkAll,
     hasDelete,
+    hasServer,
     confirmWith,
     hasDetail,
     autoAddKey,
@@ -374,8 +387,12 @@ export function Tadabut<Row extends object>({
 
   useEffect(() => {
     dataRef.current = data;
-    tableRef.current?.setData(data);
-  }, [data]);
+
+    // With server, the table loads its own rows.
+    if (data !== undefined && !hasServer) {
+      tableRef.current?.setData(data);
+    }
+  }, [data, hasServer]);
 
   // Without a rebuild, so ticks, details and sorting stay.
   useEffect(() => {
@@ -388,6 +405,7 @@ export function Tadabut<Row extends object>({
     onSaveRef.current = onSave;
     onAddRef.current = onAdd;
     onDeleteRef.current = onDelete;
+    serverRef.current = server;
     confirmDeleteRef.current = confirmDelete;
     onSelectRef.current = onSelect;
     onCurrentChangeRef.current = onCurrentChange;
@@ -433,6 +451,7 @@ export function Tadabut<Row extends object>({
       removeRow: (id) => tableRef.current?.removeRow(id) ?? false,
       getTotals: () => tableRef.current?.getTotals() ?? {},
       getOptions: (prop) => tableRef.current?.getOptions(prop),
+      reload: () => tableRef.current?.reload(),
     }),
     [],
   );

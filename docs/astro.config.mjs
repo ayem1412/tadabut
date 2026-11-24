@@ -5,7 +5,7 @@ import { unified } from '@astrojs/markdown-remark';
 import starlight from '@astrojs/starlight';
 import { defineConfig } from 'astro/config';
 import rehypeRelativeMarkdownLinks from 'astro-rehype-relative-markdown-links';
-import { ion, resolve } from 'starlight-ion-theme';
+import { ion } from 'starlight-ion-theme';
 
 export default defineConfig({
   // The site lives at ayem1412.github.io/tadabut/.
@@ -36,7 +36,7 @@ export default defineConfig({
       plugins: [
         ion({
           // A full path: the build runs from the repo root, not from docs/.
-          icons: { iconDir: resolve('./src/icons', import.meta.url) },
+          icons: { iconDir: fileURLToPath(new URL('./src/icons', import.meta.url)) },
           footer: {
             text: 'MIT License. Not affiliated with DataTables or SpryMedia.',
             links: [
@@ -72,6 +72,7 @@ export default defineConfig({
             { label: '[columns-3] Columns and cells', slug: 'columns' },
             { label: '[pencil] Editing', slug: 'editing' },
             { label: '[rows-3] Rows', slug: 'rows' },
+            { label: '[server] Big tables', slug: 'server' },
             { label: '[bell] Events', slug: 'events' },
             { label: '[palette] Styling and texts', slug: 'styling' },
             { label: '[share-2] Sharing settings', slug: 'shared-defaults' },

@@ -3,6 +3,51 @@ import type { Column } from '../columns/column';
 import type { Texts } from '../texts/texts';
 import type { RowScope, TotalScope } from './scope';
 
+/** What `server` gets: which rows to send back. */
+export type ServerRequest<Row extends object> = {
+  /** The index of the page's first row, from 0. */
+  readonly start: number;
+  /** How many rows the page shows. `-1` means all of them. */
+  readonly length: number;
+  /** How to sort, most important first. Empty when the table isn't sorted. */
+  readonly order: readonly {
+    /** The field of the column. */
+    readonly prop: keyof Row & string;
+    /** `'asc'` or `'desc'`. */
+    readonly dir: 'asc' | 'desc';
+  }[];
+  /** What's in the search box. `''` when it's empty. */
+  readonly search: string;
+};
+
+/** What `server` returns. */
+export type ServerResponse<Row extends object> = {
+  /** The rows of the page. */
+  readonly rows: readonly Row[];
+  /** How many rows match the search, on every page. It gives the number of pages. */
+  readonly count: number;
+  /** How many rows there are before the search, for "(filtered from …)". Defaults to `count`. */
+  readonly countAll?: number;
+  /**
+   * The footer's totals, by field, for the columns with a `total`. The
+   * browser only has one page, so it can't count them. Formatted like the
+   * cells.
+   */
+  readonly totals?: Partial<Record<keyof Row & string, number>>;
+};
+
+/**
+ * Loads one page of rows. `signal` is aborted when a newer request replaces
+ * this one: pass it to `fetch`. Throw to show the error above the table.
+ */
+export type ServerFunction<Row extends object> = (
+  request: ServerRequest<Row>,
+  context: {
+    /** Aborted when this request isn't needed anymore. */
+    readonly signal: AbortSignal;
+  },
+) => Promise<ServerResponse<Row>>;
+
 /** The second argument of `onSave`. */
 export type SaveContext<Row extends object> = {
   /** The row as it was before editing. */
@@ -105,7 +150,7 @@ export type ButtonIcons = {
  * Any {@link https://datatables.net/reference/option/ | DataTables option},
  * extensions included, except the ones Tadabut has to own: `data`,
  * `columns`, `columnDefs` (use the column options), and `ajax`/`serverSide`
- * (load rows yourself and call `setData`).
+ * (use the `server` option).
  *
  * @example
  * { order: [[1, 'asc']], pageLength: 20, language: { search: 'Rechercher :' } }
@@ -119,7 +164,8 @@ export type DataTablesSettings = Omit<
 export type SelectionOptions = {
   /**
    * Which rows the header checkbox selects. Defaults to `'searched'`: every
-   * row that matches the search, on every page.
+   * row that matches the search, on every page. Always `'page'` with
+   * `server`, where only the page is loaded.
    */
   readonly checkAll?: RowScope;
 };
@@ -135,8 +181,26 @@ export type DetailContext = {
 
 /** Options for `new Tadabut()`. */
 export type TadabutOptions<Row extends object> = {
-  /** The rows. The array is copied, never changed. */
-  readonly data: readonly Row[];
+  /** The rows. The array is copied, never changed. Leave it out with `server`. */
+  readonly data?: readonly Row[];
+  /**
+   * Loads the rows one page at a time from your server, for tables too big
+   * to load at once. Paging, sorting and search ask it again. Can't go with
+   * `data`, and `setData`, `insertRow` and `removeRow` throw with it: use
+   * `reload()`.
+   *
+   * Changing page, sorting or searching closes open rows, like `setData`.
+   * Totals come from the server, except with `totalRows: 'selected'`.
+   *
+   * @example
+   * server: async ({ start, length, order, search }, { signal }) => {
+   *   const params = new URLSearchParams({ start: String(start), length: String(length), search });
+   *   const res = await fetch(`/api/employees?${params}`, { signal });
+   *   const { rows, count } = await res.json();
+   *   return { rows, count };
+   * }
+   */
+  readonly server?: ServerFunction<Row>;
   /** The columns, in order. */
   readonly columns: readonly Column<Row>[];
   /**
@@ -154,7 +218,8 @@ export type TadabutOptions<Row extends object> = {
   readonly editable?: boolean;
   /**
    * Opens the new row by itself: once the table is built, after each
-   * `setData`, after each add, and after `setEditable(true)`. An object gives
+   * `setData` (or each load with `server`), after each add, and after
+   * `setEditable(true)`. An object gives
    * it starting values, like `add()`. After Cancel it stays closed until the
    * next `setData`.
    *
@@ -188,6 +253,8 @@ export type TadabutOptions<Row extends object> = {
    * matches the search, on every page. `'all'` ignores the search. `'page'`
    * is only the rows shown. `'selected'` is only the ticked rows, even ones
    * the search hides or on other pages: it needs `selection`.
+   *
+   * With `server`, the server sends the totals, so only `'selected'` counts here.
    *
    * Does nothing unless a column has `total`.
    */

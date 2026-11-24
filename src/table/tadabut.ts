@@ -22,7 +22,8 @@ import type {
 import { RowLines } from './row-lines';
 import type { RowScope, TotalScope } from './scope';
 import { Selection } from './selection';
-import { footerFor, rowsFor, totalText, totalValue } from './totals';
+import { ServerSource } from './server';
+import { footerFor, formatTotal, rowsFor, totalText, totalValue } from './totals';
 
 /**
  * A DataTables table with row editing.
@@ -117,6 +118,14 @@ export class Tadabut<Row extends object> {
   private readonly autoAdd?: Partial<Row>;
   /** Who listens to what: the `on…` options first, then `on()`. */
   private readonly listeners = new Listeners<Row>();
+  /** Loads the rows a page at a time. Only with the `server` option. */
+  private readonly server?: ServerSource<Row>;
+  /** After an add with `server`: the next new row takes the cursor once the page reloads. */
+  private focusNewRow = false;
+  /** The line above the table when loading the rows failed. */
+  private loadError?: HTMLDivElement;
+  /** Fields the server sent no total for, so the console only warns once each. */
+  private readonly warnedTotals = new Set<string>();
   /** Whether `autoAdd` opened the new row, rather than `add()`. */
   private newRowIsAuto = false;
   /** Whether Edit closed the auto row in `'single'` mode, so it comes back once that row closes. */
@@ -138,6 +147,7 @@ export class Tadabut<Row extends object> {
    * @throws If a date editor's `min` or `max` isn't a real date in its `format`.
    * @throws If a time editor's `min` or `max` isn't a real time.
    * @throws If a datetime editor's `min` or `max` isn't a real date and time in its `format`.
+   * @throws If both `data` and `server` are given.
    */
   public constructor(container: HTMLElement, given: TadabutOptions<Row>) {
     // new.target: the class the page used, so AppTable's defaults are read here.
@@ -224,10 +234,27 @@ export class Tadabut<Row extends object> {
       this.tableEl.append(footerFor(this.offset + this.columns.length + (this.hasActions ? 1 : 0)));
     }
 
+    // The callbacks only run once a reply came, after an await: by then the
+    // constructor has finished, so rowLines and the rest exist.
+    if (options.server !== undefined) {
+      this.server = new ServerSource({
+        server: options.server,
+        columns: this.columns,
+        offset: this.offset,
+        onRows: () => this.forgetRows(),
+        onError: (message) => this.showLoadError(message ?? this.texts.rowsFailed),
+        onLoaded: () => this.hideLoadError(),
+      });
+    }
+
     this.dataTable = new DataTable(this.tableEl, {
+      // Before the spread, so a page can turn it off. Without it, nothing shows while waiting.
+      ...(this.server !== undefined && { processing: true }),
       ...options.dataTables,
       ...(this.offset > 0 && { order: shiftOrder(options.dataTables?.order, this.offset) }),
-      data: [...options.data],
+      ...(this.server === undefined
+        ? { data: [...(options.data ?? [])] }
+        : { serverSide: true, ajax: this.server.ajax }),
       columns: toDataTables(options.columns, actions, this.classNames, this.texts, this.icons, {
         selection: Boolean(options.selection),
         detail: options.detail !== undefined,
@@ -255,10 +282,13 @@ export class Tadabut<Row extends object> {
       this.selection = new Selection({
         dataTable: this.dataTable,
         rowId: this.rowId as keyof Row & string,
+        server: this.server !== undefined,
         scope:
-          typeof options.selection === 'object'
-            ? (options.selection.checkAll ?? 'searched')
-            : 'searched',
+          this.server !== undefined
+            ? 'page'
+            : typeof options.selection === 'object'
+              ? (options.selection.checkAll ?? 'searched')
+              : 'searched',
         onSelect: (rows) => {
           // Ticking doesn't redraw, so the totals wouldn't follow by themselves.
           if (this.hasTotals && this.totalRows === 'selected') {
@@ -282,10 +312,14 @@ export class Tadabut<Row extends object> {
       this.dataTable.on('draw', () => this.currentRow?.sync());
     }
 
-    // The first draw already happened inside `new DataTable`.
+    // The first draw already happened inside `new DataTable`. Not with server:
+    // no reply yet, so there are no totals to show.
     if (this.hasTotals) {
       this.dataTable.on('draw', this.updateTotals);
-      this.updateTotals();
+
+      if (this.server === undefined) {
+        this.updateTotals();
+      }
     }
 
     if (this.hasActions || options.detail !== undefined) {
@@ -299,7 +333,13 @@ export class Tadabut<Row extends object> {
     this.tableEl.addEventListener('click', this.onRowEvent);
     this.tableEl.addEventListener('dblclick', this.onRowEvent);
 
-    this.autoOpen();
+    // Last, so the listeners above have synced. With server there are no
+    // rows yet: the first reply opens the auto row.
+    if (this.server !== undefined) {
+      this.dataTable.on('draw', this.afterServerDraw);
+    } else {
+      this.autoOpen();
+    }
   }
 
   /**
@@ -307,13 +347,12 @@ export class Tadabut<Row extends object> {
    *
    * Open rows, and the new row, are closed first, and their unsaved changes
    * are lost. Open details close too.
+   *
+   * @throws With `server`: use `reload()`.
    */
   public setData(rows: readonly Row[]): void {
-    this.destroySessions();
-    this.autoMadeWay = false;
-    this.deleting.clear();
-    // Before the draw, so the new rows draw with a closed ▸.
-    this.rowLines.destroy();
+    this.assertClientMode('setData');
+    this.forgetRows();
 
     this.dataTable
       .clear()
@@ -327,9 +366,29 @@ export class Tadabut<Row extends object> {
   }
 
   /**
+   * Asks the server for the page again, keeping the page, sorting and
+   * search. For when something outside the table changed, like a filter.
+   * Open rows close, like when the page changes.
+   *
+   * @throws Without `server`: use `setData()`.
+   *
+   * @example
+   * yearSelect.addEventListener('change', () => table.reload());
+   */
+  public reload(): void {
+    if (this.server === undefined) {
+      throw new Error('Tadabut: reload() is for server. Use setData() to change the rows.');
+    }
+
+    this.dataTable.draw(false);
+  }
+
+  /**
    * Every row, in the order shown. `scope` works like `totalRows`: `'all'`
    * (default), `'searched'` or `'page'`. They're copies, so changing them
    * changes nothing: use `updateRow` for that.
+   *
+   * With `server`, only the rows of the page, whatever the `scope`.
    *
    * @example
    * table.getData('searched'); // the rows that match the search
@@ -344,7 +403,8 @@ export class Tadabut<Row extends object> {
 
   /**
    * The row with this id, as a copy, or `undefined`. It's the saved row:
-   * while a row is edited, what's typed isn't in it until Save.
+   * while a row is edited, what's typed isn't in it until Save. With
+   * `server`, only rows on the page are found.
    */
   public getRow(id: string | number): Row | undefined {
     const row = this.findRow(id);
@@ -373,11 +433,14 @@ export class Tadabut<Row extends object> {
    *
    * @throws If there's no `rowId`, a row has no `rowId` value, or its id is
    *   already in the table (or twice in `rows`).
+   * @throws With `server`: use `reload()`.
    *
    * @example
    * table.insertRow(rowFromServer);
    */
   public insertRow(rows: Row | readonly Row[]): void {
+    this.assertClientMode('insertRow');
+
     const rowId = this.rowId;
 
     if (rowId === undefined) {
@@ -428,7 +491,7 @@ export class Tadabut<Row extends object> {
       return false;
     }
 
-    found.data({ ...row }).draw(false);
+    this.redrawRow(id, row);
     this.rowLines.reload(id);
 
     return true;
@@ -439,8 +502,11 @@ export class Tadabut<Row extends object> {
    * `onDeleted` doesn't fire. Its detail closes, and it leaves the selection.
    *
    * @returns `false` if no row has this id, or it's being edited or deleted.
+   * @throws With `server`: use `reload()`.
    */
   public removeRow(id: string | number): boolean {
+    this.assertClientMode('removeRow');
+
     const found = this.findRow(id);
 
     if (found === undefined || this.sessions.has(id) || this.deleting.has(id)) {
@@ -461,10 +527,26 @@ export class Tadabut<Row extends object> {
    * the same rows as the footer. If two columns show the same field with a
    * total each, the last one wins.
    *
+   * With `server`, the totals it sent, except with `totalRows: 'selected'`.
+   *
    * @example
    * table.getTotals().salary; // 176651.5
    */
   public getTotals(): Partial<Record<keyof Row & string, number | string>> {
+    if (this.server !== undefined && this.totalRows !== 'selected') {
+      const totals: Partial<Record<keyof Row & string, number | string>> = {};
+
+      for (const column of this.columns) {
+        const value = this.server.totals[column.prop];
+
+        if (column.total !== undefined && value !== undefined) {
+          totals[column.prop] = value;
+        }
+      }
+
+      return totals;
+    }
+
     const rows = this.countedRows();
     const totals: Partial<Record<keyof Row & string, number | string>> = {};
 
@@ -752,7 +834,8 @@ export class Tadabut<Row extends object> {
 
   /**
    * Validates the new row, then calls `onAdd`. On success the row joins the
-   * table, and the table shows the page it landed on.
+   * table, and the table shows the page it landed on. With `server`, the
+   * page reloads instead, since the server decides where the row goes.
    *
    * While `onAdd` runs the row is locked. If it throws, the row stays open
    * and the error message is shown under it.
@@ -819,6 +902,15 @@ export class Tadabut<Row extends object> {
     newRow.destroy();
     this.newRow = undefined;
 
+    // The server decides where the row goes, so the page reloads. The reply opens the next new row.
+    if (this.server !== undefined) {
+      this.focusNewRow = true;
+      this.dataTable.draw(false);
+      this.listeners.emit('added', { ...saved });
+
+      return true;
+    }
+
     const added = this.dataTable.row.add({ ...saved });
     this.dataTable.draw(false);
 
@@ -864,8 +956,7 @@ export class Tadabut<Row extends object> {
     this.rowLines.clearError(id);
     this.findRow(id)?.node()?.classList.remove('tdb-row-editing');
 
-    // 'data', or DataTables would read the emptied cells back as data.
-    this.findRow(id)?.invalidate('data').draw(false);
+    this.redrawRow(id);
     this.giveBackAutoRow();
   }
 
@@ -939,9 +1030,7 @@ export class Tadabut<Row extends object> {
     session.destroy();
     this.sessions.delete(id);
 
-    this.findRow(id)
-      ?.data({ ...saved })
-      .draw(false);
+    this.redrawRow(id, saved);
     this.findRow(id)?.node()?.classList.remove('tdb-row-editing');
     this.setSaving(id, false);
 
@@ -954,7 +1043,7 @@ export class Tadabut<Row extends object> {
 
   /**
    * Calls `onDelete`, then removes the row. Never asks first: only the
-   * Delete button does.
+   * Delete button does. With `server`, the page reloads instead.
    *
    * While `onDelete` runs the row is locked. If it throws, the row stays and
    * the error message is shown under it.
@@ -997,6 +1086,15 @@ export class Tadabut<Row extends object> {
     }
 
     this.deleting.delete(id);
+
+    // The next row of the next page moves up, so the server has to send the page again.
+    if (this.server !== undefined) {
+      this.selection?.forget(id);
+      this.dataTable.draw(false);
+      this.listeners.emit('deleted', data);
+
+      return true;
+    }
 
     this.findRow(id)?.remove().draw(false);
 
@@ -1077,6 +1175,7 @@ export class Tadabut<Row extends object> {
 
   /** Removes the table. Open rows are closed without saving. */
   public destroy(): void {
+    this.server?.abort();
     this.tableEl.removeEventListener('click', this.onClick);
     this.tableEl.removeEventListener('keydown', this.onKeyDown);
     this.tableEl.removeEventListener('click', this.onRowEvent);
@@ -1087,6 +1186,7 @@ export class Tadabut<Row extends object> {
     this.selection?.destroy();
     this.rowLines.destroy();
     this.dataTable.destroy();
+    this.hideLoadError();
     this.tableEl.remove();
 
     this.listeners.clear();
@@ -1103,6 +1203,82 @@ export class Tadabut<Row extends object> {
     const row = this.dataTable.row((_index, data) => data[rowId] === id);
 
     return row.any() ? row : undefined;
+  }
+
+  /**
+   * Closes everything tied to the rows on screen, before they're replaced:
+   * open rows, the new row, deletes in progress, details.
+   */
+  private forgetRows(): void {
+    this.destroySessions();
+    this.autoMadeWay = false;
+    this.deleting.clear();
+    // Before the draw, so the new rows draw with a closed ▸.
+    this.rowLines.destroy();
+  }
+
+  /**
+   * Shows a row's new data, or its saved data again. With `server` only that
+   * row is redrawn: a full draw would ask the server.
+   */
+  private redrawRow(id: string | number, data?: Row): void {
+    const row = this.findRow(id);
+
+    if (row === undefined) {
+      return;
+    }
+
+    if (data === undefined) {
+      // 'data', or DataTables would read the emptied cells back as data.
+      row.invalidate('data');
+    } else {
+      row.data({ ...data });
+      this.selection?.update(data);
+    }
+
+    if (this.server === undefined) {
+      row.draw(false);
+      return;
+    }
+
+    // What the draw listeners would do. Totals don't change: the server counts them.
+    this.rowLines.sync();
+    this.selection?.sync();
+    this.currentRow?.sync();
+  }
+
+  /** Puts the error line above the table, or changes its text. */
+  private showLoadError(message: string): void {
+    if (this.loadError === undefined) {
+      this.loadError = document.createElement('div');
+      this.loadError.className = 'tdb-load-error';
+      this.loadError.setAttribute('role', 'alert');
+      this.tableEl.before(this.loadError);
+    }
+
+    // The message may come from the server: text only.
+    this.loadError.textContent = message;
+  }
+
+  /** Removes the error line, if any. */
+  private hideLoadError(): void {
+    this.loadError?.remove();
+    this.loadError = undefined;
+  }
+
+  /** For the methods that change rows by hand, which can't work when the server owns them. */
+  private assertClientMode(method: string): void {
+    if (this.server !== undefined) {
+      throw new Error(`Tadabut: ${method} doesn't work with server. Use reload().`);
+    }
+  }
+
+  /** The developer's mistake, so it goes to the console, once per field. */
+  private warnMissingTotal(prop: string): void {
+    if (!this.warnedTotals.has(prop)) {
+      this.warnedTotals.add(prop);
+      console.warn(`Tadabut: the server sent no total for "${prop}".`);
+    }
   }
 
   /**
@@ -1175,7 +1351,7 @@ export class Tadabut<Row extends object> {
 
   /** Puts Edit and Delete back after No. */
   private keepRow(id: string | number): void {
-    this.findRow(id)?.invalidate('data').draw(false);
+    this.redrawRow(id);
   }
 
   /** Whether an element is inside the new row, or its error. */
@@ -1311,14 +1487,25 @@ export class Tadabut<Row extends object> {
   /**
    * Writes every total. Runs after each redraw: search, paging, save, add,
    * delete and `setData` all redraw. With `'selected'`, also after each tick.
+   * With `server`, the totals come from its last reply.
    */
   private readonly updateTotals = (): void => {
-    const rows = this.countedRows();
+    const fromServer = this.server !== undefined && this.totalRows !== 'selected';
+    const rows = fromServer ? [] : this.countedRows();
 
     this.columns.forEach((column, index) => {
       const cell = this.dataTable.column(this.dtIndex(index)).footer();
 
-      if (column.total !== undefined) {
+      if (column.total !== undefined && fromServer) {
+        const value = this.server?.totals[column.prop];
+
+        if (value === undefined) {
+          cell.replaceChildren();
+          this.warnMissingTotal(column.prop);
+        } else {
+          cell.replaceChildren(formatTotal(column, value));
+        }
+      } else if (column.total !== undefined) {
         cell.replaceChildren(totalText(column, rows));
       } else if (index === 0) {
         cell.textContent = this.texts.total;
@@ -1448,6 +1635,16 @@ export class Tadabut<Row extends object> {
     }
 
     this.listeners.emit('rowDoubleClick', row.data(), event);
+  };
+
+  /**
+   * After each reply with `server`: forgets the highlight if its row left,
+   * and opens the auto row. An arrow function, so it can be passed as is.
+   */
+  private readonly afterServerDraw = (): void => {
+    this.currentRow?.prune();
+    this.autoOpen(this.focusNewRow);
+    this.focusNewRow = false;
   };
 }
 
