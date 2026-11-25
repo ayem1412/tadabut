@@ -31,6 +31,13 @@ export default defineConfig({
   integrations: [
     starlight({
       title: 'Tadabut',
+      // A crayon drawing, so a PNG: an SVG can't keep its texture.
+      logo: { src: './src/assets/logo.png' },
+      favicon: '/favicon.png',
+      // iPhones and iPads use this one when the site is saved to the home screen.
+      head: [
+        { tag: 'link', attrs: { rel: 'apple-touch-icon', href: '/tadabut/apple-touch-icon.png' } },
+      ],
       description:
         'Editable, typed DataTables: inputs in the cells, validation, and selects that depend on each other.',
       plugins: [

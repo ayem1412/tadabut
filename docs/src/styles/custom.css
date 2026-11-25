@@ -203,3 +203,18 @@
     font-size: var(--sl-text-lg);
   }
 }
+
+/* Edit and Delete at the right edge of the demo, not floating in the middle. */
+.live-demo td.tdb-actions {
+  text-align: end;
+}
+
+/*
+ * Ion centers the hero image in the space left of the title, so it floats on
+ * wide screens. Above 1250px the image sits beside the title, not under it.
+ */
+@media (min-width: 1251px) {
+  .hero > img {
+    margin-inline-end: 0;
+  }
+}
