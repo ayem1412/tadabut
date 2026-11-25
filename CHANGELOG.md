@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.1.0](https://github.com/ayem1412/tadabut/compare/v1.0.0...v1.1.0) (2026-11-25)
+
+
+### Features
+
+* server-side mode ([#79](https://github.com/ayem1412/tadabut/issues/79)) ([001025f](https://github.com/ayem1412/tadabut/commit/001025f2458f187fcdce3482350326da95d7c8e1))
+* Vue component ([#83](https://github.com/ayem1412/tadabut/issues/83)) ([27337cf](https://github.com/ayem1412/tadabut/commit/27337cf301c32c4233d65aea0717e638787f1f85))
+
 ## [1.0.0](https://github.com/ayem1412/tadabut/compare/v0.8.0...v1.0.0) (2026-11-23)
 
 
