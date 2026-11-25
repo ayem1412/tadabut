@@ -19,16 +19,18 @@ pnpm dev
 
 ```
 playground/
-  index.html      links to the two pages
+  index.html      links to every page
   shared/         used by every page
     data.ts       the rows, and the columns (makeColumns)
     tadabut.css   the CSS every page needs
     plain.css     the look of the React page
   bootstrap/      index.html, bootstrap.ts, bootstrap.css
   react/          index.html, react.tsx
+  server/         index.html, server.ts: server-side mode, on DummyJSON
+  vue/            index.html, main.ts, App.vue: on DummyJSON
 ```
 
-Both pages share the same rows and columns, from `makeColumns()` in `shared/data.ts`, so a new column is added once. The Bootstrap page passes its input classes to it.
+The Bootstrap and React pages share the same rows and columns, from `makeColumns()` in `shared/data.ts`, so a new column is added once. The Bootstrap page passes its input classes to it. The server and Vue pages load real-looking users from [DummyJSON](https://dummyjson.com/docs/users), which answers saves and deletes but doesn't keep them.
 
 | Command          | What it does                           |
 | ---------------- | -------------------------------------- |
@@ -68,6 +70,7 @@ src/
   texts/        Tadabut's own texts: the `Texts` type, English and French
   editing/      editing a row: turning cells into editors and back
   react/        the React adapter
+  vue/          the Vue adapter
 tests/          same folders as src/
 playground/     pages to try things by hand, one folder each
 docs/           the website

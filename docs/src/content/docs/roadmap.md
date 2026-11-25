@@ -41,6 +41,7 @@ Done:
 - [x] Shared settings for many tables (`Tadabut.extend`, `<TadabutDefaults>`)
 - [x] Listening to events from anywhere (`table.on`, `table.off`)
 - [x] Big tables: loading one page at a time from the server (`server`, `reload`)
+- [x] A Vue component (`tadabut/vue`)
 
 Next, roughly in this order:
 
@@ -48,4 +49,4 @@ Next, roughly in this order:
 - [ ] Choosing what clicking the current row again does: remove the highlight or keep it
 - [ ] Keyboard navigation and theming
 
-Later: popup editing, changing many rows in one go, Vue and jQuery adapters.
+Later: popup editing, changing many rows in one go, a jQuery adapter.
