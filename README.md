@@ -1,4 +1,4 @@
-<img align="right" width="180" src="https://raw.githubusercontent.com/ayem1412/tadabut/master/docs/src/assets/hero.png" alt="A crayon drawing of a wooden table">
+<img align="right" width="180" src="https://raw.githubusercontent.com/ayem1412/tadabut/master/docs/src/assets/hero.png" alt="A crayon drawing of a wooden table, by Fraankyy">
 
 # ⵜⴰⴷⴰⴱⵓⵜ · Tadabut
 
@@ -153,6 +153,10 @@ Everything is also on [the website](https://ayem1412.github.io/tadabut/), with s
 ## Contributing
 
 Help is welcome. Read [CONTRIBUTING.md](./CONTRIBUTING.md) to get set up, and please follow the [code of conduct](./CODE_OF_CONDUCT.md).
+
+## Credits
+
+The table logo was drawn by Fraankyy ([@fraankyy2](https://x.com/fraankyy2) on X).
 
 ## Not affiliated with DataTables
 
