@@ -1,3 +1,5 @@
+<img align="right" width="180" src="https://raw.githubusercontent.com/ayem1412/tadabut/master/docs/src/assets/hero.png" alt="A crayon drawing of a wooden table">
+
 # ⵜⴰⴷⴰⴱⵓⵜ · Tadabut
 
 [![CI](https://github.com/ayem1412/tadabut/actions/workflows/ci.yml/badge.svg)](https://github.com/ayem1412/tadabut/actions/workflows/ci.yml)
