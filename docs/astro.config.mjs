@@ -54,6 +54,7 @@ export default defineConfig({
                 href: 'https://github.com/ayem1412/tadabut/blob/master/CHANGELOG.md',
                 newTab: true,
               },
+              { text: 'Logo by Fraankyy', href: 'https://x.com/fraankyy2', newTab: true },
             ],
           },
         }),
