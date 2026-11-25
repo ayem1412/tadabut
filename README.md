@@ -1,4 +1,6 @@
-<img align="right" width="180" src="https://raw.githubusercontent.com/ayem1412/tadabut/master/docs/src/assets/hero.png" alt="A crayon drawing of a wooden table, by Fraankyy">
+<div align="center">
+
+<img width="200" src="https://raw.githubusercontent.com/ayem1412/tadabut/master/docs/src/assets/hero.png" alt="A crayon drawing of a wooden table, by Fraankyy">
 
 # ⵜⴰⴷⴰⴱⵓⵜ · Tadabut
 
@@ -10,6 +12,8 @@
 [![npm](https://img.shields.io/npm/v/tadabut)](https://www.npmjs.com/package/tadabut)
 [![Docs](https://img.shields.io/badge/docs-website-blue)](https://ayem1412.github.io/tadabut/)
 [![PRs welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](./CONTRIBUTING.md)
+
+</div>
 
 Tadabut wraps [DataTables](https://datatables.net) and adds what it doesn't give you for free: editing rows, real inputs in the cells, and selects that depend on each other.
 
