@@ -35,7 +35,7 @@ The core has no framework in it. Each framework gets a small adapter on top.
 | TypeScript | Supported |
 | JavaScript | Supported |
 | React      | Supported |
-| Vue        | Planned   |
+| Vue        | Supported |
 | jQuery     | Planned   |
 
 ## Requirements
@@ -145,6 +145,7 @@ Everything is also on [the website](https://ayem1412.github.io/tadabut/), with s
 - [Styling and texts](https://ayem1412.github.io/tadabut/styling/): DataTables settings, translations, classes, Bootstrap and icons.
 - [Sharing settings between tables](https://ayem1412.github.io/tadabut/shared-defaults/): Write the common options once, with `Tadabut.extend` or `<TadabutDefaults>`.
 - [React](https://ayem1412.github.io/tadabut/react/): The `<Tadabut>` component from `tadabut/react`.
+- [Vue](https://ayem1412.github.io/tadabut/vue/): The `<Tadabut>` component from `tadabut/vue`.
 - [Roadmap](https://ayem1412.github.io/tadabut/roadmap/): What's done, and what comes next.
 
 ## Contributing

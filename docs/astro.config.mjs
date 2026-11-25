@@ -77,6 +77,7 @@ export default defineConfig({
             { label: '[palette] Styling and texts', slug: 'styling' },
             { label: '[share-2] Sharing settings', slug: 'shared-defaults' },
             { label: '[atom] React', slug: 'react' },
+            { label: '[code-xml] Vue', slug: 'vue' },
             { label: '[map] Roadmap', slug: 'roadmap' },
           ],
         },

@@ -1,7 +1,7 @@
 {
   "$schema": "https://typedoc.org/schema.json",
   "name": "Tadabut",
-  "entryPoints": ["src/index.ts", "src/react/index.tsx"],
+  "entryPoints": ["src/index.ts", "src/react/index.tsx", "src/vue/index.ts"],
   "plugin": ["typedoc-plugin-markdown", "./docs/typedoc-titles.mjs"],
   "out": "docs/src/content/docs/api",
   "readme": "none",
