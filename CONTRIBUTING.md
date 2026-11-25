@@ -52,9 +52,9 @@ Link guides to each other with their file name, like `[Editing](editing.md#dates
 
 A live demo goes under an example with `<div data-demo="name"></div>`, for the file `docs/src/demos/name.ts`. It's a plain div, so GitHub shows nothing. If you change an example, change its demo too.
 
-Biome skips the guides: it would flatten the settings block at the top of each one, which Starlight needs.
+The guides are formatted by [Prettier](https://prettier.io) instead of Biome: Biome flattens the settings block at the top of each one, which Starlight needs. `pnpm format` runs both. In `.mdx` files, put a blank line around a code block inside a component like `<TabItem>`, and don't indent it, or Prettier squashes it onto one line.
 
-Formatting is done by [Biome](https://biomejs.dev). Set your editor to use it. Please don't add Prettier or ESLint.
+Everything else is formatted and linted by [Biome](https://biomejs.dev). Set your editor to use it. Please don't add ESLint, or Prettier for anything but the guides.
 
 ## Where things are
 
