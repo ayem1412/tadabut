@@ -361,3 +361,55 @@ describe('delete()', () => {
     expect(await done).toBe(false);
   });
 });
+
+describe('delete() after setData, on the same row', () => {
+  /** An `onDelete` whose calls each wait until the test settles them, in order. */
+  function deletes() {
+    const calls: { resolve: () => void; reject: (error: Error) => void }[] = [];
+    const fn = vi.fn(
+      () =>
+        new Promise<void>((resolve, reject) => {
+          calls.push({ resolve, reject });
+        }),
+    );
+
+    return { fn, calls };
+  }
+
+  it('ignores the old delete failing while the new one runs', async () => {
+    const { fn: onDelete, calls } = deletes();
+    const { table, firstRow, rowError } = setup({ onDelete });
+
+    const first = table.delete(1);
+    table.setData(rows());
+    void table.delete(1);
+    calls[0]?.reject(new Error('first failed'));
+
+    expect(await first).toBe(false);
+    expect(rowError()).toBeUndefined();
+    expect(firstRow().inert).toBe(true);
+    expect(await table.delete(1)).toBe(false);
+    expect(onDelete).toHaveBeenCalledTimes(2);
+  });
+
+  it('ignores the old delete working, and shows the new one failing', async () => {
+    const onDeleted = vi.fn();
+    const { fn: onDelete, calls } = deletes();
+    const { table, ids, rowError } = setup({ onDelete, onDeleted });
+
+    const first = table.delete(1);
+    table.setData(rows());
+    const second = table.delete(1);
+    calls[0]?.resolve();
+
+    expect(await first).toBe(false);
+    expect(ids()).toEqual(['1', '2', '3']);
+
+    calls[1]?.reject(new Error('second failed'));
+
+    expect(await second).toBe(false);
+    expect(ids()).toEqual(['1', '2', '3']);
+    expect(rowError()).toBe('second failed');
+    expect(onDeleted).not.toHaveBeenCalled();
+  });
+});

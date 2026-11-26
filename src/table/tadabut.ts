@@ -94,8 +94,8 @@ export class Tadabut<Row extends object> {
   private readonly hasEditor: boolean;
   /** Open rows, by row id. */
   private readonly sessions: Map<string | number, EditSession<Row>> = new Map();
-  /** Rows waiting for `onDelete`, by row id. */
-  private readonly deleting: Set<string | number> = new Set();
+  /** Rows waiting for `onDelete`, by row id. The value is a token for the call that started it. */
+  private readonly deleting: Map<string | number, object> = new Map();
   /** The row `add()` opened, if any. */
   private newRow?: NewRow<Row>;
   /** Whether any column has a `total`, so the table has a footer. */
@@ -1052,14 +1052,18 @@ export class Tadabut<Row extends object> {
     const data = row.data();
 
     this.rowLines.clearError(id);
-    this.deleting.add(id);
+
+    const token = {};
+    this.deleting.set(id, token);
+
     this.setSaving(id, true);
 
     try {
       await this.onDelete?.(data);
     } catch (error) {
-      // setData or destroy may have run while we were waiting.
-      if (!this.deleting.has(id)) {
+      // setData or destroy may have run while we were waiting, and a new delete of
+      // the same row may have started. Only this call's token means it's still ours.
+      if (this.deleting.get(id) !== token) {
         return false;
       }
 
@@ -1071,7 +1075,7 @@ export class Tadabut<Row extends object> {
       return false;
     }
 
-    if (!this.deleting.has(id)) {
+    if (this.deleting.get(id) !== token) {
       return false;
     }
 
