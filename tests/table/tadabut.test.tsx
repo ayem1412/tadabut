@@ -1258,4 +1258,45 @@ describe('React Tadabut with server', () => {
     expect(container.querySelector('table')).not.toBe(table);
     expect(namesShown()).toEqual(['Amina']);
   });
+
+  it('calls the new server when columns and server change in the same render', async () => {
+    const first = serverOf(rows);
+    const second = serverOf([rows[1] as Row]);
+
+    await act(async () => {
+      root.render(<Tadabut server={first} columns={columns} rowId='id' />);
+    });
+    await act(async () => {
+      root.render(<Tadabut server={second} columns={columnsWithCity} rowId='id' />);
+    });
+
+    expect(first).toHaveBeenCalledTimes(1);
+    expect(second).toHaveBeenCalledTimes(1);
+    expect(namesShown()).toEqual(['Youness']);
+  });
+
+  it('loads from server after switching from data, on the same component', async () => {
+    const server = serverOf([rows[0] as Row]);
+
+    await act(async () => {
+      root.render(<Tadabut data={rows} columns={columns} rowId='id' />);
+    });
+    await act(async () => {
+      root.render(<Tadabut server={server} columns={columns} rowId='id' />);
+    });
+
+    expect(server).toHaveBeenCalledTimes(1);
+    expect(namesShown()).toEqual(['Amina']);
+  });
+
+  it('builds with the new data when columns and data change in the same render', async () => {
+    await act(async () => {
+      root.render(<Tadabut data={rows} columns={columns} rowId='id' />);
+    });
+    await act(async () => {
+      root.render(<Tadabut data={[rows[2] as Row]} columns={columnsWithCity} rowId='id' />);
+    });
+
+    expect(namesShown()).toEqual(['Salma']);
+  });
 });
