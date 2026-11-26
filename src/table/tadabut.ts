@@ -590,16 +590,12 @@ export class Tadabut<Row extends object> {
    *
    * @param id The value of the row's `rowId` field.
    * @returns `false` if editing is off, the row doesn't exist, is already
-   *   open, another row or the new row is open in `'single'` mode, nothing is
-   *   editable, the row is being deleted, it's on a page that hasn't been
-   *   displayed yet, or `onEditStart` returned `false`.
+   *   open, another row or the new row from `add()` is open in `'single'`
+   *   mode, nothing is editable, the row is being deleted, it's on a page that
+   *   hasn't been displayed yet, or `onEditStart` returned `false`.
    */
   public edit(id: string | number): boolean {
-    return this.openRow(id);
-  }
-
-  /** What `edit` does, apart from giving the auto row back when it refuses. */
-  private openRow(id: string | number): boolean {
+    // With `autoAdd` in 'single' mode, the auto row would block every Edit.
     const autoMakesWay =
       this.editing.mode === 'single' &&
       this.sessions.size === 0 &&
@@ -628,6 +624,7 @@ export class Tadabut<Row extends object> {
       return false;
     }
 
+    // Only now, so a refused Edit keeps the auto row and what was typed in it.
     if (autoMakesWay) {
       this.cancelNew();
       this.autoMadeWay = true;

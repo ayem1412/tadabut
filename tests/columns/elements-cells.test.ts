@@ -54,6 +54,36 @@ describe('elements in cells', () => {
     expect(cell(0, 0).textContent).toBe('<b>Paid</b>');
   });
 
+  it('keeps plain text cells as text, with no element around them', () => {
+    const { cell } = setup([{ title: 'Status', prop: 'status' }]);
+
+    expect(cell(0, 0).innerHTML).toBe('Paid');
+  });
+
+  it('accepts text from html``, which is not an element', () => {
+    const { cell } = setup([
+      { title: 'Status', prop: 'status', render: (value) => html`${value} MAD` },
+    ]);
+
+    expect(cell(0, 0).textContent).toBe('Paid MAD');
+    expect(cell(1, 0).querySelector('img')).toBeNull();
+  });
+
+  it('accepts several elements from html``', () => {
+    const { cell } = setup([
+      { title: 'Status', prop: 'status', render: (value) => html`<b>${value}</b> <i>!</i>` },
+    ]);
+
+    expect(cell(0, 0).querySelector('b')?.textContent).toBe('Paid');
+    expect(cell(0, 0).querySelector('i')?.textContent).toBe('!');
+  });
+
+  it('shows an empty cell for an empty html``', () => {
+    const { cell } = setup([{ title: 'Status', prop: 'status', render: () => html`` }]);
+
+    expect(cell(0, 0).textContent).toBe('');
+  });
+
   it('searches the visible text, and the raw value', () => {
     const { container, table } = setup([
       { title: 'ID', prop: 'id' },

@@ -124,7 +124,20 @@ export function toDataTables<Row extends object>(
             const shown = label(value, row);
 
             // DataTables puts an element in the cell as it is, and a string as HTML.
-            return typeof shown === 'string' ? escapeHtml(shown) : shown;
+            // It reads innerHTML for column widths, which only elements have, so
+            // anything else gets a span around it.
+            if (typeof shown === 'string') {
+              return escapeHtml(shown);
+            }
+
+            if (shown instanceof Element) {
+              return shown;
+            }
+
+            const span = document.createElement('span');
+            span.append(shown);
+
+            return span;
           }
 
           case 'filter':
