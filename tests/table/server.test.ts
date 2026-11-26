@@ -331,6 +331,44 @@ describe('server: totals', () => {
       formatMoney(1400, defaultMoneyFormat),
     );
   });
+
+  it("follows a save of a ticked row with totalRows: 'selected'", async () => {
+    const { container, table } = await setup({ selection: true, totalRows: 'selected' });
+    const salaryInput = () =>
+      container.querySelector<HTMLInputElement>(
+        'tbody tr td:nth-child(3) input',
+      ) as HTMLInputElement;
+
+    table.select([1]);
+    table.edit(1);
+    type(salaryInput(), '500');
+
+    expect(await table.save(1)).toBe(true);
+    expect(container.querySelector('tfoot th:nth-child(3)')?.textContent).toBe(
+      formatMoney(500, defaultMoneyFormat),
+    );
+  });
+
+  it("follows updateRow on a ticked row with totalRows: 'selected'", async () => {
+    const { container, table } = await setup({ selection: true, totalRows: 'selected' });
+
+    table.select([1]);
+    table.updateRow({ id: 1, name: 'Person 1', salary: 700 });
+
+    expect(container.querySelector('tfoot th:nth-child(3)')?.textContent).toBe(
+      formatMoney(700, defaultMoneyFormat),
+    );
+  });
+
+  it("keeps the server's total after a save without 'selected'", async () => {
+    const { container, table } = await setup();
+
+    table.updateRow({ id: 1, name: 'Person 1', salary: 700 });
+
+    expect(container.querySelector('tfoot th:nth-child(2)')?.textContent).toBe(
+      formatMoney(32500, defaultMoneyFormat),
+    );
+  });
 });
 
 describe('server: selection', () => {

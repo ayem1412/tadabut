@@ -1246,10 +1246,15 @@ export class Tadabut<Row extends object> {
       return;
     }
 
-    // What the draw listeners would do. Totals don't change: the server counts them.
+    // What the draw listeners would do. Totals the server counts don't change, but
+    // ticked rows are counted here.
     this.rowLines.sync();
     this.selection?.sync();
     this.currentRow?.sync();
+
+    if (this.hasTotals && this.totalRows === 'selected') {
+      this.updateTotals();
+    }
   }
 
   /** Puts the error line above the table, or changes its text. */
