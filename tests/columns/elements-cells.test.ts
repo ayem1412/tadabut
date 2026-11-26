@@ -122,3 +122,28 @@ describe('elements in cells', () => {
     expect(container.querySelector('tfoot strong')?.textContent).toBe('150');
   });
 });
+
+describe('column titles', () => {
+  it('shows a title from the server as text', () => {
+    const { container } = setup([{ title: '<img src=x onerror=alert(1)>Name', prop: 'status' }]);
+    const th = container.querySelector('thead th') as HTMLElement;
+
+    expect(th.querySelector('img')).toBeNull();
+    expect(th.querySelector('.dt-column-title')?.textContent).toBe(
+      '<img src=x onerror=alert(1)>Name',
+    );
+  });
+
+  it('keeps every character of the title', () => {
+    const { container } = setup([{ title: 'Qty <min> & max', prop: 'amount' }]);
+
+    expect(container.querySelector('thead .dt-column-title')?.textContent).toBe('Qty <min> & max');
+  });
+
+  it('gives the sort button a plain-text label, without escapes', () => {
+    const { container } = setup([{ title: 'R&D <budget>', prop: 'amount' }]);
+    const label = container.querySelector('thead .dt-column-order')?.getAttribute('aria-label');
+
+    expect(label?.startsWith('R&D <budget>')).toBe(true);
+  });
+});
