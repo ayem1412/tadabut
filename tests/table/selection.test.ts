@@ -1,7 +1,13 @@
 import { describe, expect, it, vi } from 'vitest';
 
-import { type Column, fr, Tadabut, type TadabutOptions } from '../../src/index';
-import { goToPage, mountPoint, search, type } from '../helpers';
+import {
+  type Column,
+  type DataTablesSettings,
+  fr,
+  Tadabut,
+  type TadabutOptions,
+} from '../../src/index';
+import { goToPage, mountPoint, search, settle, type } from '../helpers';
 
 type Row = { id: number; name: string; city: string };
 
@@ -228,6 +234,53 @@ describe('check all', () => {
     click(all());
 
     expect(ids()).toHaveLength(25);
+  });
+
+  it.each([
+    { name: 'scrollY', scroll: { scrollY: '200px' } },
+    { name: 'scrollX', scroll: { scrollX: true } },
+  ])(
+    'works with $name, where the header is in its own table',
+    ({ scroll }: { scroll: DataTablesSettings }) => {
+      const { container, ids, onSelect } = setup({ dataTables: { order: [], ...scroll } });
+      const visible = container.querySelector<HTMLInputElement>('.dt-scroll-head .tdb-select-all');
+
+      click(visible ?? undefined);
+
+      expect(visible?.checked).toBe(true);
+      expect(ids()).toHaveLength(25);
+      expect(onSelect).toHaveBeenCalledTimes(1);
+    },
+  );
+
+  it('stops listening after destroy', () => {
+    const { all, onSelect, table } = setup();
+    const box = all();
+
+    table.destroy();
+    click(box);
+
+    expect(onSelect).not.toHaveBeenCalled();
+  });
+
+  it("ignores another table's check all inside a detail", async () => {
+    const inner = document.createElement('div');
+    const { ids, table } = setup({ detail: () => inner });
+    const onInnerSelect = vi.fn();
+    new Tadabut(inner, {
+      data: rows().slice(0, 2),
+      rowId: 'id',
+      columns,
+      selection: true,
+      onSelect: onInnerSelect,
+    });
+
+    table.openDetail(1);
+    await settle();
+    click(inner.querySelector<HTMLInputElement>('.tdb-select-all') ?? undefined);
+
+    expect(onInnerSelect).toHaveBeenCalledTimes(1);
+    expect(ids()).toEqual([]);
   });
 
   it('unticking only removes the rows it takes', () => {
