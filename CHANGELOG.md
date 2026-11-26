@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.1.1](https://github.com/ayem1412/tadabut/compare/v1.1.0...v1.1.1) (2026-11-26)
+
+
+### Bug Fixes
+
+* make vue an optional peer dependency ([#89](https://github.com/ayem1412/tadabut/issues/89)) ([c67645c](https://github.com/ayem1412/tadabut/commit/c67645cc426ea586f5061f28bb23983b5602ab50))
+
 ## [1.1.0](https://github.com/ayem1412/tadabut/compare/v1.0.0...v1.1.0) (2026-11-25)
 
 
