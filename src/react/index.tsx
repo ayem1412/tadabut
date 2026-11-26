@@ -21,6 +21,7 @@ import {
   useContext,
   useEffect,
   useImperativeHandle,
+  useLayoutEffect,
   useMemo,
   useRef,
   useState,
@@ -186,7 +187,6 @@ export function Tadabut<Row extends object>({
   const dataRef = useRef(data);
   /** The latest `autoAdd`. Its text is what rebuilds, so a Date in it stays a Date. */
   const autoAddRef = useRef(autoAdd);
-  autoAddRef.current = autoAdd;
   /** The latest `editable`, so a rebuild starts the way it is now. */
   const editableRef = useRef(editable);
   /** The latest `onSave`, so a new one doesn't rebuild the table. */
@@ -251,6 +251,28 @@ export function Tadabut<Row extends object>({
   const hasDetail = detail !== undefined;
   // As text, so a new object with the same values doesn't rebuild the table.
   const autoAddKey = autoAdd === undefined ? undefined : JSON.stringify(autoAdd);
+
+  // A layout effect runs before every useEffect, so a rebuild in the same
+  // render already sees the new functions and values.
+  useLayoutEffect(() => {
+    dataRef.current = data;
+    editableRef.current = editable;
+    autoAddRef.current = autoAdd;
+    onSaveRef.current = onSave;
+    onAddRef.current = onAdd;
+    onDeleteRef.current = onDelete;
+    serverRef.current = server;
+    confirmDeleteRef.current = confirmDelete;
+    onSelectRef.current = onSelect;
+    onCurrentChangeRef.current = onCurrentChange;
+    onEditStartRef.current = onEditStart;
+    onSavedRef.current = onSaved;
+    onAddedRef.current = onAdded;
+    onDeletedRef.current = onDeleted;
+    onRowClickRef.current = onRowClick;
+    onRowDoubleClickRef.current = onRowDoubleClick;
+    detailRef.current = detail;
+  });
 
   useEffect(() => {
     const container = containerRef.current;
@@ -386,8 +408,6 @@ export function Tadabut<Row extends object>({
   ]);
 
   useEffect(() => {
-    dataRef.current = data;
-
     // With server, the table loads its own rows.
     if (data !== undefined && !hasServer) {
       tableRef.current?.setData(data);
@@ -396,27 +416,9 @@ export function Tadabut<Row extends object>({
 
   // Without a rebuild, so ticks, details and sorting stay.
   useEffect(() => {
-    editableRef.current = editable;
     // Not given: what the table started with, from the defaults or `true`.
     tableRef.current?.setEditable(editable ?? Table.defaults.editable ?? true);
   }, [editable, Table]);
-
-  useEffect(() => {
-    onSaveRef.current = onSave;
-    onAddRef.current = onAdd;
-    onDeleteRef.current = onDelete;
-    serverRef.current = server;
-    confirmDeleteRef.current = confirmDelete;
-    onSelectRef.current = onSelect;
-    onCurrentChangeRef.current = onCurrentChange;
-    onEditStartRef.current = onEditStart;
-    onSavedRef.current = onSaved;
-    onAddedRef.current = onAdded;
-    onDeletedRef.current = onDeleted;
-    onRowClickRef.current = onRowClick;
-    onRowDoubleClickRef.current = onRowDoubleClick;
-    detailRef.current = detail;
-  });
 
   useImperativeHandle(
     ref,
