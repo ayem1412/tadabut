@@ -113,7 +113,10 @@ export function toDataTables<Row extends object>(
         searchable: column.searchable,
         className: column.className,
       }),
-      title: column.title,
+      // DataTables writes the title as HTML, so it's escaped. ariaTitle keeps the
+      // screen reader's label as plain text, or it would read the escapes.
+      title: escapeHtml(column.title),
+      ariaTitle: column.title,
       data: column.prop,
       // A row without this field (an added row, an optional field) is an empty
       // cell. Without it, DataTables shows an alert() box.
