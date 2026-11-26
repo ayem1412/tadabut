@@ -193,34 +193,34 @@ importers:
         version: 7.3.10
       '@astrojs/starlight':
         specifier: ~0.42.11
-        version: 0.42.11(@astrojs/markdown-remark@7.3.10)(astro@7.4.13(@astrojs/markdown-remark@7.3.10)(@types/node@26.6.6)(yaml@2.9.1))(typescript@7.0.2)
+        version: 0.42.11(@astrojs/markdown-remark@7.3.10)(astro@7.4.13(@astrojs/markdown-remark@7.3.10)(@types/node@26.6.10)(yaml@2.9.1))(typescript@7.0.2)
       '@biomejs/biome':
         specifier: 2.6.6
         version: 2.6.6
       '@types/node':
-        specifier: ^26.6.6
-        version: 26.6.6
+        specifier: ^26.6.10
+        version: 26.6.10
       '@types/react':
-        specifier: ^19.3.0
-        version: 19.3.0
+        specifier: ^19.3.3
+        version: 19.3.3
       '@types/react-dom':
         specifier: ^19.3.0
-        version: 19.3.0(@types/react@19.3.0)
+        version: 19.3.0(@types/react@19.3.3)
       '@vitejs/plugin-react':
         specifier: ^6.3.0
-        version: 6.3.0(vite@8.3.8(@types/node@26.6.6)(yaml@2.9.1))
+        version: 6.3.0(vite@8.3.8(@types/node@26.6.10)(yaml@2.9.1))
       '@vitejs/plugin-vue':
         specifier: ^6.0.11
-        version: 6.0.11(vite@8.3.8(@types/node@26.6.6)(yaml@2.9.1))(vue@3.5.46(typescript@7.0.2))
+        version: 6.0.11(vite@8.3.8(@types/node@26.6.10)(yaml@2.9.1))(vue@3.5.46(typescript@7.0.2))
       '@vue/test-utils':
         specifier: ^2.6.0
         version: 2.6.0(@vue/compiler-dom@3.5.46)(@vue/server-renderer@3.5.46)(vue@3.5.46(typescript@7.0.2))
       astro:
         specifier: ^7.4.13
-        version: 7.4.13(@astrojs/markdown-remark@7.3.10)(@types/node@26.6.6)(yaml@2.9.1)
+        version: 7.4.13(@astrojs/markdown-remark@7.3.10)(@types/node@26.6.10)(yaml@2.9.1)
       astro-rehype-relative-markdown-links:
         specifier: ^0.19.2
-        version: 0.19.2(astro@7.4.13(@astrojs/markdown-remark@7.3.10)(@types/node@26.6.6)(yaml@2.9.1))
+        version: 0.19.2(astro@7.4.13(@astrojs/markdown-remark@7.3.10)(@types/node@26.6.10)(yaml@2.9.1))
       bootstrap:
         specifier: ^5.3.9
         version: 5.3.9(@popperjs/core@2.11.8)
@@ -250,7 +250,7 @@ importers:
         version: 19.3.1(react@19.3.1)
       starlight-ion-theme:
         specifier: ^2.4.1
-        version: 2.4.1(@astrojs/starlight@0.42.11(@astrojs/markdown-remark@7.3.10)(astro@7.4.13(@astrojs/markdown-remark@7.3.10)(@types/node@26.6.6)(yaml@2.9.1))(typescript@7.0.2))(astro@7.4.13(@astrojs/markdown-remark@7.3.10)(@types/node@26.6.6)(yaml@2.9.1))
+        version: 2.4.1(@astrojs/starlight@0.42.11(@astrojs/markdown-remark@7.3.10)(astro@7.4.13(@astrojs/markdown-remark@7.3.10)(@types/node@26.6.10)(yaml@2.9.1))(typescript@7.0.2))(astro@7.4.13(@astrojs/markdown-remark@7.3.10)(@types/node@26.6.10)(yaml@2.9.1))
       tsdown:
         specifier: ^0.23.7
         version: 0.23.7(@arethetypeswrong/core@0.18.5)(publint@0.3.25)(typescript@7.0.2)
@@ -259,10 +259,10 @@ importers:
         version: 7.0.2
       vite:
         specifier: ^8.3.8
-        version: 8.3.8(@types/node@26.6.6)(yaml@2.9.1)
+        version: 8.3.8(@types/node@26.6.10)(yaml@2.9.1)
       vitest:
-        specifier: ^5.1.1
-        version: 5.1.1(@types/node@26.6.6)(jsdom@30.1.3)(vite@8.3.8(@types/node@26.6.6)(yaml@2.9.1))
+        specifier: ^5.1.2
+        version: 5.1.2(@types/node@26.6.10)(jsdom@30.1.3)(vite@8.3.8(@types/node@26.6.10)(yaml@2.9.1))
       vue:
         specifier: ^3.5.46
         version: 3.5.46(typescript@7.0.2)
@@ -1244,8 +1244,8 @@ packages:
   '@types/estree-jsx@1.0.5':
     resolution: {integrity: sha512-52CcUVNFyfb1A2ALocQw/Dd1BQFNmSdkuC3BkZ6iqhdMfQz7JWOFRuJFloOzjk+6WijU56m9oKXFAXc7o3Towg==}
 
-  '@types/estree@1.0.10':
-    resolution: {integrity: sha512-lTyOMnOcmRBzdCv6/4zUZCrEhV0xrqQiUZBZtVcbmLHBXKLnN8q89v/wKRF/Q0HbwVsqbIG3o5HDoFl9sduM+g==}
+  '@types/estree@1.0.11':
+    resolution: {integrity: sha512-YBdNe5JcjYR0sPhJW1QIeRCmI11YhYvaRuGCs9+WCeTTb+Yhb2BE2XMe5/wAqF10FK5g3+q1PDhQABfT7aX0gg==}
 
   '@types/hast@3.0.5':
     resolution: {integrity: sha512-rp/ezSWaD1m44dPKICGhiskI13nVr7qTloFwDa/IYkhhf5nzwP+zIQcIJh3WIFSBOy/H1PzB40jPjMDksN4F+g==}
@@ -1262,16 +1262,16 @@ packages:
   '@types/nlcst@2.0.3':
     resolution: {integrity: sha512-vSYNSDe6Ix3q+6Z7ri9lyWqgGhJTmzRjZRqyq15N0Z/1/UnVsno9G/N40NBijoYx2seFDIl0+B2mgAb9mezUCA==}
 
-  '@types/node@26.6.6':
-    resolution: {integrity: sha512-MzQj+8Kx3XI40OmUAE6Qoh58ZMNstNNMwn2nfd3qWsfe7nDNSqJNzes4njhz6AHwrSHOffSLwXU6yb474Q4aog==}
+  '@types/node@26.6.10':
+    resolution: {integrity: sha512-WJuPHoGB8WNQuTksNF7SOQpnH02PXeDYz4iueWbBT6/hTWnShY5F3T/hoJA3fY9+uYReDZ7pyTKKx83jQa7aGg==}
 
   '@types/react-dom@19.3.0':
     resolution: {integrity: sha512-ZI7bU42mZXXKHn/qNLEw2IrbiINU7X5+vfgdixBHkCNpYWXjKgfQ/P+uyGb5CjOLB9UcnTeg3rylQtV2hym44Q==}
     peerDependencies:
       '@types/react': ^19.3.0
 
-  '@types/react@19.3.0':
-    resolution: {integrity: sha512-N0rFCuH9YoxG9/m61l9MfpJKfmLOVU0em7ipIz6TRgSSkvReLB9vL85GB+yr8Bs5leqpvg96JSwF4ZS1s4viQg==}
+  '@types/react@19.3.3':
+    resolution: {integrity: sha512-K8uWpJc4teiuOPdiP1umjeA9rGMgVPiXuoL66fcS1QlwBT1WMqY8PORmub9FadopIs+RCW6siYEs7Lpq+vDlog==}
 
   '@types/sax@1.2.7':
     resolution: {integrity: sha512-rO73L89PJxeYM3s3pPPjiPgVVcymqU490g0YO5n5By0k2Erzj6tay/4lr1CHAAU4JyOWd1rpQ8bCf6cZfHU96A==}
@@ -1431,8 +1431,8 @@ packages:
       vite: ^5.0.0 || ^6.0.0 || ^7.0.0 || ^8.0.0
       vue: ^3.2.25 || ^3.6.0-rc.15
 
-  '@vitest/mocker@5.1.1':
-    resolution: {integrity: sha512-b2OgTB4+3ImWIVafXKazJXwLKwQxUNnix6b3xUvUTMh7RyXlrtzoxfZr8aEz9zkHOMAS4K5lu3TvFWoiVeVTQg==}
+  '@vitest/mocker@5.1.2':
+    resolution: {integrity: sha512-UGc97wUIy0Ji2+9GxzHEJiOhiwkaukgE7VYcUNnjpX3sWnwQ8XogmNXX4WyOukxYgKb8Nh2XFa7KId0ZjpmVhQ==}
     peerDependencies:
       msw: ^2.4.9 || ^3.0.0
       vite: ^6.0.0 || ^7.0.0 || ^8.0.0
@@ -1442,8 +1442,8 @@ packages:
       vite:
         optional: true
 
-  '@vitest/spy@5.1.1':
-    resolution: {integrity: sha512-6K8C6alQG1/Yc8/ZI22iJS7JEsxPdVzqtqDq+/xM4Z0mGVykemMVjLhqMy/q6/IHYG3kKD8hKSwRen/ZdyI9vQ==}
+  '@vitest/spy@5.1.2':
+    resolution: {integrity: sha512-PQl0/3+p9GaY71+MHywN6oyHfLhVDD5kcbm7oNRldA2F0ExMU3S8RQdnpteJ9gFAdK5P6KCgE6LqCpUgy57KzA==}
 
   '@vue/compiler-core@3.5.46':
     resolution: {integrity: sha512-yb+N8/mgBcoeqCJPVyJI/D3OphLrSMXnB3ZQUNmRLU/1fsMW4bFfdJWNi9oIj7+EA3ULKKkP7b/VCpcYQYeiuQ==}
@@ -2886,8 +2886,8 @@ packages:
     resolution: {integrity: sha512-nTv2raKFMzGG6JJp0lpNDsRPdfFE6UHlu2rVEjXo8vkx1ZS3LW2CVXqIaLu8xZlu+6tbFs9V58Qc/Jmk/Ii7wA==}
     engines: {node: ^16.14.0 || >= 17.3.0}
 
-  tinyexec@1.3.1:
-    resolution: {integrity: sha512-GCvB3aoys96IuDFBMcTB46JOR6mdMtAToqwiW8JlWhsoh1mhHi/xn9ss/Dg7N555GiJyEt2qzoG/NHCwM6h1EA==}
+  tinyexec@1.4.0:
+    resolution: {integrity: sha512-PV6lIcJQh57aFeJDwx16JNHmgFRh5xguzallrDW1qe8nAghYgr5MKz2K5k7wEyV/ygZhdnIAP8+HZSarHPBCsg==}
     engines: {node: '>=18'}
 
   tinyglobby@0.2.17:
@@ -2897,11 +2897,11 @@ packages:
   tinyps@0.5.2:
     resolution: {integrity: sha512-sYhvdbpuo2rGE7u/jPUMiZz4H2LCaOodUtRD9ot4DLNFQbr884g9zozoJnxLI+1r4hXqWkmdHUl8Yig2Rllxxw==}
 
-  tldts-core@7.5.5:
-    resolution: {integrity: sha512-rEJz/8cJFY/bdF354gl14yxavbrIbvM+FcbkYVQ6CSCMQTJdUFUIm39TTWSiGPvcpQh7/F6qHrD3SkwwdgtDCw==}
+  tldts-core@7.6.0:
+    resolution: {integrity: sha512-0By9U6fw2hNzfJAbBMuo1bsX/OyVlsj0wjGyMPV50RZKoLCRwXBOX0FQqgZDaMo2WjjaEW/ZGyVXicLUFTmXqQ==}
 
-  tldts@7.5.5:
-    resolution: {integrity: sha512-Hy6IImaWALzJOgCIss4gIFi4G0M9lqk95pFKCUVxQPZw+biZ1Pv6f28JpYgahpJB+BufA0HYsIU/aP/WIx3KRg==}
+  tldts@7.6.0:
+    resolution: {integrity: sha512-IFk9SJW/EhTZMpJA1zRdP+69JK4NmJbMx1aRdJvLBR9em1k62eWiwolSWlDRpRdkaAnZ1dDCwFPmRPBNuLGGHA==}
     hasBin: true
 
   tough-cookie@6.1.0:
@@ -3158,20 +3158,20 @@ packages:
       vite:
         optional: true
 
-  vitest@5.1.1:
-    resolution: {integrity: sha512-trVmzUFOSraCZcI3uZIMD5FqBh4atFkC/XuJP/IU7qtyQay0FCs3Ia+0QiQ2JJwGyWG/xrcBoJNel2+O7kEZ0g==}
+  vitest@5.1.2:
+    resolution: {integrity: sha512-VIa2wXV208WraXUbzH+dQUrGcFpPuaiRA8HlhXS8R6/sy9cynw6OMqGj8fmAlH1hot7huTCtWUE14+FdXU3eLw==}
     engines: {node: ^22.12.0 || ^24.0.0 || >=26.0.0}
     hasBin: true
     peerDependencies:
       '@edge-runtime/vm': '*'
       '@opentelemetry/api': ^1.9.0
       '@types/node': ^22.0.0 || >=24.0.0
-      '@vitest/browser-playwright': 5.1.1
-      '@vitest/browser-preview': 5.1.1
+      '@vitest/browser-playwright': 5.1.2
+      '@vitest/browser-preview': 5.1.2
       '@vitest/browser-webdriverio': ^5.0.0-beta.5 || >=5.0.0
-      '@vitest/coverage-istanbul': 5.1.1
-      '@vitest/coverage-v8': 5.1.1
-      '@vitest/ui': 5.1.1
+      '@vitest/coverage-istanbul': 5.1.2
+      '@vitest/coverage-v8': 5.1.2
+      '@vitest/ui': 5.1.2
       happy-dom: '*'
       jsdom: '*'
       vite: ^6.4.0 || ^7.0.0 || ^8.0.0
@@ -3297,12 +3297,12 @@ snapshots:
   '@antfu/install-pkg@1.1.0':
     dependencies:
       package-manager-detector: 1.9.0
-      tinyexec: 1.3.1
+      tinyexec: 1.4.0
 
   '@antfu/install-pkg@2.1.0':
     dependencies:
       package-manager-detector: 1.9.0
-      tinyexec: 1.3.1
+      tinyexec: 1.4.0
 
   '@antfu/utils@8.1.1': {}
 
@@ -3428,11 +3428,11 @@ snapshots:
       github-slugger: 2.0.0
       satteri: 0.11.7
 
-  '@astrojs/mdx@8.1.6(@astrojs/markdown-remark@7.3.10)(@astrojs/markdown-satteri@0.4.10)(astro@7.4.13(@astrojs/markdown-remark@7.3.10)(@types/node@26.6.6)(yaml@2.9.1))':
+  '@astrojs/mdx@8.1.6(@astrojs/markdown-remark@7.3.10)(@astrojs/markdown-satteri@0.4.10)(astro@7.4.13(@astrojs/markdown-remark@7.3.10)(@types/node@26.6.10)(yaml@2.9.1))':
     dependencies:
       '@astrojs/internal-helpers': 0.13.2
       '@astrojs/markdown-satteri': 0.4.10
-      astro: 7.4.13(@astrojs/markdown-remark@7.3.10)(@types/node@26.6.6)(yaml@2.9.1)
+      astro: 7.4.13(@astrojs/markdown-remark@7.3.10)(@types/node@26.6.10)(yaml@2.9.1)
       es-module-lexer: 3.0.5
     optionalDependencies:
       '@astrojs/markdown-remark': 7.3.10
@@ -3451,16 +3451,16 @@ snapshots:
       sitemap: 10.0.0
       zod: 4.6.7
 
-  '@astrojs/starlight@0.42.11(@astrojs/markdown-remark@7.3.10)(astro@7.4.13(@astrojs/markdown-remark@7.3.10)(@types/node@26.6.6)(yaml@2.9.1))(typescript@7.0.2)':
+  '@astrojs/starlight@0.42.11(@astrojs/markdown-remark@7.3.10)(astro@7.4.13(@astrojs/markdown-remark@7.3.10)(@types/node@26.6.10)(yaml@2.9.1))(typescript@7.0.2)':
     dependencies:
       '@astrojs/markdown-satteri': 0.4.10
-      '@astrojs/mdx': 8.1.6(@astrojs/markdown-remark@7.3.10)(@astrojs/markdown-satteri@0.4.10)(astro@7.4.13(@astrojs/markdown-remark@7.3.10)(@types/node@26.6.6)(yaml@2.9.1))
+      '@astrojs/mdx': 8.1.6(@astrojs/markdown-remark@7.3.10)(@astrojs/markdown-satteri@0.4.10)(astro@7.4.13(@astrojs/markdown-remark@7.3.10)(@types/node@26.6.10)(yaml@2.9.1))
       '@astrojs/sitemap': 3.7.6
       '@pagefind/default-ui': 1.6.0
       '@types/hast': 3.0.5
       '@types/mdast': 4.0.4
-      astro: 7.4.13(@astrojs/markdown-remark@7.3.10)(@types/node@26.6.6)(yaml@2.9.1)
-      astro-expressive-code: 0.44.4(astro@7.4.13(@astrojs/markdown-remark@7.3.10)(@types/node@26.6.6)(yaml@2.9.1))
+      astro: 7.4.13(@astrojs/markdown-remark@7.3.10)(@types/node@26.6.10)(yaml@2.9.1)
+      astro-expressive-code: 0.44.4(astro@7.4.13(@astrojs/markdown-remark@7.3.10)(@types/node@26.6.10)(yaml@2.9.1))
       bcp-47: 2.1.2
       hast-util-format: 1.1.0
       hast-util-select: 6.0.5
@@ -3494,7 +3494,7 @@ snapshots:
       is-docker: 4.0.0
       package-manager-detector: 1.9.0
 
-  '@astrojs/vite-plugin-astro@0.1.3(vite@8.3.8(@types/node@26.6.6)(yaml@2.9.1))':
+  '@astrojs/vite-plugin-astro@0.1.3(vite@8.3.8(@types/node@26.6.10)(yaml@2.9.1))':
     dependencies:
       '@astrojs/compiler-rs': 0.5.3
       '@astrojs/internal-helpers': 0.13.2
@@ -3504,7 +3504,7 @@ snapshots:
       magic-string: 1.4.5
       rolldown: 1.2.19
       smol-toml: 1.9.1
-      vite: 8.3.8(@types/node@26.6.6)(yaml@2.9.1)
+      vite: 8.3.8(@types/node@26.6.10)(yaml@2.9.1)
       zod: 4.6.7
 
   '@babel/helper-string-parser@7.29.15': {}
@@ -3930,7 +3930,7 @@ snapshots:
 
   '@mdx-js/mdx@3.1.1':
     dependencies:
-      '@types/estree': 1.0.10
+      '@types/estree': 1.0.11
       '@types/estree-jsx': 1.0.5
       '@types/hast': 3.0.5
       '@types/mdx': 2.0.14
@@ -4014,7 +4014,7 @@ snapshots:
 
   '@publint/pack@0.1.7':
     dependencies:
-      tinyexec: 1.3.1
+      tinyexec: 1.4.0
 
   '@quansync/fs@1.1.0':
     dependencies:
@@ -4193,9 +4193,9 @@ snapshots:
 
   '@types/estree-jsx@1.0.5':
     dependencies:
-      '@types/estree': 1.0.10
+      '@types/estree': 1.0.11
 
-  '@types/estree@1.0.10': {}
+  '@types/estree@1.0.11': {}
 
   '@types/hast@3.0.5':
     dependencies:
@@ -4213,21 +4213,21 @@ snapshots:
     dependencies:
       '@types/unist': 3.0.3
 
-  '@types/node@26.6.6':
+  '@types/node@26.6.10':
     dependencies:
       undici-types: 8.9.0
 
-  '@types/react-dom@19.3.0(@types/react@19.3.0)':
+  '@types/react-dom@19.3.0(@types/react@19.3.3)':
     dependencies:
-      '@types/react': 19.3.0
+      '@types/react': 19.3.3
 
-  '@types/react@19.3.0':
+  '@types/react@19.3.3':
     dependencies:
       csstype: 3.2.4
 
   '@types/sax@1.2.7':
     dependencies:
-      '@types/node': 26.6.6
+      '@types/node': 26.6.10
 
   '@types/unist@2.0.11': {}
 
@@ -4235,7 +4235,7 @@ snapshots:
 
   '@types/yauzl@2.10.3':
     dependencies:
-      '@types/node': 26.6.6
+      '@types/node': 26.6.10
     optional: true
 
   '@typescript/typescript-aix-ppc64@7.0.2':
@@ -4300,27 +4300,27 @@ snapshots:
 
   '@ungap/structured-clone@1.4.0': {}
 
-  '@vitejs/plugin-react@6.3.0(vite@8.3.8(@types/node@26.6.6)(yaml@2.9.1))':
+  '@vitejs/plugin-react@6.3.0(vite@8.3.8(@types/node@26.6.10)(yaml@2.9.1))':
     dependencies:
       '@rolldown/pluginutils': 1.1.1
-      vite: 8.3.8(@types/node@26.6.6)(yaml@2.9.1)
+      vite: 8.3.8(@types/node@26.6.10)(yaml@2.9.1)
 
-  '@vitejs/plugin-vue@6.0.11(vite@8.3.8(@types/node@26.6.6)(yaml@2.9.1))(vue@3.5.46(typescript@7.0.2))':
+  '@vitejs/plugin-vue@6.0.11(vite@8.3.8(@types/node@26.6.10)(yaml@2.9.1))(vue@3.5.46(typescript@7.0.2))':
     dependencies:
       '@rolldown/pluginutils': 1.1.1
-      vite: 8.3.8(@types/node@26.6.6)(yaml@2.9.1)
+      vite: 8.3.8(@types/node@26.6.10)(yaml@2.9.1)
       vue: 3.5.46(typescript@7.0.2)
 
-  '@vitest/mocker@5.1.1(vite@8.3.8(@types/node@26.6.6)(yaml@2.9.1))':
+  '@vitest/mocker@5.1.2(vite@8.3.8(@types/node@26.6.10)(yaml@2.9.1))':
     dependencies:
       '@jridgewell/trace-mapping': 0.3.31
-      '@vitest/spy': 5.1.1
+      '@vitest/spy': 5.1.2
       estree-walker: 3.0.3
       magic-string: 1.4.5
     optionalDependencies:
-      vite: 8.3.8(@types/node@26.6.6)(yaml@2.9.1)
+      vite: 8.3.8(@types/node@26.6.10)(yaml@2.9.1)
 
-  '@vitest/spy@5.1.1': {}
+  '@vitest/spy@5.1.2': {}
 
   '@vue/compiler-core@3.5.46':
     dependencies:
@@ -4432,9 +4432,9 @@ snapshots:
 
   astring@1.9.0: {}
 
-  astro-expressive-code@0.44.4(astro@7.4.13(@astrojs/markdown-remark@7.3.10)(@types/node@26.6.6)(yaml@2.9.1)):
+  astro-expressive-code@0.44.4(astro@7.4.13(@astrojs/markdown-remark@7.3.10)(@types/node@26.6.10)(yaml@2.9.1)):
     dependencies:
-      astro: 7.4.13(@astrojs/markdown-remark@7.3.10)(@types/node@26.6.6)(yaml@2.9.1)
+      astro: 7.4.13(@astrojs/markdown-remark@7.3.10)(@types/node@26.6.10)(yaml@2.9.1)
       rehype-expressive-code: 0.44.4
       url-extras: 0.1.0
 
@@ -4444,9 +4444,9 @@ snapshots:
       '@iconify/types': 2.0.0
       '@iconify/utils': 3.1.7
 
-  astro-rehype-relative-markdown-links@0.19.2(astro@7.4.13(@astrojs/markdown-remark@7.3.10)(@types/node@26.6.6)(yaml@2.9.1)):
+  astro-rehype-relative-markdown-links@0.19.2(astro@7.4.13(@astrojs/markdown-remark@7.3.10)(@types/node@26.6.10)(yaml@2.9.1)):
     dependencies:
-      astro: 7.4.13(@astrojs/markdown-remark@7.3.10)(@types/node@26.6.6)(yaml@2.9.1)
+      astro: 7.4.13(@astrojs/markdown-remark@7.3.10)(@types/node@26.6.10)(yaml@2.9.1)
       catch-unknown: 2.0.0
       debug: 4.4.3
       github-slugger: 2.0.0
@@ -4458,14 +4458,14 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  astro@7.4.13(@astrojs/markdown-remark@7.3.10)(@types/node@26.6.6)(yaml@2.9.1):
+  astro@7.4.13(@astrojs/markdown-remark@7.3.10)(@types/node@26.6.10)(yaml@2.9.1):
     dependencies:
       '@astrojs/compiler-rs': 0.5.3
       '@astrojs/internal-helpers': 0.13.2
       '@astrojs/markdown-satteri': 0.4.10
       '@astrojs/runtime': 0.1.2
       '@astrojs/telemetry': 3.4.2
-      '@astrojs/vite-plugin-astro': 0.1.3(vite@8.3.8(@types/node@26.6.6)(yaml@2.9.1))
+      '@astrojs/vite-plugin-astro': 0.1.3(vite@8.3.8(@types/node@26.6.10)(yaml@2.9.1))
       '@capsizecss/unpack': 4.0.1
       '@clack/prompts': 1.9.0
       '@oslojs/encoding': 1.1.0
@@ -4501,20 +4501,20 @@ snapshots:
       smol-toml: 1.9.1
       svgo: 4.1.0
       tinyclip: 1.0.3
-      tinyexec: 1.3.1
+      tinyexec: 1.4.0
       tinyglobby: 0.2.17
       tinyps: 0.5.2
       ultrahtml: 1.7.0
       unifont: 1.0.3
       unstorage: 1.17.6
       verkit: 0.5.0
-      vite: 8.3.8(@types/node@26.6.6)(yaml@2.9.1)
-      vitefu: 1.1.4(vite@8.3.8(@types/node@26.6.6)(yaml@2.9.1))
+      vite: 8.3.8(@types/node@26.6.10)(yaml@2.9.1)
+      vitefu: 1.1.4(vite@8.3.8(@types/node@26.6.10)(yaml@2.9.1))
       xxhash-wasm: 1.1.0
       zod: 4.6.7
     optionalDependencies:
       '@astrojs/markdown-remark': 7.3.10
-      sharp: 0.35.5(@types/node@26.6.6)
+      sharp: 0.35.5(@types/node@26.6.10)
     transitivePeerDependencies:
       - '@azure/app-configuration'
       - '@azure/cosmos'
@@ -4818,7 +4818,7 @@ snapshots:
 
   estree-util-attach-comments@3.0.0:
     dependencies:
-      '@types/estree': 1.0.10
+      '@types/estree': 1.0.11
 
   estree-util-build-jsx@3.0.1:
     dependencies:
@@ -4831,7 +4831,7 @@ snapshots:
 
   estree-util-scope@1.0.1:
     dependencies:
-      '@types/estree': 1.0.10
+      '@types/estree': 1.0.11
       devlop: 1.1.0
 
   estree-util-to-js@2.0.0:
@@ -4849,7 +4849,7 @@ snapshots:
 
   estree-walker@3.0.3:
     dependencies:
-      '@types/estree': 1.0.10
+      '@types/estree': 1.0.11
 
   expect-type@1.4.0: {}
 
@@ -5053,7 +5053,7 @@ snapshots:
 
   hast-util-to-estree@3.1.3:
     dependencies:
-      '@types/estree': 1.0.10
+      '@types/estree': 1.0.11
       '@types/estree-jsx': 1.0.5
       '@types/hast': 3.0.5
       comma-separated-tokens: 2.0.3
@@ -5088,7 +5088,7 @@ snapshots:
 
   hast-util-to-jsx-runtime@2.3.7:
     dependencies:
-      '@types/estree': 1.0.10
+      '@types/estree': 1.0.11
       '@types/hast': 3.0.5
       '@types/unist': 3.0.3
       comma-separated-tokens: 2.0.3
@@ -5608,7 +5608,7 @@ snapshots:
 
   micromark-extension-mdx-expression@3.0.1:
     dependencies:
-      '@types/estree': 1.0.10
+      '@types/estree': 1.0.11
       devlop: 1.1.0
       micromark-factory-mdx-expression: 2.0.3
       micromark-factory-space: 2.1.0
@@ -5619,7 +5619,7 @@ snapshots:
 
   micromark-extension-mdx-jsx@3.0.2:
     dependencies:
-      '@types/estree': 1.0.10
+      '@types/estree': 1.0.11
       devlop: 1.1.0
       estree-util-is-identifier-name: 3.0.0
       micromark-factory-mdx-expression: 2.0.3
@@ -5636,7 +5636,7 @@ snapshots:
 
   micromark-extension-mdxjs-esm@3.0.0:
     dependencies:
-      '@types/estree': 1.0.10
+      '@types/estree': 1.0.11
       devlop: 1.1.0
       micromark-core-commonmark: 2.0.4
       micromark-util-character: 2.1.1
@@ -5672,7 +5672,7 @@ snapshots:
 
   micromark-factory-mdx-expression@2.0.3:
     dependencies:
-      '@types/estree': 1.0.10
+      '@types/estree': 1.0.11
       devlop: 1.1.0
       micromark-factory-space: 2.1.0
       micromark-util-character: 2.1.1
@@ -5740,7 +5740,7 @@ snapshots:
 
   micromark-util-events-to-acorn@2.0.3:
     dependencies:
-      '@types/estree': 1.0.10
+      '@types/estree': 1.0.11
       '@types/unist': 3.0.3
       devlop: 1.1.0
       estree-util-visit: 2.0.0
@@ -6004,7 +6004,7 @@ snapshots:
 
   recma-build-jsx@1.0.0:
     dependencies:
-      '@types/estree': 1.0.10
+      '@types/estree': 1.0.11
       estree-util-build-jsx: 3.0.1
       vfile: 6.0.3
 
@@ -6019,14 +6019,14 @@ snapshots:
 
   recma-parse@1.0.0:
     dependencies:
-      '@types/estree': 1.0.10
+      '@types/estree': 1.0.11
       esast-util-from-js: 2.0.1
       unified: 11.0.5
       vfile: 6.0.3
 
   recma-stringify@1.0.0:
     dependencies:
-      '@types/estree': 1.0.10
+      '@types/estree': 1.0.11
       estree-util-to-js: 2.0.0
       unified: 11.0.5
       vfile: 6.0.3
@@ -6053,7 +6053,7 @@ snapshots:
 
   rehype-recma@1.0.0:
     dependencies:
-      '@types/estree': 1.0.10
+      '@types/estree': 1.0.11
       '@types/hast': 3.0.5
       hast-util-to-estree: 3.1.3
     transitivePeerDependencies:
@@ -6265,7 +6265,7 @@ snapshots:
 
   semver@7.8.6: {}
 
-  sharp@0.35.5(@types/node@26.6.6):
+  sharp@0.35.5(@types/node@26.6.10):
     dependencies:
       '@img/colour': 1.1.0
       detect-libc: 2.1.2
@@ -6296,7 +6296,7 @@ snapshots:
       '@img/sharp-win32-arm64': 0.35.5
       '@img/sharp-win32-ia32': 0.35.5
       '@img/sharp-win32-x64': 0.35.5
-      '@types/node': 26.6.6
+      '@types/node': 26.6.10
     optional: true
 
   shiki@4.6.0:
@@ -6314,7 +6314,7 @@ snapshots:
 
   sitemap@10.0.0:
     dependencies:
-      '@types/node': 26.6.6
+      '@types/node': 26.6.10
       '@types/sax': 1.2.7
       sax: 1.6.1
 
@@ -6330,13 +6330,13 @@ snapshots:
 
   sprintf-js@1.0.3: {}
 
-  starlight-ion-theme@2.4.1(@astrojs/starlight@0.42.11(@astrojs/markdown-remark@7.3.10)(astro@7.4.13(@astrojs/markdown-remark@7.3.10)(@types/node@26.6.6)(yaml@2.9.1))(typescript@7.0.2))(astro@7.4.13(@astrojs/markdown-remark@7.3.10)(@types/node@26.6.6)(yaml@2.9.1)):
+  starlight-ion-theme@2.4.1(@astrojs/starlight@0.42.11(@astrojs/markdown-remark@7.3.10)(astro@7.4.13(@astrojs/markdown-remark@7.3.10)(@types/node@26.6.10)(yaml@2.9.1))(typescript@7.0.2))(astro@7.4.13(@astrojs/markdown-remark@7.3.10)(@types/node@26.6.10)(yaml@2.9.1)):
     dependencies:
-      '@astrojs/starlight': 0.42.11(@astrojs/markdown-remark@7.3.10)(astro@7.4.13(@astrojs/markdown-remark@7.3.10)(@types/node@26.6.6)(yaml@2.9.1))(typescript@7.0.2)
+      '@astrojs/starlight': 0.42.11(@astrojs/markdown-remark@7.3.10)(astro@7.4.13(@astrojs/markdown-remark@7.3.10)(@types/node@26.6.10)(yaml@2.9.1))(typescript@7.0.2)
       '@iconify/tools': 4.2.0
       '@iconify/utils': 2.3.0
       '@shikijs/themes': 1.29.2
-      astro: 7.4.13(@astrojs/markdown-remark@7.3.10)(@types/node@26.6.6)(yaml@2.9.1)
+      astro: 7.4.13(@astrojs/markdown-remark@7.3.10)(@types/node@26.6.10)(yaml@2.9.1)
       astro-icon: 1.2.0
       pathe: 2.0.3
     transitivePeerDependencies:
@@ -6397,7 +6397,7 @@ snapshots:
 
   tinyclip@1.0.3: {}
 
-  tinyexec@1.3.1: {}
+  tinyexec@1.4.0: {}
 
   tinyglobby@0.2.17:
     dependencies:
@@ -6406,15 +6406,15 @@ snapshots:
 
   tinyps@0.5.2: {}
 
-  tldts-core@7.5.5: {}
+  tldts-core@7.6.0: {}
 
-  tldts@7.5.5:
+  tldts@7.6.0:
     dependencies:
-      tldts-core: 7.5.5
+      tldts-core: 7.6.0
 
   tough-cookie@6.1.0:
     dependencies:
-      tldts: 7.5.5
+      tldts: 7.6.0
 
   tr46@7.0.0:
     dependencies:
@@ -6435,7 +6435,7 @@ snapshots:
       picomatch: 4.0.7
       rolldown: 1.3.3
       rolldown-plugin-dts: 0.30.2(rolldown@1.3.3)(typescript@7.0.2)
-      tinyexec: 1.3.1
+      tinyexec: 1.4.0
       tinyglobby: 0.2.17
       tinyps: 0.5.2
       unconfig-core: 7.5.0
@@ -6589,7 +6589,7 @@ snapshots:
       '@types/unist': 3.0.3
       vfile-message: 4.0.4
 
-  vite@8.3.8(@types/node@26.6.6)(yaml@2.9.1):
+  vite@8.3.8(@types/node@26.6.10)(yaml@2.9.1):
     dependencies:
       lightningcss: 1.33.0
       picomatch: 4.0.7
@@ -6597,18 +6597,18 @@ snapshots:
       rolldown: 1.2.19
       tinyglobby: 0.2.17
     optionalDependencies:
-      '@types/node': 26.6.6
+      '@types/node': 26.6.10
       fsevents: 2.3.3
       yaml: 2.9.1
 
-  vitefu@1.1.4(vite@8.3.8(@types/node@26.6.6)(yaml@2.9.1)):
+  vitefu@1.1.4(vite@8.3.8(@types/node@26.6.10)(yaml@2.9.1)):
     optionalDependencies:
-      vite: 8.3.8(@types/node@26.6.6)(yaml@2.9.1)
+      vite: 8.3.8(@types/node@26.6.10)(yaml@2.9.1)
 
-  vitest@5.1.1(@types/node@26.6.6)(jsdom@30.1.3)(vite@8.3.8(@types/node@26.6.6)(yaml@2.9.1)):
+  vitest@5.1.2(@types/node@26.6.10)(jsdom@30.1.3)(vite@8.3.8(@types/node@26.6.10)(yaml@2.9.1)):
     dependencies:
       '@types/chai': 5.2.3
-      '@vitest/mocker': 5.1.1(vite@8.3.8(@types/node@26.6.6)(yaml@2.9.1))
+      '@vitest/mocker': 5.1.2(vite@8.3.8(@types/node@26.6.10)(yaml@2.9.1))
       chai: 6.3.0
       es-module-lexer: 2.3.2
       expect-type: 1.4.0
@@ -6617,12 +6617,12 @@ snapshots:
       picomatch: 4.0.7
       std-env: 4.3.0
       tinybench: 6.2.5
-      tinyexec: 1.3.1
+      tinyexec: 1.4.0
       tinyglobby: 0.2.17
-      vite: 8.3.8(@types/node@26.6.6)(yaml@2.9.1)
+      vite: 8.3.8(@types/node@26.6.10)(yaml@2.9.1)
       why-is-node-running: 3.2.1
     optionalDependencies:
-      '@types/node': 26.6.6
+      '@types/node': 26.6.10
       jsdom: 30.1.3
     transitivePeerDependencies:
       - msw

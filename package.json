@@ -13,7 +13,8 @@
     "chained-select",
     "dependent-select",
     "typescript",
-    "react"
+    "react",
+    "vue"
   ],
   "author": "Anas Youssef ELMAHDAD <elmahdad.anasyoussef00@proton.me> (https://github.com/ayem1412)",
   "repository": {
@@ -44,13 +45,16 @@
     "datatables.net": "^3.0.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
-    "vue": "^3.0.0"
+    "vue": "^3.5.0"
   },
   "peerDependenciesMeta": {
     "react": {
       "optional": true
     },
     "react-dom": {
+      "optional": true
+    },
+    "vue": {
       "optional": true
     }
   },
@@ -59,8 +63,8 @@
     "@astrojs/markdown-remark": "^7.3.10",
     "@astrojs/starlight": "~0.42.11",
     "@biomejs/biome": "2.6.6",
-    "@types/node": "^26.6.6",
-    "@types/react": "^19.3.0",
+    "@types/node": "^26.6.10",
+    "@types/react": "^19.3.3",
     "@types/react-dom": "^19.3.0",
     "@vitejs/plugin-react": "^6.3.0",
     "@vitejs/plugin-vue": "^6.0.11",
@@ -80,7 +84,7 @@
     "tsdown": "^0.23.7",
     "typescript": "^7.0.2",
     "vite": "^8.3.8",
-    "vitest": "^5.1.1",
+    "vitest": "^5.1.2",
     "vue": "^3.5.46"
   },
   "packageManager": "pnpm@12.23.0",
