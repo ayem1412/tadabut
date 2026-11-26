@@ -183,6 +183,35 @@ describe("in 'single' mode", () => {
     expect(table.isAdding()).toBe(true);
   });
 
+  it('keeps what was typed when Edit is refused', () => {
+    const { table, newInputs } = setup({ onEditStart: () => false });
+    type(newInputs()[0] as HTMLInputElement, 'Nadia');
+
+    expect(table.edit(1)).toBe(false);
+
+    expect(newInputs()[0]?.value).toBe('Nadia');
+  });
+
+  it('keeps what was typed when Edit gets an id that is not in the table', () => {
+    const { table, newInputs } = setup();
+    type(newInputs()[0] as HTMLInputElement, 'Nadia');
+
+    expect(table.edit(99)).toBe(false);
+
+    expect(newInputs()[0]?.value).toBe('Nadia');
+  });
+
+  it('still comes back after Save when a second Edit was refused', async () => {
+    const { table } = setup();
+    table.edit(1);
+
+    expect(table.edit(2)).toBe(false);
+
+    await table.save(1);
+
+    expect(table.isAdding()).toBe(true);
+  });
+
   it("doesn't make way while it's saving", () => {
     const onAdd = waiting<Row>();
     const { table, newInputs } = setup({ onAdd: onAdd.fn });

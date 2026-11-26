@@ -595,35 +595,23 @@ export class Tadabut<Row extends object> {
    *   displayed yet, or `onEditStart` returned `false`.
    */
   public edit(id: string | number): boolean {
-    const opened = this.openRow(id);
-
-    if (this.autoMadeWay && !opened) {
-      this.autoMadeWay = false;
-      this.autoOpen();
-    }
-
-    return opened;
+    return this.openRow(id);
   }
 
   /** What `edit` does, apart from giving the auto row back when it refuses. */
   private openRow(id: string | number): boolean {
-    // In 'single' mode the auto row would block every Edit.
-    if (
-      this.editable &&
+    const autoMakesWay =
       this.editing.mode === 'single' &&
       this.sessions.size === 0 &&
       this.newRowIsAuto &&
-      this.newRow?.saving === false
-    ) {
-      this.cancelNew();
-      this.autoMadeWay = true;
-    }
+      this.newRow?.saving === false;
 
     if (
       !this.editable ||
       !this.hasEditor ||
       this.sessions.has(id) ||
-      (this.editing.mode === 'single' && (this.sessions.size > 0 || this.newRow !== undefined)) ||
+      (this.editing.mode === 'single' &&
+        (this.sessions.size > 0 || (this.newRow !== undefined && !autoMakesWay))) ||
       this.deleting.has(id)
     ) {
       return false;
@@ -638,6 +626,11 @@ export class Tadabut<Row extends object> {
 
     if (this.onEditStart?.(row.data()) === false) {
       return false;
+    }
+
+    if (autoMakesWay) {
+      this.cancelNew();
+      this.autoMadeWay = true;
     }
 
     const rowIndex = row.index();
