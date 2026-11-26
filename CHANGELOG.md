@@ -1,5 +1,16 @@
 # Changelog
 
+## [1.1.2](https://github.com/ayem1412/tadabut/compare/v1.1.1...v1.1.2) (2026-11-26)
+
+
+### Bug Fixes
+
+* accept text and fragments from render ([#94](https://github.com/ayem1412/tadabut/issues/94)) ([5aee5c0](https://github.com/ayem1412/tadabut/commit/5aee5c0f35db55eafce172645ba10b95d36d80ae))
+* keep the auto row when an edit is refused ([#91](https://github.com/ayem1412/tadabut/issues/91)) ([8e51d84](https://github.com/ayem1412/tadabut/commit/8e51d840352ace1b9f5dc024ec7142913ebd8d92))
+* make check all work when the table scrolls ([#93](https://github.com/ayem1412/tadabut/issues/93)) ([d2b4f19](https://github.com/ayem1412/tadabut/commit/d2b4f1989230d19533096d5bcc26199fe4068a69))
+* **react:** use the latest props when the table rebuilds ([#95](https://github.com/ayem1412/tadabut/issues/95)) ([e4d22a2](https://github.com/ayem1412/tadabut/commit/e4d22a277c2be2765a25057b29b68933ad030f16))
+* show column titles as text ([#96](https://github.com/ayem1412/tadabut/issues/96)) ([3931426](https://github.com/ayem1412/tadabut/commit/39314262ff407180b88001d48d37d9b13fc9a946))
+
 ## [1.1.1](https://github.com/ayem1412/tadabut/compare/v1.1.0...v1.1.1) (2026-11-26)
 
 
