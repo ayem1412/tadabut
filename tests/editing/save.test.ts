@@ -207,3 +207,40 @@ describe('saving a row', () => {
     expect(await table.save(1)).toBe(false);
   });
 });
+
+describe('a row returned by onSave', () => {
+  it('throws when its id changed, and leaves the row open and unlocked', async () => {
+    const { table, firstRow, cellTexts } = setup((row) => ({ ...row, id: 10 }));
+    table.edit(1);
+
+    await expect(table.save(1)).rejects.toThrow(
+      'Tadabut: onSave returned a row with a different "id". Keep the same id.',
+    );
+
+    expect(table.isEditing(1)).toBe(true);
+    expect(firstRow().inert).toBe(false);
+    expect(firstRow().classList.contains('tdb-row-saving')).toBe(false);
+
+    table.cancel(1);
+
+    expect(table.isEditing(1)).toBe(false);
+    expect(cellTexts().slice(0, 3)).toEqual(['1', 'Amina', '20']);
+  });
+
+  it('throws when it has no id', async () => {
+    const { table } = setup((row) => ({ name: row.name, age: row.age }) as Row);
+    table.edit(1);
+
+    await expect(table.save(1)).rejects.toThrow('a different "id"');
+
+    expect(table.isEditing(1)).toBe(true);
+  });
+
+  it('saves when it keeps the id, with more fields', async () => {
+    const { table, cellTexts } = setup((row) => ({ ...row, age: 21 }));
+    table.edit(1);
+
+    expect(await table.save(1)).toBe(true);
+    expect(cellTexts().slice(0, 3)).toEqual(['1', 'Amina', '21']);
+  });
+});
