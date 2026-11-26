@@ -32,7 +32,7 @@ export class Selection<Row extends object> {
   /** Starts listening to the checkboxes. Nothing is ticked yet. */
   public constructor(parts: SelectionParts<Row>) {
     this.parts = parts;
-    this.parts.dataTable.table().node().addEventListener('change', this.onChange);
+    this.parts.dataTable.table().container().addEventListener('change', this.onChange);
   }
 
   /**
@@ -188,7 +188,7 @@ export class Selection<Row extends object> {
 
   /** Stops listening to the checkboxes. */
   public destroy(): void {
-    this.parts.dataTable.table().node().removeEventListener('change', this.onChange);
+    this.parts.dataTable.table().container().removeEventListener('change', this.onChange);
   }
 
   /** Tells the user the selection changed. */
@@ -255,6 +255,10 @@ export class Selection<Row extends object> {
 
       this.toggle(row, target.checked);
     } else if (target.classList.contains('tdb-select-all')) {
+      if (target.closest('thead') !== this.parts.dataTable.table().header()) {
+        return;
+      }
+
       for (const row of this.scopeRows()) {
         this.toggle(row, target.checked);
       }
