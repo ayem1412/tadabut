@@ -29,7 +29,10 @@ export class Selection<Row extends object> {
   /** What the selection needs from the table. */
   private readonly parts: SelectionParts<Row>;
 
-  /** Starts listening to the checkboxes. Nothing is ticked yet. */
+  /**
+   * Starts listening to the checkboxes. On the wrapper, because a scrolling
+   * table puts its header in a table of its own. Nothing is ticked yet.
+   */
   public constructor(parts: SelectionParts<Row>) {
     this.parts = parts;
     this.parts.dataTable.table().container().addEventListener('change', this.onChange);
