@@ -963,6 +963,7 @@ export class Tadabut<Row extends object> {
    * the error message is shown under it. The table only changes on success.
    *
    * @returns `true` once the row is saved and closed.
+   * @throws If `onSave` returns a row with a different `rowId` value.
    */
   public async save(id: string | number): Promise<boolean> {
     const session = this.sessions.get(id);
@@ -1015,6 +1016,16 @@ export class Tadabut<Row extends object> {
     // setData or destroy may have run while we were waiting.
     if (this.sessions.get(id) !== session) {
       return false;
+    }
+
+    // The developer's mistake, not the user's, so it goes to the console. The
+    // selection, details and highlight all follow the id, so it can't change here.
+    if (this.rowId !== undefined && saved[this.rowId] !== id) {
+      this.setSaving(id, false);
+
+      throw new Error(
+        `Tadabut: onSave returned a row with a different "${this.rowId}". Keep the same id.`,
+      );
     }
 
     session.destroy();

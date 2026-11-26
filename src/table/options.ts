@@ -306,7 +306,8 @@ export type TadabutOptions<Row extends object> = {
    * Called with the edited row once it passes validation. May be async.
    *
    * Return a row to replace the edited one (useful for fields the server
-   * sets, like `updatedAt`), or nothing to keep it. Throw to reject the
+   * sets, like `updatedAt`), or nothing to keep it. The row you return must
+   * keep its `rowId` value, or Tadabut throws an error. Throw to reject the
    * save: the row stays open and the error message is shown under it.
    */
   readonly onSave?: (
