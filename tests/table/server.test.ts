@@ -483,6 +483,16 @@ describe('server: add and delete', () => {
     expect(document.activeElement?.closest('.tdb-row-new')).not.toBeNull();
   });
 
+  it("doesn't check the added id against the page, since the server decides", async () => {
+    const { server, table } = await setup({ onAdd: (row) => ({ ...row, id: 1 }) as Row });
+    const calls = server.mock.calls.length;
+    table.add();
+    type(document.querySelector('.tdb-row-new .tdb-input') as HTMLInputElement, 'New one');
+
+    expect(await table.saveNew()).toBe(true);
+    expect(server.mock.calls.length).toBe(calls + 1);
+  });
+
   it('reloads the page after a delete', async () => {
     const onDeleted = vi.fn();
     const { server, table } = await setup({ onDeleted });

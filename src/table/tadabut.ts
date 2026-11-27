@@ -833,6 +833,7 @@ export class Tadabut<Row extends object> {
    * @returns `true` once the row is added. `false` if there's no new row, a
    *   field is invalid, it's already saving, or `onAdd` threw.
    * @throws If the saved row has no `rowId` value.
+   * @throws If the saved row's id is already in the table. Not with `server`.
    */
   public async saveNew(): Promise<boolean> {
     const newRow = this.newRow;
@@ -887,6 +888,13 @@ export class Tadabut<Row extends object> {
       throw new Error(
         `Tadabut: the added row has no "${String(this.rowId)}". Return it from onAdd.`,
       );
+    }
+
+    // Only the current page is here with server, and the server decides anyway.
+    if (this.server === undefined && this.findRow(id) !== undefined) {
+      newRow.setSaving(false);
+
+      throw new Error(`Tadabut: the added row has the id ${id}, which is already in the table.`);
     }
 
     newRow.destroy();
