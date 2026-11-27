@@ -242,7 +242,7 @@ export class Tadabut<Row extends object> {
         server: options.server,
         columns: this.columns,
         offset: this.offset,
-        onRows: () => this.forgetRows(),
+        onRows: () => this.forgetPage(),
         onError: (message) => this.showLoadError(message ?? this.texts.rowsFailed),
         onLoaded: () => this.hideLoadError(),
         shownRows: () => this.dataTable.rows().data().toArray(),
@@ -1013,8 +1013,9 @@ export class Tadabut<Row extends object> {
 
       this.setSaving(id, false);
 
-      // Editing was turned off while it saved: its Save and Cancel are hidden now.
-      if (!this.editable) {
+      // Editing was turned off while it saved, so its Save and Cancel are hidden. Or the
+      // page reloaded while it saved, so its inputs are gone.
+      if (!this.editable || session.closed) {
         this.cancel(id);
       }
 
@@ -1227,6 +1228,33 @@ export class Tadabut<Row extends object> {
     this.destroySessions();
     this.autoMadeWay = false;
     this.deleting.clear();
+    // Before the draw, so the new rows draw with a closed ▸.
+    this.rowLines.destroy();
+  }
+
+  /**
+   * Before a server reply replaces the page. Like `forgetRows`, but a save, an
+   * add or a delete that is running carries on, since the server is still
+   * doing it. A saving row's inputs go away with the old cells, but its
+   * session stays until `onSave` is done.
+   */
+  private forgetPage(): void {
+    for (const [id, session] of this.sessions) {
+      session.destroy();
+
+      if (!session.saving) {
+        this.sessions.delete(id);
+      }
+    }
+
+    // It has its own <tbody>, so the new page doesn't touch it.
+    if (this.newRow?.saving === false) {
+      this.newRow.destroy();
+      this.newRow = undefined;
+    }
+
+    // A saving row that Edit opened still gives the auto row back once it's done.
+    this.autoMadeWay = this.autoMadeWay && this.sessions.size > 0;
     // Before the draw, so the new rows draw with a closed ▸.
     this.rowLines.destroy();
   }
@@ -1657,10 +1685,16 @@ export class Tadabut<Row extends object> {
   };
 
   /**
-   * After each reply with `server`: forgets the highlight if its row left,
-   * and opens the auto row. An arrow function, so it can be passed as is.
+   * After each reply with `server`: locks again the rows still saving or
+   * being deleted, forgets the highlight if its row left, and opens the auto
+   * row. An arrow function, so it can be passed as is.
    */
   private readonly afterServerDraw = (): void => {
+    // The new <tr>s don't know these rows are still saving or being deleted.
+    for (const id of [...this.sessions.keys(), ...this.deleting.keys()]) {
+      this.setSaving(id, true);
+    }
+
     this.currentRow?.prune();
     this.autoOpen(this.focusNewRow);
     this.focusNewRow = false;

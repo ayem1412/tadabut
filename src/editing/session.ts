@@ -47,6 +47,8 @@ export class EditSession<Row extends object> {
   private readonly loadErrors: Set<keyof Row & string> = new Set();
   /** Set by `Tadabut` while `onSave` runs. */
   public saving = false;
+  /** Whether `destroy` ran, so its inputs are gone. */
+  public closed = false;
   /** Error messages and the "Loading…" text. */
   private readonly texts: Texts;
   /** Told each time a select's options load, so the table can remember them. */
@@ -168,6 +170,7 @@ export class EditSession<Row extends object> {
 
   /** Leaves the cells empty; the caller redraws them. Safe to call twice. */
   public destroy(): void {
+    this.closed = true;
     this.clearErrors();
 
     for (const { editor } of this.fields.values()) {
