@@ -48,5 +48,6 @@ Next, roughly in this order:
 - [ ] Choosing what turning editing off does: hide the buttons column or grey the buttons out, and cancel open rows or leave them open
 - [ ] Choosing what clicking the current row again does: remove the highlight or keep it
 - [ ] Keyboard navigation and theming
+- [ ] A message under the new row when the id the user typed is already in the table, instead of only an error in the console
 
 Later: popup editing, changing many rows in one go, a jQuery adapter.

@@ -234,8 +234,9 @@ export class Tadabut<Row extends object> {
       this.tableEl.append(footerFor(this.offset + this.columns.length + (this.hasActions ? 1 : 0)));
     }
 
-    // The callbacks only run once a reply came, after an await: by then the
-    // constructor has finished, so rowLines and the rest exist.
+    // DataTables asks for the first page inside `new DataTable()`, but the
+    // callbacks only run after an await, even when `server` throws right away:
+    // by then the constructor has finished, so rowLines and the rest exist.
     if (options.server !== undefined) {
       this.server = new ServerSource({
         server: options.server,

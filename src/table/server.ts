@@ -70,7 +70,11 @@ export class ServerSource<Row extends object> {
     try {
       reply = await this.parts.server(this.toRequest(data), { signal: controller.signal });
     } catch (error) {
-      // A newer request replaced this one: it isn't an error.
+      // `server` may throw before it returns a promise. On the first load the
+      // table's constructor is still running then: waiting lets it finish.
+      await Promise.resolve();
+
+      // A newer request replaced this one, or the table went away: it isn't an error.
       if (controller.signal.aborted) {
         return;
       }
