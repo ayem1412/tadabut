@@ -126,7 +126,7 @@ Each one loads new rows, like `setData`:
 - Open details close.
 - The highlight (`currentRow`) goes away if its row isn't on the new page, and `onCurrentChange` gets `null`.
 
-Ticked rows stay ticked, even on other pages: Tadabut keeps a copy of each. `getSelected()` returns them in the order they were ticked. The header checkbox ticks the current page only.
+Ticked rows stay ticked, even on other pages: Tadabut keeps a copy of each. When a ticked row's page loads again, its copy takes the new values from the server. A ticked row on another page keeps the values it had when you last saw it. `getSelected()` returns them in the order they were ticked. The header checkbox ticks the current page only.
 
 ## When the server fails
 

@@ -91,6 +91,19 @@ function namesOf(table: Tadabut<Row>): string[] {
   return table.getData().map((row) => row.name);
 }
 
+/**
+ * Makes the server's next reply show page 1 with row 1 changed, as if someone
+ * else saved it in the meantime.
+ */
+function changeRow1(server: ReturnType<typeof fakeServer>['server'], changes: Partial<Row>): void {
+  server.mockImplementationOnce(async () => ({
+    rows: people.slice(0, 10).map((row) => (row.id === 1 ? { ...row, ...changes } : row)),
+    count: people.length,
+    countAll: people.length,
+    totals: { salary: 32500 },
+  }));
+}
+
 let warn: MockInstance;
 
 beforeEach(() => {
@@ -462,6 +475,23 @@ describe('server: totals', () => {
     );
   });
 
+  it("follows a reload that brings new values for a ticked row with totalRows: 'selected'", async () => {
+    const { container, server, table } = await setup({ selection: true, totalRows: 'selected' });
+    table.select([1]);
+
+    changeRow1(server, { salary: 200 });
+    table.reload();
+    await settle();
+
+    expect(container.querySelector('tbody tr td:nth-child(3)')?.textContent).toBe(
+      formatMoney(200, defaultMoneyFormat),
+    );
+    expect(table.getTotals()).toEqual({ salary: 200 });
+    expect(container.querySelector('tfoot th:nth-child(3)')?.textContent).toBe(
+      formatMoney(200, defaultMoneyFormat),
+    );
+  });
+
   it("keeps the server's total after a save without 'selected'", async () => {
     const { container, table } = await setup();
 
@@ -509,6 +539,58 @@ describe('server: selection', () => {
     type(input, 'Nadia');
     await table.save(1);
 
+    expect(table.getSelected()[0]?.name).toBe('Nadia');
+  });
+
+  it('keeps the new values of a ticked row after a reload', async () => {
+    const { server, table } = await setup({ selection: true });
+    table.select([2, 1]);
+
+    changeRow1(server, { name: 'Nadia', salary: 200 });
+    table.reload();
+    await settle();
+
+    // Still in the order they were ticked.
+    expect(table.getSelected()).toEqual([people[1], { id: 1, name: 'Nadia', salary: 200 }]);
+    expect(table.isSelected(1)).toBe(true);
+  });
+
+  it('keeps the copy of a ticked row from another page when a page loads', async () => {
+    const { container, table } = await setup({ selection: true });
+    table.select([1]);
+
+    goToPage(container, 1);
+    await settle();
+    goToPage(container, 0);
+    await settle();
+    goToPage(container, 1);
+    await settle();
+
+    expect(table.getSelected()).toEqual([people[0]]);
+  });
+
+  it("doesn't tick a row that changed but wasn't ticked", async () => {
+    const { server, table } = await setup({ selection: true });
+
+    changeRow1(server, { name: 'Nadia' });
+    table.reload();
+    await settle();
+
+    expect(table.getSelected()).toEqual([]);
+    expect(table.isSelected(1)).toBe(false);
+  });
+
+  it("doesn't call onSelect when a reload only brings new values for a ticked row", async () => {
+    const onSelect = vi.fn();
+    const { server, table } = await setup({ selection: true, onSelect });
+    table.select([1]);
+    onSelect.mockClear();
+
+    changeRow1(server, { name: 'Nadia' });
+    table.reload();
+    await settle();
+
+    expect(onSelect).not.toHaveBeenCalled();
     expect(table.getSelected()[0]?.name).toBe('Nadia');
   });
 

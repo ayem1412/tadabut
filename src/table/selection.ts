@@ -40,7 +40,9 @@ export class Selection<Row extends object> {
 
   /**
    * Ticks the checkboxes on the page to match the selection, and sets the
-   * header's checkbox to all, none or some.
+   * header's checkbox to all, none or some. With `server`, also refreshes the
+   * copies of the ticked rows on the page. The ticks don't change, so
+   * `onSelect` isn't called.
    */
   public sync(): void {
     const rows = this.parts.dataTable.rows({ page: 'current' });
@@ -56,7 +58,13 @@ export class Selection<Row extends object> {
           return;
         }
 
-        const selected = this.rows.has(this.idFor(row));
+        const id = this.idFor(row);
+        const selected = this.rows.has(id);
+
+        if (selected && this.parts.server) {
+          this.rows.set(id, { ...row });
+        }
+
         node.classList.toggle('tdb-row-selected', selected);
 
         const checkbox = node.querySelector<HTMLInputElement>('.tdb-select-row');
