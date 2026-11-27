@@ -3,6 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, type MockInstance, vi } fr
 import {
   type Column,
   defaultMoneyFormat,
+  en,
   formatMoney,
   fr,
   type ServerRequest,
@@ -398,6 +399,107 @@ describe('server: errors', () => {
     table.destroy();
 
     expect(container.querySelector('.tdb-load-error')).toBeNull();
+  });
+});
+
+describe('server: replies with the wrong shape', () => {
+  let error: MockInstance;
+
+  beforeEach(() => {
+    error = vi.spyOn(console, 'error').mockImplementation(() => {});
+  });
+
+  afterEach(() => {
+    error.mockRestore();
+  });
+
+  it('treats a reply without rows as a failed load, and tells the developer in the console', async () => {
+    const { server, container, table } = await setup();
+    table.updateRow({ id: 1, name: 'Saved', salary: 100 });
+    // A JavaScript user, or a bad cast, can send any shape.
+    server.mockResolvedValueOnce({ data: [], recordsTotal: 0 } as unknown as ServerResponse<Row>);
+
+    goToPage(container, 1);
+    await settle();
+
+    expect(container.querySelector('.tdb-load-error')?.textContent).toBe(en.rowsFailed);
+    expect(container.querySelector<HTMLElement>('.dt-processing')?.style.display).toBe('none');
+    expect(namesOf(table)).toHaveLength(10);
+    expect(table.getRow(1)?.name).toBe('Saved');
+    expect(error).toHaveBeenCalledOnce();
+    expect(String(error.mock.calls[0]?.[0])).toContain('Tadabut: server must return');
+  });
+
+  it('treats a reply whose count isn’t a number as a failed load', async () => {
+    const { server, container } = await setup();
+    // A JavaScript user, or a bad cast, can send any shape.
+    server.mockResolvedValueOnce({
+      rows: people.slice(10, 20),
+      count: '25',
+    } as unknown as ServerResponse<Row>);
+
+    goToPage(container, 1);
+    await settle();
+
+    expect(container.querySelector('.tdb-load-error')?.textContent).toBe(en.rowsFailed);
+    expect(container.querySelector('tbody tr td')?.textContent).toBe('Person 1');
+    expect(error).toHaveBeenCalledOnce();
+  });
+
+  it('treats an empty reply as a failed load, like a server function that forgot to return', async () => {
+    const { server, container } = await setup();
+    // A JavaScript user, or a bad cast, can send any shape.
+    server.mockResolvedValueOnce(undefined as unknown as ServerResponse<Row>);
+
+    goToPage(container, 1);
+    await settle();
+
+    expect(container.querySelector('.tdb-load-error')?.textContent).toBe(en.rowsFailed);
+    expect(container.querySelector<HTMLElement>('.dt-processing')?.style.display).toBe('none');
+    expect(error).toHaveBeenCalledOnce();
+  });
+
+  it('shows the error on the first load, and works again after a good reply', async () => {
+    const server = vi.fn(
+      // A JavaScript user, or a bad cast, can send any shape.
+      async (): Promise<ServerResponse<Row>> => ({ data: [] }) as unknown as ServerResponse<Row>,
+    );
+    const container = mountPoint();
+    const table = new Tadabut<Row>(container, { server, rowId: 'id', columns, texts: fr });
+    await settle();
+
+    expect(container.querySelector('.tdb-load-error')?.textContent).toBe(fr.rowsFailed);
+    expect(container.querySelector<HTMLElement>('.dt-processing')?.style.display).toBe('none');
+
+    server.mockImplementation(async () => ({ rows: people.slice(0, 2), count: 2 }));
+    table.reload();
+    await settle();
+
+    expect(namesOf(table)).toEqual(['Person 1', 'Person 2']);
+    expect(container.querySelector('.tdb-load-error')).toBeNull();
+  });
+
+  it('ignores a wrong reply that comes after a newer request started', async () => {
+    const { server, container, table } = await setup();
+    let answer: (reply: ServerResponse<Row>) => void = () => {};
+    server.mockImplementationOnce(
+      () =>
+        new Promise((resolve) => {
+          answer = resolve;
+        }),
+    );
+
+    goToPage(container, 1);
+    await settle();
+    goToPage(container, 2);
+    await settle();
+    // A JavaScript user, or a bad cast, can send any shape.
+    answer({ data: [] } as unknown as ServerResponse<Row>);
+    await settle();
+
+    expect(container.querySelector('.tdb-load-error')).toBeNull();
+    expect(error).not.toHaveBeenCalled();
+    expect(namesOf(table)[0]).toBe('Person 21');
   });
 });
 

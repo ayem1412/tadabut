@@ -79,22 +79,25 @@ export class ServerSource<Row extends object> {
         return;
       }
 
-      // The rows shown come back, saves included, so "Processing…" goes away.
-      // The page number at the bottom already moved to the page that failed:
-      // DataTables moves it before asking. The next good reply fixes it.
-      this.parts.onRows();
-      callback({
-        ...this.lastReply,
-        draw: data.draw,
-        data: this.parts.shownRows().map((row) => ({ ...row })),
-      });
-      this.parts.onError(error instanceof Error ? error.message : undefined);
+      this.fail(data, callback, error instanceof Error ? error.message : undefined);
 
       return;
     }
 
     // The function may ignore the signal and answer late: a newer request owns the table.
     if (controller.signal.aborted) {
+      return;
+    }
+
+    // The developer's mistake, not the user's, so the details go to the console.
+    // The type says it can't happen, but JavaScript users and bad casts can send anything.
+    if (!Array.isArray(reply?.rows) || typeof reply.count !== 'number') {
+      console.error(
+        'Tadabut: server must return { rows: [...], count: number }. It returned:',
+        reply,
+      );
+      this.fail(data, callback, undefined);
+
       return;
     }
 
@@ -110,6 +113,17 @@ export class ServerSource<Row extends object> {
     // `draw` goes back as it came: DataTables uses it to drop old replies.
     callback({ ...this.lastReply, draw: data.draw });
     this.parts.onLoaded();
+  }
+
+  /** Puts back the rows shown and shows the error, when a load failed. */
+  private fail(data: AjaxData, callback: AjaxCallback, message: string | undefined): void {
+    this.parts.onRows();
+    callback({
+      ...this.lastReply,
+      draw: data.draw,
+      data: this.parts.shownRows().map((row) => ({ ...row })),
+    });
+    this.parts.onError(message);
   }
 
   /** DataTables' request, with fields instead of column numbers. */
