@@ -746,6 +746,261 @@ describe('server: add and delete', () => {
   });
 });
 
+/** A promise the test settles by hand. Unlike `waiting`, each call gets its own. */
+function later<Value>(): {
+  readonly promise: Promise<Value>;
+  readonly resolve: (value: Value) => void;
+  readonly reject: (error: unknown) => void;
+} {
+  let resolve: (value: Value) => void = () => {};
+  let reject: (error: unknown) => void = () => {};
+
+  const promise = new Promise<Value>((res, rej) => {
+    resolve = res;
+    reject = rej;
+  });
+
+  return { promise, resolve, reject };
+}
+
+/** The `<tr>` of a row on the page, found by the name in its first cell. */
+function trOf(container: HTMLElement, name: string): HTMLTableRowElement | undefined {
+  return [...container.querySelectorAll<HTMLTableRowElement>('tbody tr')].find(
+    (tr) => tr.cells[0]?.textContent === name,
+  );
+}
+
+/**
+ * Whether a row on the page is locked, like while it saves. `undefined` if it
+ * isn't on the page. jsdom only knows `inert` once it was set, so a new row
+ * that was never locked has none.
+ */
+function isLocked(container: HTMLElement, name: string): boolean | undefined {
+  const tr = trOf(container, name);
+
+  return tr === undefined
+    ? undefined
+    : tr.inert === true && tr.classList.contains('tdb-row-saving');
+}
+
+/**
+ * A pretend server over `people` that forgets the deleted rows, and an
+ * `onDelete` that waits for the test for each row.
+ */
+function deletingServer() {
+  const gone = new Set<number>();
+  const calls = new Map<number, ReturnType<typeof later<void>>>();
+
+  const server = vi.fn(async (request: ServerRequest<Row>): Promise<ServerResponse<Row>> => {
+    const rows = people.filter((row) => !gone.has(row.id));
+
+    return { rows: rows.slice(request.start, request.start + request.length), count: rows.length };
+  });
+
+  const onDelete = vi.fn((row: Row) => {
+    const call = later<void>();
+    calls.set(row.id, call);
+
+    return call.promise;
+  });
+
+  /** Finishes the delete of a row: the server forgets it. */
+  const finish = (id: number): void => {
+    gone.add(id);
+    calls.get(id)?.resolve();
+  };
+
+  /** Makes the delete of a row fail. */
+  const fail = (id: number, message: string): void => {
+    calls.get(id)?.reject(new Error(message));
+  };
+
+  return { server, onDelete, finish, fail };
+}
+
+describe('server: jobs still running when the page reloads', () => {
+  it('keeps a row locked while it is deleted, when another delete reloads the page', async () => {
+    const fake = deletingServer();
+    const onDeleted = vi.fn();
+    const { container, table } = await setup({ ...fake, onDeleted });
+
+    const first = table.delete(1);
+    const second = table.delete(2);
+    fake.finish(1);
+    await first;
+    await settle();
+
+    expect(trOf(container, 'Person 1')).toBeUndefined();
+    expect(isLocked(container, 'Person 2')).toBe(true);
+    expect(await table.delete(2)).toBe(false);
+    expect(fake.onDelete).toHaveBeenCalledTimes(2);
+
+    const calls = fake.server.mock.calls.length;
+    fake.finish(2);
+
+    expect(await second).toBe(true);
+
+    await settle();
+
+    expect(onDeleted).toHaveBeenCalledTimes(2);
+    expect(onDeleted).toHaveBeenLastCalledWith(people[1]);
+    expect(fake.server.mock.calls.length).toBe(calls + 1);
+    expect(trOf(container, 'Person 2')).toBeUndefined();
+  });
+
+  it('shows the error and unlocks the row when its delete fails after the page reloaded', async () => {
+    const fake = deletingServer();
+    const { container, table } = await setup({ ...fake });
+
+    const first = table.delete(1);
+    const second = table.delete(2);
+    fake.finish(1);
+    await first;
+    await settle();
+    fake.fail(2, 'Still in use');
+
+    expect(await second).toBe(false);
+    expect(isLocked(container, 'Person 2')).toBe(false);
+    expect(container.querySelector('tr.tdb-row-error')?.textContent).toContain('Still in use');
+
+    const again = table.delete(2);
+    fake.finish(2);
+
+    expect(await again).toBe(true);
+  });
+
+  it('still fires deleted and reloads when the user changed page during the delete', async () => {
+    const fake = deletingServer();
+    const onDeleted = vi.fn();
+    const { container, table } = await setup({ ...fake, onDeleted });
+
+    const deleting = table.delete(3);
+    goToPage(container, 1);
+    await settle();
+
+    const calls = fake.server.mock.calls.length;
+    fake.finish(3);
+
+    expect(await deleting).toBe(true);
+    expect(onDeleted).toHaveBeenCalledWith(people[2]);
+    expect(fake.server.mock.calls.length).toBe(calls + 1);
+  });
+
+  it('finishes a save when the page reloads during it, and shows the saved values', async () => {
+    const save = later<Row>();
+    const onSaved = vi.fn();
+    const { container, table } = await setup({ onSave: () => save.promise, onSaved });
+
+    table.edit(1);
+    type(container.querySelector('tr.tdb-row-editing .tdb-input') as HTMLInputElement, 'Saved');
+    const saving = table.save(1);
+    table.reload();
+    await settle();
+
+    expect(container.querySelector('tr.tdb-row-editing')).toBeNull();
+    expect(isLocked(container, 'Person 1')).toBe(true);
+    expect(await table.delete(1)).toBe(false);
+
+    save.resolve({ ...people[0], name: 'Saved' } as Row);
+
+    expect(await saving).toBe(true);
+    expect(onSaved).toHaveBeenCalledWith({ ...people[0], name: 'Saved' }, { previous: people[0] });
+    expect(table.getRow(1)?.name).toBe('Saved');
+    expect(isLocked(container, 'Saved')).toBe(false);
+    expect(table.isEditing(1)).toBe(false);
+  });
+
+  it('shows the error and unlocks the row when its save fails after the page reloaded', async () => {
+    const save = later<Row>();
+    const { container, table } = await setup({ onSave: () => save.promise });
+
+    table.edit(1);
+    type(container.querySelector('tr.tdb-row-editing .tdb-input') as HTMLInputElement, 'Saved');
+    const saving = table.save(1);
+    table.reload();
+    await settle();
+    save.reject(new Error('Name taken'));
+
+    expect(await saving).toBe(false);
+    expect(table.isEditing(1)).toBe(false);
+    expect(table.getRow(1)?.name).toBe('Person 1');
+    expect(isLocked(container, 'Person 1')).toBe(false);
+    expect(container.querySelector('tr.tdb-row-error')?.textContent).toContain('Name taken');
+    expect(table.edit(1)).toBe(true);
+  });
+
+  it('gives the auto row back once a save that outlived a reload is done', async () => {
+    const save = later<Row>();
+    const { container, table } = await setup({ autoAdd: true, onSave: () => save.promise });
+
+    table.edit(1);
+    const saving = table.save(1);
+    table.reload();
+    await settle();
+
+    expect(table.isAdding()).toBe(false);
+
+    save.resolve(people[0] as Row);
+    await saving;
+
+    expect(table.isAdding()).toBe(true);
+    expect(container.querySelector('tr.tdb-row-new')).not.toBeNull();
+  });
+
+  it('keeps the new row while it saves, when the page reloads during it', async () => {
+    const add = later<Row>();
+    const onAdded = vi.fn();
+    const { container, server, table } = await setup({ onAdd: () => add.promise, onAdded });
+
+    table.add();
+    type(container.querySelector('.tdb-row-new .tdb-input') as HTMLInputElement, 'New one');
+    const adding = table.saveNew();
+    table.reload();
+    await settle();
+
+    expect(table.isAdding()).toBe(true);
+    expect(container.querySelector<HTMLTableRowElement>('tr.tdb-row-new')?.inert).toBe(true);
+
+    const calls = server.mock.calls.length;
+    add.resolve({ id: 99, name: 'New one', salary: 0 });
+
+    expect(await adding).toBe(true);
+    expect(onAdded).toHaveBeenCalledWith({ id: 99, name: 'New one', salary: 0 });
+    expect(server.mock.calls.length).toBe(calls + 1);
+    expect(table.isAdding()).toBe(false);
+  });
+
+  it('keeps the new row open with its error when its save fails after the page reloaded', async () => {
+    const add = later<Row>();
+    const { container, table } = await setup({ onAdd: () => add.promise });
+
+    table.add();
+    type(container.querySelector('.tdb-row-new .tdb-input') as HTMLInputElement, 'New one');
+    const adding = table.saveNew();
+    table.reload();
+    await settle();
+    add.reject(new Error('Too many people'));
+
+    expect(await adding).toBe(false);
+    expect(table.isAdding()).toBe(true);
+    expect(container.querySelector('tr.tdb-row-new')?.classList.contains('tdb-row-saving')).toBe(
+      false,
+    );
+    expect(container.querySelector('.tdb-row-new .tdb-input')).toHaveProperty('value', 'New one');
+    expect(container.textContent).toContain('Too many people');
+  });
+
+  it('still closes a new row that is not saving when the page reloads', async () => {
+    const { table } = await setup();
+
+    table.add();
+    table.reload();
+    await settle();
+
+    expect(table.isAdding()).toBe(false);
+  });
+});
+
 describe('server: leaving the page', () => {
   it('closes open rows, the new row and details, and forgets the highlight', async () => {
     const onCurrentChange = vi.fn();

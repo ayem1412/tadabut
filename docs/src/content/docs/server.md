@@ -120,9 +120,10 @@ They're formatted like the cells, and go through the column's `render`, as usual
 
 ## Changing page, sorting and searching
 
-Each one loads new rows, like `setData`:
+Each one loads new rows, like `setData`. So do `reload()` and the reload after an add or a delete:
 
 - Open rows, and the new row, close without saving.
+- A save, add or delete that is still running carries on. Its row stays locked until it's done, and `onSaved`, `onAdded` or `onDeleted` still runs. A saving row's inputs close: if the save fails, the error shows under the row, and what was typed is lost. The new row stays open while it saves.
 - Open details close.
 - The highlight (`currentRow`) goes away if its row isn't on the new page, and `onCurrentChange` gets `null`.
 
