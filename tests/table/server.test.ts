@@ -274,6 +274,51 @@ describe('server: errors', () => {
     expect(container.querySelector('.tdb-load-error img')).toBeNull();
   });
 
+  it('keeps a saved row when the next page fails to load', async () => {
+    const { server, container, table } = await setup();
+
+    table.edit(1);
+    type(container.querySelector<HTMLInputElement>('.tdb-input') as HTMLInputElement, 'Saved');
+    expect(await table.save(1)).toBe(true);
+
+    server.mockRejectedValueOnce(new Error('Down.'));
+    goToPage(container, 1);
+    await settle();
+
+    expect(container.querySelector('tbody tr td')?.textContent).toBe('Saved');
+    expect(table.getRow(1)?.name).toBe('Saved');
+  });
+
+  it('keeps a row changed with updateRow when the next page fails to load', async () => {
+    const { server, container, table } = await setup();
+
+    table.updateRow({ id: 1, name: 'Saved', salary: 100 });
+
+    server.mockRejectedValueOnce(new Error('Down.'));
+    goToPage(container, 1);
+    await settle();
+
+    expect(container.querySelector('tbody tr td')?.textContent).toBe('Saved');
+    expect(table.getRow(1)?.name).toBe('Saved');
+  });
+
+  it('keeps a saved row after two failed loads in a row', async () => {
+    const { server, container, table } = await setup();
+
+    table.updateRow({ id: 1, name: 'Saved', salary: 100 });
+
+    server.mockRejectedValueOnce(new Error('Down.'));
+    goToPage(container, 1);
+    await settle();
+    server.mockRejectedValueOnce(new Error('Still down.'));
+    goToPage(container, 2);
+    await settle();
+
+    expect(container.querySelector('tbody tr td')?.textContent).toBe('Saved');
+    expect(table.getRow(1)?.name).toBe('Saved');
+    expect(namesOf(table)).toHaveLength(10);
+  });
+
   it('removes the error line on destroy', async () => {
     const { server, container, table } = await setup();
     server.mockRejectedValueOnce(new Error('Down.'));
