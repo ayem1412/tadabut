@@ -319,6 +319,63 @@ describe('server: errors', () => {
     expect(namesOf(table)).toHaveLength(10);
   });
 
+  it('shows the error when server throws before it returns a promise, on the first load', async () => {
+    const server = vi.fn(
+      (
+        _request: ServerRequest<Row>,
+        _context: { signal: AbortSignal },
+      ): Promise<ServerResponse<Row>> => {
+        throw new Error('Not logged in.');
+      },
+    );
+    const container = mountPoint();
+    const table = new Tadabut<Row>(container, { server, rowId: 'id', columns });
+    await settle();
+
+    expect(container.querySelector('.tdb-load-error')?.textContent).toBe('Not logged in.');
+    expect(container.querySelector<HTMLElement>('.dt-processing')?.style.display).toBe('none');
+    expect(container.querySelector('tbody td')?.textContent).not.toBe('Loading...');
+
+    // The table still works: the next good load shows the rows.
+    server.mockImplementation(() => Promise.resolve({ rows: people.slice(0, 2), count: 2 }));
+    table.reload();
+    await settle();
+
+    expect(namesOf(table)).toEqual(['Person 1', 'Person 2']);
+    expect(container.querySelector('.tdb-load-error')).toBeNull();
+  });
+
+  it('uses rowsFailed when server throws something that isn’t an Error before it returns a promise', async () => {
+    const container = mountPoint();
+    new Tadabut<Row>(container, {
+      server: () => {
+        throw 'nope';
+      },
+      rowId: 'id',
+      columns,
+      texts: fr,
+    });
+    await settle();
+
+    expect(container.querySelector('.tdb-load-error')?.textContent).toBe(fr.rowsFailed);
+  });
+
+  it('shows nothing when server throws before it returns a promise and the table is destroyed right away', async () => {
+    const container = mountPoint();
+    const table = new Tadabut<Row>(container, {
+      server: () => {
+        throw new Error('Not logged in.');
+      },
+      rowId: 'id',
+      columns,
+    });
+
+    table.destroy();
+    await settle();
+
+    expect(container.querySelector('.tdb-load-error')).toBeNull();
+  });
+
   it('removes the error line on destroy', async () => {
     const { server, container, table } = await setup();
     server.mockRejectedValueOnce(new Error('Down.'));
