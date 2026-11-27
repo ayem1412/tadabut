@@ -16,6 +16,8 @@ export type ServerParts<Row extends object> = {
   readonly onError: (message: string | undefined) => void;
   /** Called after rows loaded fine. */
   readonly onLoaded: () => void;
+  /** The rows the table shows now, saves included. */
+  readonly shownRows: () => readonly Row[];
 };
 
 /** Loads the rows from the user's `server` function, one page at a time. */
@@ -24,7 +26,7 @@ export class ServerSource<Row extends object> {
   private readonly parts: ServerParts<Row>;
   /** Stops the request in progress, when a newer one starts or the table goes away. */
   private controller?: AbortController;
-  /** The last good reply, shown again when a load fails. */
+  /** The last good reply. Its counts are used again when a load fails. */
   private lastReply: AjaxResponse = { data: [], recordsFiltered: 0, recordsTotal: 0 };
   /** The totals of the last good reply. */
   private lastTotals: NonNullable<ServerResponse<Row>['totals']> = {};
@@ -73,11 +75,15 @@ export class ServerSource<Row extends object> {
         return;
       }
 
-      // The old rows come back so "Processing…" goes away. The page number at
-      // the bottom already moved to the page that failed: DataTables moves it
-      // before asking. The next good reply fixes it.
+      // The rows shown come back, saves included, so "Processing…" goes away.
+      // The page number at the bottom already moved to the page that failed:
+      // DataTables moves it before asking. The next good reply fixes it.
       this.parts.onRows();
-      callback({ ...this.lastReply, draw: data.draw });
+      callback({
+        ...this.lastReply,
+        draw: data.draw,
+        data: this.parts.shownRows().map((row) => ({ ...row })),
+      });
       this.parts.onError(error instanceof Error ? error.message : undefined);
 
       return;

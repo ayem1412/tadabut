@@ -244,11 +244,11 @@ export class Tadabut<Row extends object> {
         onRows: () => this.forgetRows(),
         onError: (message) => this.showLoadError(message ?? this.texts.rowsFailed),
         onLoaded: () => this.hideLoadError(),
+        shownRows: () => this.dataTable.rows().data().toArray(),
       });
     }
 
     this.dataTable = new DataTable(this.tableEl, {
-      // Before the spread, so a page can turn it off. Without it, nothing shows while waiting.
       ...(this.server !== undefined && { processing: true }),
       ...options.dataTables,
       ...(this.offset > 0 && { order: shiftOrder(options.dataTables?.order, this.offset) }),
