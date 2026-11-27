@@ -141,6 +141,8 @@ If `server` throws, the old rows stay, and the error's message shows on a line a
 
 The page number at the bottom has already moved to the page that failed, because DataTables moves it before asking. The next good load fixes it.
 
+A reply without a `rows` array or a number in `count` counts as a failed load too. The line shows `texts.rowsFailed`, and the console says what came back, so you can fix your `server` function.
+
 ## What changes from code
 
 - `getData()` and `getRow()` only see the current page.
