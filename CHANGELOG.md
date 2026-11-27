@@ -1,5 +1,20 @@
 # Changelog
 
+## [1.1.3](https://github.com/ayem1412/tadabut/compare/v1.1.2...v1.1.3) (2026-11-27)
+
+
+### Bug Fixes
+
+* ignore an old delete after the rows were replaced ([#97](https://github.com/ayem1412/tadabut/issues/97)) ([6bf6489](https://github.com/ayem1412/tadabut/commit/6bf648954de37268788dae852e0b21364faaeda8))
+* keep saved rows when a server load fails ([#102](https://github.com/ayem1412/tadabut/issues/102)) ([277fdee](https://github.com/ayem1412/tadabut/commit/277fdee2d94543d92fd72da9bcdefeb6b4ac4013))
+* keep saves, adds and deletes running when the server page reloads ([#107](https://github.com/ayem1412/tadabut/issues/107)) ([7fa12c7](https://github.com/ayem1412/tadabut/commit/7fa12c778d7c1b472500f916f7cd157aa391b9ae))
+* refresh ticked rows when their page loads again in server mode ([#105](https://github.com/ayem1412/tadabut/issues/105)) ([c52d186](https://github.com/ayem1412/tadabut/commit/c52d186b347b22c60d5a26c1857ee61439cf4ccf))
+* refuse a saved row whose id changed ([#100](https://github.com/ayem1412/tadabut/issues/100)) ([df17e9f](https://github.com/ayem1412/tadabut/commit/df17e9fbd996e0d9c05e8f80acb1ffe269c5e13b))
+* refuse an added row whose id is already in the table ([#103](https://github.com/ayem1412/tadabut/issues/103)) ([9128b12](https://github.com/ayem1412/tadabut/commit/9128b128f197c65258dfbe3d9bfd201553934f16))
+* show an error when the server reply has the wrong shape ([#106](https://github.com/ayem1412/tadabut/issues/106)) ([76d82a9](https://github.com/ayem1412/tadabut/commit/76d82a9f56795ebac9019ba3f51e551046dd8c6b))
+* show the error when server throws before it returns a promise ([#104](https://github.com/ayem1412/tadabut/issues/104)) ([36a95b4](https://github.com/ayem1412/tadabut/commit/36a95b4a734f24a6f6d349052c82d2127d889398))
+* update selected totals after a save ([#101](https://github.com/ayem1412/tadabut/issues/101)) ([41c5782](https://github.com/ayem1412/tadabut/commit/41c5782d1eeba24f9a0d8bb82f26aeccbd56ee17))
+
 ## [1.1.2](https://github.com/ayem1412/tadabut/compare/v1.1.1...v1.1.2) (2026-11-26)
 
 
