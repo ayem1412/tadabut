@@ -162,7 +162,7 @@ See [Reading and changing rows](#reading-and-changing-rows) for `getData`, `inse
 
 `delete` never asks first: only the Delete button does. It returns a promise of `true` once the row is removed, `false` if it wasn't: the row doesn't exist, it's being edited, it's already being deleted, or `onDelete` failed. Without `onDelete`, it just removes the row.
 
-`add` returns `true` if the new row opened, `false` if one is already open, no column has an editor, or a row is being edited in `'single'` mode. `saveNew` works like `save`, and throws if the saved row has no id. `cancelNew` does nothing while `onAdd` runs.
+`add` returns `true` if the new row opened, `false` if one is already open, no column has an editor, or a row is being edited in `'single'` mode. `saveNew` works like `save`, and throws if the saved row has no id, or an id that's already in the table. `cancelNew` does nothing while `onAdd` runs.
 
 `select` skips ids that aren't in the table. `onSelect` is only called when something really changed. `getSelected` gives the rows in the order they were added, including rows hidden by the search or on other pages. Without `selection`, these do nothing, and `getSelected` gives `[]`. The detail methods do nothing without `detail`, and `isDetailOpen` gives `false`.
 

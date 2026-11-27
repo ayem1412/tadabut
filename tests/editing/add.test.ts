@@ -268,6 +268,61 @@ describe('saveNew()', () => {
     expect(newTr()?.inert).toBe(false);
   });
 
+  it('throws when onAdd returns an id already in the table, and leaves the row open', async () => {
+    const onAdded = vi.fn();
+    const { table, newTr, typeName, info, input } = setup({
+      onAdd: (row) => ({ ...row, id: 1 }) as Row,
+      onAdded,
+    });
+    table.add();
+    typeName('Zed');
+
+    await expect(table.saveNew()).rejects.toThrow(
+      'Tadabut: the added row has the id 1, which is already in the table.',
+    );
+
+    expect(table.isAdding()).toBe(true);
+    expect(newTr()?.inert).toBe(false);
+    expect(input(0).value).toBe('Zed');
+    expect(info()).toContain('of 25 ');
+    expect(table.getData().filter((row) => row.id === 1)).toHaveLength(1);
+    expect(table.getRow(1)?.name).toBe('N00');
+    expect(onAdded).not.toHaveBeenCalled();
+  });
+
+  it('throws for an id on a page that is not shown', async () => {
+    const { table, typeName, info } = setup({ onAdd: (row) => ({ ...row, id: 25 }) as Row });
+    table.add();
+    typeName('Zed');
+
+    await expect(table.saveNew()).rejects.toThrow('the id 25, which is already in the table');
+    expect(info()).toContain('of 25 ');
+  });
+
+  it('throws when the row is added as typed with an id already in the table', async () => {
+    const { table, typeName, info } = setup();
+    table.add({ id: 3 });
+    typeName('Zed');
+
+    await expect(table.saveNew()).rejects.toThrow('the id 3, which is already in the table');
+    expect(table.isAdding()).toBe(true);
+    expect(info()).toContain('of 25 ');
+  });
+
+  it('adds the row on the next try once the id is new', async () => {
+    let id = 1;
+    const { table, typeName } = setup({ onAdd: (row) => ({ ...row, id }) as Row });
+    table.add();
+    typeName('Zed');
+    await expect(table.saveNew()).rejects.toThrow();
+    id = 99;
+
+    expect(await table.saveNew()).toBe(true);
+    expect(table.isAdding()).toBe(false);
+    expect(table.getRow(99)?.name).toBe('Zed');
+    expect(table.getRow(1)?.name).toBe('N00');
+  });
+
   it('keeps the row open and shows the error when onAdd throws', async () => {
     const { table, newTr, typeName, newError, container } = setup({
       onAdd: async () => {

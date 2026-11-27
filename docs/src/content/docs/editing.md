@@ -450,6 +450,7 @@ What happens:
 - It gets a `Partial` row, because the row isn't saved yet: the id, and columns without an editor, are only there if you gave them to `add()`. TypeScript makes you check them.
 - Return the saved row, usually with the id the server made, or nothing to keep the row as typed.
 - Either way, the row must have its `rowId`. If it doesn't, Tadabut throws `Tadabut: the added row has no "id". Return it from onAdd.` That's a mistake in your code, so it goes to the console, and the row stays open.
+- The id must also be new. If a row with that id is already in the table, Tadabut throws `Tadabut: the added row has the id 1, which is already in the table.` and the row stays open. With `server` there's no check, because the server decides which rows come back.
 - Without `onAdd`, the row is added as typed. That's fine for a table that only lives in the page, as long as the id comes from an input or from `add({ id })`.
 
 **Starting values:** `table.add({ country: 'MA', active: true })`. Inputs start with them, and columns without an editor show them as text. Those cells don't use the column's `render`.
